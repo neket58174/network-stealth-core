@@ -1,6 +1,6 @@
 # Operations runbook
 
-This runbook is the production operations reference for `Xray Reality Ultimate`.
+This runbook is the operations reference for `Xray Reality Ultimate`.
 
 ## Installation entry points
 
@@ -125,7 +125,7 @@ When escalating incidents, collect:
 - `/etc/xray/config.json` (with secrets redacted)
 - `/etc/xray/private/keys/clients.json` (if artifact consistency is involved)
 
-## QA before production changes
+## QA before changes
 
 ```bash
 make lint
@@ -134,4 +134,4 @@ make release-check
 make ci
 ```
 
-Only deploy from green commits.
+Apply changes only from green commits.

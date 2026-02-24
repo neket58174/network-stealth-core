@@ -168,7 +168,7 @@ This reduces repetitive traffic patterns and avoids persistently failing domains
 | `/etc/xray/private/keys/clients.txt` | `config.sh` | `0640`, `root:xray` |
 | `/etc/xray/private/keys/clients.json` | `config.sh` | `0640`, `root:xray` |
 | `/var/lib/xray/domain-health.json` | `health.sh` | runtime state file |
-| `/etc/systemd/system/xray.service` | `service.sh` | hardened service unit |
+| `/etc/systemd/system/xray.service` | `service.sh` | service unit with restrictive settings |
 
 ## QA and release control layers
 

@@ -2,7 +2,7 @@
 
 Thanks for contributing to `Xray Reality Ultimate`.
 
-This guide defines the expected workflow for safe, reviewable, production-grade changes.
+This guide defines the expected workflow for safe, reviewable, and reliable changes.
 
 ## Core rules
 

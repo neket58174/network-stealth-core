@@ -1,7 +1,7 @@
 <h1 align="center">Xray Reality Ultimate</h1>
 
 <p align="center">
-  Production-ready Xray Reality bootstrap with strict validation, rollback safety, and client exports.
+  Installation and management script for Xray Reality on Linux servers.
 </p>
 
 <p align="center">
@@ -18,7 +18,7 @@
 It is designed around three priorities:
 
 - predictable installation and update flows
-- security-first defaults (validation, integrity checks, privilege separation)
+- defensive defaults (validation, integrity checks, privilege separation)
 - operational clarity (rollback, diagnostics, export artifacts)
 
 ## Canonical source
@@ -59,7 +59,7 @@ sudo bash <(curl -fsSL https://raw.githubusercontent.com/neket58174/network-stea
 
 If you see `/dev/fd/...: no such file or directory`, use universal install.
 
-### Pinned bootstrap (supply-chain hardened)
+### Pinned bootstrap (commit pin)
 
 ```bash
 curl -fL https://raw.githubusercontent.com/neket58174/network-stealth-core/main/xray-reality.sh -o /tmp/xray-reality.sh
@@ -135,7 +135,7 @@ sudo bash xray-reality.sh logs
 - controlled download surface via allowlisted hosts
 - Xray integrity verification (`sha256` + optional `minisign`)
 - transactional file writes with rollback support
-- hardened `systemd` service and unprivileged runtime user
+- `systemd` unit with restrictive options and unprivileged runtime user
 
 See [SECURITY.md](SECURITY.md) for full details.
 

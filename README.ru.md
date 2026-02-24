@@ -1,7 +1,7 @@
 <h1 align="center">Xray Reality Ultimate</h1>
 
 <p align="center">
-  Безопасная и предсказуемая автоматизация Xray Reality для Linux-серверов.
+  Скрипт установки и сопровождения Xray Reality для Linux-серверов.
 </p>
 
 <p align="center">
@@ -24,7 +24,7 @@
 
 ## Официальный источник
 
-Используйте только каноничный репозиторий:
+Используйте официальный репозиторий:
 
 - `https://github.com/neket58174/network-stealth-core`
 
@@ -60,7 +60,7 @@ sudo bash <(curl -fsSL https://raw.githubusercontent.com/neket58174/network-stea
 
 Если видите `/dev/fd/...: no such file or directory`, переходите на universal install.
 
-### Усиленный bootstrap с pin по commit
+### Bootstrap с pin по commit
 
 ```bash
 curl -fL https://raw.githubusercontent.com/neket58174/network-stealth-core/main/xray-reality.sh -o /tmp/xray-reality.sh
@@ -136,7 +136,7 @@ sudo bash xray-reality.sh logs
 - allowlist для критичных загрузок
 - проверка целостности Xray (`sha256` + optional `minisign`)
 - атомарные записи + rollback при ошибках
-- запуск сервиса от непривилегированного пользователя с hardening `systemd`
+- запуск сервиса от непривилегированного пользователя и ограничивающие параметры `systemd`
 
 Подробно: [SECURITY.md](SECURITY.md).
 

@@ -30,7 +30,7 @@ Target response windows:
 | command/path injection | strict validators, safe path guards, sanitized runtime values |
 | partial write corruption | atomic writes + staged validation |
 | failed updates/install | rollback stack + runtime reconciliation |
-| service over-privilege | unprivileged `xray` user + hardened `systemd` unit |
+| service over-privilege | unprivileged `xray` user + restrictive `systemd` settings |
 
 ## Security controls
 
@@ -99,7 +99,7 @@ These flags reduce default security guarantees and should be temporary:
 
 ## Operational security recommendations
 
-1. run production from tagged releases
+1. prefer tagged releases for stable installs
 2. update regularly via controlled maintenance windows
 3. monitor `journalctl -u xray` and health logs
 4. restrict shell/admin access on the host
