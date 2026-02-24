@@ -59,6 +59,45 @@ is_nonfatal_systemctl_error() {
     esac
 }
 
+cleanup_conflicting_xray_service_dropins() {
+    local dropin_dir="/etc/systemd/system/xray.service.d"
+    [[ -d "$dropin_dir" ]] || return 0
+
+    local -a dropin_files=()
+    while IFS= read -r -d '' dropin_file; do
+        dropin_files+=("$dropin_file")
+    done < <(find "$dropin_dir" -mindepth 1 -maxdepth 1 -type f -name '*.conf' -print0 2> /dev/null | sort -z)
+
+    if ((${#dropin_files[@]} == 0)); then
+        return 0
+    fi
+
+    local cleaned_any=false
+    local dropin_file
+    for dropin_file in "${dropin_files[@]}"; do
+        if ! grep -Eq '^[[:space:]]*(ExecStart|ExecStartPre|ExecStartPost|User|Group|WorkingDirectory|EnvironmentFile|DynamicUser)[[:space:]]*=' "$dropin_file"; then
+            continue
+        fi
+        backup_file "$dropin_file"
+        if ! rm -f "$dropin_file"; then
+            log ERROR "Не удалось удалить конфликтный systemd drop-in: ${dropin_file}"
+            return 1
+        fi
+        cleaned_any=true
+        log WARN "Отключён конфликтный systemd drop-in: ${dropin_file}"
+    done
+
+    if [[ "$cleaned_any" == true ]]; then
+        if find "$dropin_dir" -mindepth 1 -maxdepth 1 | read -r _; then
+            :
+        else
+            rmdir "$dropin_dir" 2> /dev/null || true
+        fi
+    fi
+
+    return 0
+}
+
 create_systemd_service() {
     log STEP "Создаём systemd сервис..."
 
@@ -94,6 +133,8 @@ create_systemd_service() {
     validate_systemd_path_value "$_sd_logs" "XRAY_LOGS" || return 1
     validate_systemd_path_value "$_sd_bin" "XRAY_BIN" || return 1
     validate_systemd_path_value "$_sd_config" "XRAY_CONFIG" || return 1
+
+    cleanup_conflicting_xray_service_dropins || return 1
 
     backup_file /etc/systemd/system/xray.service
     atomic_write /etc/systemd/system/xray.service 0644 << EOF

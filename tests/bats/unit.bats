@@ -1620,6 +1620,18 @@ EOF
     [ "$output" = "ok" ]
 }
 
+@test "create_systemd_service cleans conflicting xray drop-ins" {
+    run bash -c '
+    grep -q '\''cleanup_conflicting_xray_service_dropins'\'' ./service.sh
+    grep -q '\''/etc/systemd/system/xray.service.d'\'' ./service.sh
+    grep -Eq '\''ExecStart\|ExecStartPre\|ExecStartPost\|User\|Group\|WorkingDirectory\|EnvironmentFile\|DynamicUser'\'' ./service.sh
+    grep -q '\''Отключён конфликтный systemd drop-in'\'' ./service.sh
+    echo "ok"
+  '
+    [ "$status" -eq 0 ]
+    [ "$output" = "ok" ]
+}
+
 @test "service systemd flows degrade on nonfatal systemctl errors" {
     run bash -c '
     grep -q '\''is_nonfatal_systemctl_error()'\'' ./service.sh

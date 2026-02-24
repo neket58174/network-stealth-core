@@ -12,6 +12,10 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 - Normalized operations commands to use installed `xray-reality.sh` invocation form.
 - Aligned docs wording around Ubuntu 24.04 LTS support scope and repository-supported version line.
 
+### Fixed
+
+- Install now neutralizes conflicting `systemd` drop-ins in `xray.service.d` that override runtime-critical fields (for example `ExecStart`, `User`, `Group`), preventing false startup/listening failures.
+
 ## [4.1.8] - 2026-02-24
 
 ### Changed
