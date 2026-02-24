@@ -175,7 +175,7 @@ This reduces repetitive traffic patterns and avoids persistently failing domains
 The project keeps three quality layers:
 
 - local: `make lint`, `make test`, `make release-check`
-- CI: lint + tests + audits + smoke matrix
+- CI: lint + tests + audits + Ubuntu smoke
 - release: consistency checks and artifact policy gates
 
 This structure keeps daily development fast while preserving release integrity.

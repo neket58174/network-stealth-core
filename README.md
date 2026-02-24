@@ -101,9 +101,9 @@ sudo XRAY_BOOTSTRAP_DEFAULT_REF=release bash /tmp/xray-reality.sh install
 Example:
 
 ```bash
-sudo bash xray-reality.sh status
-sudo bash xray-reality.sh diagnose
-sudo bash xray-reality.sh logs
+sudo xray-reality.sh status
+sudo xray-reality.sh diagnose
+sudo xray-reality.sh logs
 ```
 
 ## Runtime profiles
@@ -155,7 +155,7 @@ Primary and CI-verified platform:
 - `ubuntu-24.04` (LTS)
 
 Other Linux distributions may work, but are currently outside the active CI contract.
-Ubuntu 22.04 is usually compatible, while Ubuntu 18.04 is considered legacy and is not recommended.
+No compatibility guarantees are provided for platforms outside this scope.
 
 ## Local QA
 

@@ -102,9 +102,9 @@ sudo XRAY_BOOTSTRAP_DEFAULT_REF=release bash /tmp/xray-reality.sh install
 Пример:
 
 ```bash
-sudo bash xray-reality.sh status
-sudo bash xray-reality.sh diagnose
-sudo bash xray-reality.sh logs
+sudo xray-reality.sh status
+sudo xray-reality.sh diagnose
+sudo xray-reality.sh logs
 ```
 
 ## Профили и лимиты
@@ -156,7 +156,7 @@ sudo bash xray-reality.sh logs
 - `ubuntu-24.04` (LTS)
 
 Другие Linux-дистрибутивы могут работать, но сейчас не входят в активный CI-контракт.
-Ubuntu 22.04 обычно совместим, а Ubuntu 18.04 считается устаревшим и не рекомендуется.
+Для платформ вне этого контура совместимость не гарантируется.
 
 ## Локальная проверка
 

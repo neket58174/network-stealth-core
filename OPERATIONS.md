@@ -19,9 +19,9 @@ sudo bash <(curl -fsSL https://raw.githubusercontent.com/neket58174/network-stea
 
 If `/dev/fd` is unavailable, switch to universal install.
 
-## Public release sanity (Ubuntu 24.04.4)
+## Public release sanity (Ubuntu 24.04 LTS)
 
-Use this list before creating a public release. Supported and verified target for this checklist: **Ubuntu 24.04.4 LTS**.
+Use this list before creating a public release. Supported and verified target for this checklist: **Ubuntu 24.04 LTS**.
 
 ### Scope lock (must pass)
 
@@ -37,17 +37,17 @@ make ci
 
 ### Fresh host smoke (must pass)
 
-Run on a clean Ubuntu 24.04.4 VM:
+Run on a clean Ubuntu 24.04 VM:
 
 ```bash
 curl -fL https://raw.githubusercontent.com/neket58174/network-stealth-core/main/xray-reality.sh -o /tmp/xray-reality.sh
 sudo bash /tmp/xray-reality.sh install
-sudo bash xray-reality.sh status
+sudo xray-reality.sh status
 sudo xray -test -c /etc/xray/config.json
-sudo bash xray-reality.sh add-clients 1 --non-interactive --yes
-sudo bash xray-reality.sh update --non-interactive --yes
-sudo bash xray-reality.sh repair --non-interactive --yes
-sudo bash xray-reality.sh uninstall --non-interactive --yes
+sudo xray-reality.sh add-clients 1 --non-interactive --yes
+sudo xray-reality.sh update --non-interactive --yes
+sudo xray-reality.sh repair --non-interactive --yes
+sudo xray-reality.sh uninstall --non-interactive --yes
 ```
 
 Expected:
@@ -71,10 +71,10 @@ Expected:
 ## Daily health check
 
 ```bash
-sudo bash xray-reality.sh status
+sudo xray-reality.sh status
 sudo systemctl status xray --no-pager
 sudo journalctl -u xray -n 200 --no-pager
-sudo bash xray-reality.sh diagnose
+sudo xray-reality.sh diagnose
 ```
 
 ## Safe maintenance cycle
@@ -82,16 +82,16 @@ sudo bash xray-reality.sh diagnose
 ### Update
 
 ```bash
-sudo bash xray-reality.sh check-update
-sudo bash xray-reality.sh update
-sudo bash xray-reality.sh status
+sudo xray-reality.sh check-update
+sudo xray-reality.sh update
+sudo xray-reality.sh status
 ```
 
 ### Add client configs
 
 ```bash
-sudo bash xray-reality.sh add-clients 2
-sudo bash xray-reality.sh status
+sudo xray-reality.sh add-clients 2
+sudo xray-reality.sh status
 ```
 
 Expected artifact set after `add-clients`:
@@ -107,28 +107,28 @@ Expected artifact set after `add-clients`:
 |---|---|---|
 | `xray` not active | `sudo systemctl restart xray` | `systemctl is-active xray` |
 | config test fails | `xray -test -c /etc/xray/config.json` then rollback | config test exits `0` |
-| failed update | `sudo bash xray-reality.sh rollback` | service active + artifacts consistent |
+| failed update | `sudo xray-reality.sh rollback` | service active + artifacts consistent |
 | domain instability | inspect `/var/lib/xray/domain-health.json` and tuning vars | fail streak trend improves |
-| firewall drift | `sudo bash xray-reality.sh repair` | expected ports are listening/open |
+| firewall drift | `sudo xray-reality.sh repair` | expected ports are listening/open |
 
 ## Rollback playbook
 
 ### Latest session
 
 ```bash
-sudo bash xray-reality.sh rollback
+sudo xray-reality.sh rollback
 ```
 
 ### Specific session
 
 ```bash
-sudo bash xray-reality.sh rollback /var/backups/xray/<session-dir>
+sudo xray-reality.sh rollback /var/backups/xray/<session-dir>
 ```
 
 ### Post-rollback verification
 
 ```bash
-sudo bash xray-reality.sh status
+sudo xray-reality.sh status
 sudo journalctl -u xray -n 100 --no-pager
 ```
 
@@ -147,16 +147,16 @@ sudo journalctl -u xray -n 100 --no-pager
 Example:
 
 ```bash
-sudo DOMAIN_HEALTH_PROBE_TIMEOUT=3 \
-DOMAIN_HEALTH_MAX_PROBES=12 \
-PROGRESS_MODE=plain \
-bash xray-reality.sh repair
+sudo env DOMAIN_HEALTH_PROBE_TIMEOUT=3 \
+  DOMAIN_HEALTH_MAX_PROBES=12 \
+  PROGRESS_MODE=plain \
+  xray-reality.sh repair
 ```
 
 ## Uninstall procedure
 
 ```bash
-sudo bash xray-reality.sh uninstall --yes --non-interactive
+sudo xray-reality.sh uninstall --yes --non-interactive
 ```
 
 Post-uninstall checks:
@@ -169,7 +169,7 @@ Post-uninstall checks:
 
 When escalating incidents, collect:
 
-- `sudo bash xray-reality.sh diagnose`
+- `sudo xray-reality.sh diagnose`
 - `sudo journalctl -u xray -n 500 --no-pager`
 - `/etc/xray/config.json` (with secrets redacted)
 - `/etc/xray/private/keys/clients.json` (if artifact consistency is involved)

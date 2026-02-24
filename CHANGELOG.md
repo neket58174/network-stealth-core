@@ -7,7 +7,10 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
-- No unreleased changes.
+### Changed
+
+- Normalized operations commands to use installed `xray-reality.sh` invocation form.
+- Aligned docs wording around Ubuntu 24.04 LTS support scope and repository-supported version line.
 
 ## [4.1.8] - 2026-02-24
 
