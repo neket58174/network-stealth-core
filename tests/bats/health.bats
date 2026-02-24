@@ -1,7 +1,7 @@
 #!/usr/bin/env bats
 
 @test "setup_health_monitoring handles unset PORTS_V6 when HAS_IPV6=true" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./health.sh
 
@@ -50,7 +50,7 @@
 }
 
 @test "setup_health_monitoring applies safe fallback values for invalid inputs" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./health.sh
 
@@ -105,7 +105,7 @@
 }
 
 @test "setup_health_monitoring uses configured health log paths" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./health.sh
 
@@ -157,7 +157,7 @@
 }
 
 @test "setup_health_monitoring embeds runtime xray config path into health script" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./health.sh
 
@@ -206,7 +206,7 @@
 }
 
 @test "diagnose writes collected output to DIAG_LOG" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./health.sh
 

@@ -1,43 +1,43 @@
 #!/usr/bin/env bats
 
 @test "version_lt returns true for lower version" {
-    run bash -c 'source ./lib.sh; version_lt "1.0.0" "2.0.0" && echo "true" || echo "false"'
+    run bash -eo pipefail -c 'source ./lib.sh; version_lt "1.0.0" "2.0.0" && echo "true" || echo "false"'
     [ "$status" -eq 0 ]
     [ "$output" = "true" ]
 }
 
 @test "version_lt returns false for equal version" {
-    run bash -c 'source ./lib.sh; version_lt "1.0.0" "1.0.0" && echo "true" || echo "false"'
+    run bash -eo pipefail -c 'source ./lib.sh; version_lt "1.0.0" "1.0.0" && echo "true" || echo "false"'
     [ "$status" -eq 0 ]
     [ "$output" = "false" ]
 }
 
 @test "version_lt returns false for higher version" {
-    run bash -c 'source ./lib.sh; version_lt "3.0.0" "2.0.0" && echo "true" || echo "false"'
+    run bash -eo pipefail -c 'source ./lib.sh; version_lt "3.0.0" "2.0.0" && echo "true" || echo "false"'
     [ "$status" -eq 0 ]
     [ "$output" = "false" ]
 }
 
 @test "version_lt handles empty strings" {
-    run bash -c 'source ./lib.sh; version_lt "" "1.0.0" && echo "true" || echo "false"'
+    run bash -eo pipefail -c 'source ./lib.sh; version_lt "" "1.0.0" && echo "true" || echo "false"'
     [ "$status" -eq 0 ]
     [ "$output" = "false" ]
 }
 
 @test "version_lt treats prerelease as lower than stable" {
-    run bash -c 'source ./lib.sh; version_lt "1.2.3-rc1" "1.2.3" && echo "true" || echo "false"'
+    run bash -eo pipefail -c 'source ./lib.sh; version_lt "1.2.3-rc1" "1.2.3" && echo "true" || echo "false"'
     [ "$status" -eq 0 ]
     [ "$output" = "true" ]
 }
 
 @test "version_lt accepts versions with v prefix" {
-    run bash -c 'source ./lib.sh; version_lt "v1.2.3" "v1.2.4" && echo "true" || echo "false"'
+    run bash -eo pipefail -c 'source ./lib.sh; version_lt "v1.2.3" "v1.2.4" && echo "true" || echo "false"'
     [ "$status" -eq 0 ]
     [ "$output" = "true" ]
 }
 
 @test "rand_between returns value in range" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     val=$(rand_between 10 20)
     [[ $val -ge 10 && $val -le 20 ]] && echo "ok" || echo "fail: $val"
@@ -47,19 +47,19 @@
 }
 
 @test "rand_between handles min equals max" {
-    run bash -c 'source ./lib.sh; rand_between 5 5'
+    run bash -eo pipefail -c 'source ./lib.sh; rand_between 5 5'
     [ "$status" -eq 0 ]
     [ "$output" = "5" ]
 }
 
 @test "rand_between handles reversed min/max" {
-    run bash -c 'source ./lib.sh; rand_between 20 10'
+    run bash -eo pipefail -c 'source ./lib.sh; rand_between 20 10'
     [ "$status" -eq 0 ]
     [ "$output" = "20" ]
 }
 
 @test "rand_between rejects modulo-bias tail when source range allows it" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     calls=0
     rand_u32() {
@@ -81,19 +81,19 @@
 }
 
 @test "progress_bar handles zero total" {
-    run bash -c 'source ./lib.sh; progress_bar 0 0; echo "ok"'
+    run bash -eo pipefail -c 'source ./lib.sh; progress_bar 0 0; echo "ok"'
     [ "$status" -eq 0 ]
     [[ "$output" == *"ok"* ]]
 }
 
 @test "progress_bar displays progress" {
-    run bash -c 'source ./lib.sh; progress_bar 5 10'
+    run bash -eo pipefail -c 'source ./lib.sh; progress_bar 5 10'
     [ "$status" -eq 0 ]
     [[ "$output" == *"50%"* ]]
 }
 
 @test "resolve_progress_mode uses plain mode for dumb terminals in auto mode" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     PROGRESS_MODE="auto"
     TERM="dumb"
@@ -104,7 +104,7 @@
 }
 
 @test "progress_bar plain mode keeps sequential line output" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     PROGRESS_MODE="plain"
     progress_bar 1 4
@@ -117,7 +117,7 @@
 }
 
 @test "log closes active progress line" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     PROGRESS_MODE="bar"
     progress_bar 1 2
@@ -132,7 +132,7 @@
 }
 
 @test "validate_install_config accepts valid mux mode" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     DOMAIN_TIER="tier_ru"
     NUM_CONFIGS=5
@@ -148,7 +148,7 @@
 }
 
 @test "validate_install_config falls back to tier_ru for invalid tier" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     DOMAIN_TIER="invalid"
     NUM_CONFIGS=5
@@ -165,7 +165,7 @@
 }
 
 @test "validate_install_config accepts http2 transport" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     DOMAIN_TIER="tier_ru"
     NUM_CONFIGS=5
@@ -184,7 +184,7 @@
 }
 
 @test "validate_install_config clamps weak short id length" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     DOMAIN_TIER="tier_ru"
     NUM_CONFIGS=5
@@ -203,7 +203,7 @@
 }
 
 @test "ask_num_configs uses XRAY_NUM_CONFIGS in non-interactive mode" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./install.sh
     NON_INTERACTIVE=true
@@ -217,7 +217,7 @@
 }
 
 @test "ask_num_configs skips when reusing config" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./install.sh
     REUSE_EXISTING_CONFIG=true
@@ -229,7 +229,7 @@
 }
 
 @test "ask_domain_profile defaults to tier_ru in non-interactive mode" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./install.sh
     NON_INTERACTIVE=true
@@ -242,7 +242,7 @@
 }
 
 @test "ask_domain_profile accepts XRAY_DOMAIN_PROFILE override" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./install.sh
     NON_INTERACTIVE=true
@@ -256,7 +256,7 @@
 }
 
 @test "ask_domain_profile warns when reuse-config ignores requested profile" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./install.sh
     log() { printf "%s %s\n" "$1" "$2"; }
@@ -272,7 +272,7 @@
 }
 
 @test "ask_domain_profile marks auto mode for ru-auto alias" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./install.sh
     NON_INTERACTIVE=true
@@ -286,7 +286,7 @@
 }
 
 @test "ask_num_configs auto profile chooses default for tier_ru" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./install.sh
     NON_INTERACTIVE=true
@@ -301,7 +301,7 @@
 }
 
 @test "ask_num_configs auto profile chooses default for tier_global_ms10" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./install.sh
     NON_INTERACTIVE=true
@@ -316,7 +316,7 @@
 }
 
 @test "ask_num_configs fails in non-interactive mode without explicit value" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./install.sh
     NON_INTERACTIVE=true
@@ -327,7 +327,7 @@
 }
 
 @test "ask_num_configs enforces tier_global_ms10 limit in non-interactive mode" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./install.sh
     NON_INTERACTIVE=true
@@ -340,7 +340,7 @@
 }
 
 @test "resolve_paths sets default paths when dirs are writable" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     NON_INTERACTIVE=true
     _try_file_path() { return 0; }
@@ -353,7 +353,7 @@
 }
 
 @test "resolve_paths fails in non-interactive mode when paths are not writable" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     NON_INTERACTIVE=true
     _try_file_path() { return 1; }
@@ -365,7 +365,7 @@
 }
 
 @test "_try_dir succeeds for /tmp" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     _try_dir /tmp && echo "ok" || echo "fail"
   '
@@ -374,7 +374,7 @@
 }
 
 @test "_try_dir fails for non-writable path" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     _try_dir /proc/nonexistent 2>/dev/null && echo "ok" || echo "fail"
   '
@@ -383,7 +383,7 @@
 }
 
 @test "validate_install_config rejects zero configs" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     DOMAIN_TIER="tier_ru"
     NUM_CONFIGS=0
@@ -398,7 +398,7 @@
 }
 
 @test "validate_install_config rejects more than 100 configs" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     DOMAIN_TIER="tier_ru"
     NUM_CONFIGS=101
@@ -413,7 +413,7 @@
 }
 
 @test "validate_install_config accepts 10 configs for tier_global_ms10" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     DOMAIN_TIER="tier_global_ms10"
     NUM_CONFIGS=10
@@ -430,7 +430,7 @@
 }
 
 @test "validate_install_config rejects more than 10 configs for tier_global_ms10" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     DOMAIN_TIER="tier_global_ms10"
     NUM_CONFIGS=11
@@ -445,7 +445,7 @@
 }
 
 @test "count_listening_ports returns listening and expected counts" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./config.sh
     port_is_listening() {
@@ -462,7 +462,7 @@
 }
 
 @test "verify_ports_listening_after_start fails when only part of IPv4 ports listen" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./config.sh
     PORTS=(444 445)
@@ -480,7 +480,7 @@
 }
 
 @test "verify_ports_listening_after_start skips check when systemd is unavailable" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./config.sh
     PORTS=(444 445)
@@ -496,7 +496,7 @@
 }
 
 @test "verify_ports_listening_after_start succeeds when all IPv4 ports listen" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./config.sh
     PORTS=(444 445)

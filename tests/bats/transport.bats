@@ -3,7 +3,7 @@
 # By default transport is gRPC; optional HTTP/2 mode is supported.
 
 @test "generate_inbound_json uses grpc network" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./config.sh
     json=$(generate_inbound_json 443 "test-uuid" "yandex.ru:443" "yandex.ru" "privkey" "abcd" "chrome" "TestService" 30 60 20)
@@ -14,7 +14,7 @@
 }
 
 @test "generate_inbound_json sets grpc serviceName" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./config.sh
     json=$(generate_inbound_json 443 "test-uuid" "yandex.ru:443" "yandex.ru" "privkey" "abcd" "chrome" "my.api.v1.Service" 30 60 20)
@@ -25,7 +25,7 @@
 }
 
 @test "generate_inbound_json enables multiMode" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./config.sh
     json=$(generate_inbound_json 443 "test-uuid" "yandex.ru:443" "yandex.ru" "privkey" "abcd" "chrome" "TestService" 30 60 20)
@@ -36,7 +36,7 @@
 }
 
 @test "generate_inbound_json supports http2 mode" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./config.sh
     json=$(generate_inbound_json 443 "test-uuid" "yandex.ru:443" "[\"yandex.ru\"]" "privkey" "abcd" "chrome" "my.api.v1.Service" 30 60 20 "http2" "/my/api/v1/Service")
@@ -49,7 +49,7 @@
 }
 
 @test "build_inbound_profile_for_domain derives http2 payload from grpc service" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./config.sh
     TRANSPORT="http2"
@@ -67,7 +67,7 @@
 }
 
 @test "generate_profile_inbound_json uses prepared profile fields" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./config.sh
     TRANSPORT="http2"

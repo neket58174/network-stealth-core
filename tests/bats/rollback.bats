@@ -1,7 +1,7 @@
 #!/usr/bin/env bats
 
 @test "rollback_from_session fails when session directory does not exist" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./service.sh
     XRAY_BACKUP="$(mktemp -d)"
@@ -11,7 +11,7 @@
 }
 
 @test "rollback_from_session rejects backup outside XRAY_BACKUP root" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./service.sh
     XRAY_BACKUP="$(mktemp -d)"
@@ -23,7 +23,7 @@
 }
 
 @test "rollback_from_session restores custom runtime path from session backup" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./service.sh
     XRAY_BACKUP="$(mktemp -d)"

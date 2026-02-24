@@ -1,7 +1,7 @@
 #!/usr/bin/env bats
 
 @test "generate_inbound_json produces valid JSON for grpc" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./config.sh
     json=$(generate_inbound_json 443 "test-uuid" "example.com:443" "example.com" \
@@ -13,7 +13,7 @@
 }
 
 @test "generate_inbound_json grpc includes serviceName" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./config.sh
     json=$(generate_inbound_json 443 "uuid" "d.com:443" "d.com" \
@@ -25,7 +25,7 @@
 }
 
 @test "generate_inbound_json includes reality settings" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./config.sh
     json=$(generate_inbound_json 443 "my-uuid" "target.com:443" "target.com" \
@@ -37,7 +37,7 @@
 }
 
 @test "generate_inbound_json includes bbr congestion in sockopt" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./config.sh
     json=$(generate_inbound_json 443 "uuid" "d.com:443" "d.com" \
@@ -49,7 +49,7 @@
 }
 
 @test "generate_outbounds_json produces valid JSON" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./config.sh
     MUX_ENABLED=false
@@ -62,7 +62,7 @@
 }
 
 @test "generate_outbounds_json does not emit server-side mux field" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./config.sh
     MUX_ENABLED=true
@@ -75,7 +75,7 @@
 }
 
 @test "generate_routing_json blocks private IPs" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./config.sh
     json=$(generate_routing_json)
@@ -86,7 +86,7 @@
 }
 
 @test "check_xray_version_for_config_generation warns on untested major transport format" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./config.sh
     tmp_bin=$(mktemp)

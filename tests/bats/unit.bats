@@ -3,7 +3,7 @@
 @test "parse_bool handles true-ish values" {
     local value
     for value in 1 true yes y on; do
-        run bash -c "source ./lib.sh; parse_bool \"$value\" false"
+        run bash -eo pipefail -c "source ./lib.sh; parse_bool \"$value\" false"
         [ "$status" -eq 0 ]
         [ "$output" = "true" ]
     done
@@ -12,38 +12,38 @@
 @test "parse_bool handles false-ish values" {
     local value
     for value in 0 false no n off; do
-        run bash -c "source ./lib.sh; parse_bool \"$value\" true"
+        run bash -eo pipefail -c "source ./lib.sh; parse_bool \"$value\" true"
         [ "$status" -eq 0 ]
         [ "$output" = "false" ]
     done
 }
 
 @test "normalize_domain_tier accepts underscore alias and canonicalizes value" {
-    run bash -c 'source ./lib.sh; normalize_domain_tier "tier_global_ms10"'
+    run bash -eo pipefail -c 'source ./lib.sh; normalize_domain_tier "tier_global_ms10"'
     [ "$status" -eq 0 ]
     [ "$output" = "tier_global_ms10" ]
 }
 
 @test "normalize_domain_tier accepts ru-auto alias" {
-    run bash -c 'source ./lib.sh; normalize_domain_tier "ru-auto"'
+    run bash -eo pipefail -c 'source ./lib.sh; normalize_domain_tier "ru-auto"'
     [ "$status" -eq 0 ]
     [ "$output" = "tier_ru" ]
 }
 
 @test "normalize_domain_tier accepts global-ms10-auto alias" {
-    run bash -c 'source ./lib.sh; normalize_domain_tier "global-ms10-auto"'
+    run bash -eo pipefail -c 'source ./lib.sh; normalize_domain_tier "global-ms10-auto"'
     [ "$status" -eq 0 ]
     [ "$output" = "tier_global_ms10" ]
 }
 
 @test "default runtime flags require explicit non-interactive confirmation" {
-    run bash -c 'source ./lib.sh; echo "${ASSUME_YES}:${NON_INTERACTIVE}"'
+    run bash -eo pipefail -c 'source ./lib.sh; echo "${ASSUME_YES}:${NON_INTERACTIVE}"'
     [ "$status" -eq 0 ]
     [ "$output" = "false:false" ]
 }
 
 @test "parse_args --yes enables non-interactive confirmation mode" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     parse_args --yes uninstall
     echo "${ASSUME_YES}:${NON_INTERACTIVE}:${ACTION}"
@@ -53,7 +53,7 @@
 }
 
 @test "parse_args --non-interactive enables non-interactive confirmation mode" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     parse_args --non-interactive uninstall
     echo "${ASSUME_YES}:${NON_INTERACTIVE}:${ACTION}"
@@ -63,7 +63,7 @@
 }
 
 @test "parse_args accepts --domain-check-parallelism" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     parse_args install --domain-check-parallelism=24
     echo "${ACTION}:${DOMAIN_CHECK_PARALLELISM}"
@@ -73,27 +73,27 @@
 }
 
 @test "trim_ws strips leading and trailing spaces" {
-    run bash -c 'source ./lib.sh; trim_ws "  hello world  "'
+    run bash -eo pipefail -c 'source ./lib.sh; trim_ws "  hello world  "'
     [ "$status" -eq 0 ]
     [ "$output" = "hello world" ]
 }
 
 @test "split_list splits comma-separated values" {
-    run bash -c 'source ./lib.sh; split_list "a,b"'
+    run bash -eo pipefail -c 'source ./lib.sh; split_list "a,b"'
     [ "$status" -eq 0 ]
     [ "${lines[0]}" = "a" ]
     [ "${lines[1]}" = "b" ]
 }
 
 @test "split_list splits space-separated values" {
-    run bash -c 'source ./lib.sh; split_list "a b"'
+    run bash -eo pipefail -c 'source ./lib.sh; split_list "a b"'
     [ "$status" -eq 0 ]
     [ "${lines[0]}" = "a" ]
     [ "${lines[1]}" = "b" ]
 }
 
 @test "split_list splits mixed comma and space separators" {
-    run bash -c 'source ./lib.sh; split_list "a, b c"'
+    run bash -eo pipefail -c 'source ./lib.sh; split_list "a, b c"'
     [ "$status" -eq 0 ]
     [ "${lines[0]}" = "a" ]
     [ "${lines[1]}" = "b" ]
@@ -101,19 +101,19 @@
 }
 
 @test "get_query_param extracts value by key" {
-    run bash -c 'source ./lib.sh; get_query_param "a=1&b=2" "b"'
+    run bash -eo pipefail -c 'source ./lib.sh; get_query_param "a=1&b=2" "b"'
     [ "$status" -eq 0 ]
     [ "$output" = "2" ]
 }
 
 @test "get_query_param decodes url-encoded value" {
-    run bash -c 'source ./lib.sh; get_query_param "a=1&pbk=abc%2B123%2F%3D&sid=s%23id" "pbk"'
+    run bash -eo pipefail -c 'source ./lib.sh; get_query_param "a=1&pbk=abc%2B123%2F%3D&sid=s%23id" "pbk"'
     [ "$status" -eq 0 ]
     [ "$output" = "abc+123/=" ]
 }
 
 @test "sanitize_log_message redacts VLESS links and identifiers" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     secret_uuid="110fdea4-ddfe-4f83-bc44-ca4a63b9079a"
     input="vless://${secret_uuid}@1.1.1.1:444?pbk=abc123&sid=deadbeef#cfg uuid=${secret_uuid}"
@@ -127,12 +127,16 @@
     [[ "$out" != *"sid=deadbeef"* ]]
     echo "ok"
   '
+    if [[ "$status" -ne 0 ]]; then
+        echo "debug-status=$status"
+        echo "$output"
+    fi
     [ "$status" -eq 0 ]
     [[ "$output" == *"ok"* ]]
 }
 
 @test "debug_file writes sanitized content into install log" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     tmp=$(mktemp)
     trap "rm -f \"$tmp\"" EXIT
@@ -152,7 +156,7 @@
 }
 
 @test "print_secret_file_to_tty degrades gracefully without tty" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     can_write_dev_tty() { return 1; }
     tmp=$(mktemp)
@@ -170,7 +174,7 @@
 }
 
 @test "setup_logging avoids mktemp -u race pattern" {
-    run bash -c '
+    run bash -eo pipefail -c '
     ! grep -q "mktemp -u .*xray-log" ./lib.sh
     echo "ok"
   '
@@ -179,7 +183,7 @@
 }
 
 @test "install sysctl profile sets bbr congestion control" {
-    run bash -c '
+    run bash -eo pipefail -c '
     grep -q "^net\\.ipv4\\.tcp_congestion_control = bbr$" ./install.sh
     echo "ok"
   '
@@ -188,7 +192,7 @@
 }
 
 @test "yaml_escape always returns quoted safe scalar" {
-    run bash -c 'source ./lib.sh; source ./export.sh; yaml_escape "a:b # test"'
+    run bash -eo pipefail -c 'source ./lib.sh; source ./export.sh; yaml_escape "a:b # test"'
     [ "$status" -eq 0 ]
     [ "$output" = "\"a:b # test\"" ]
 }
@@ -196,14 +200,14 @@
 @test "resolve_mirror_base replaces version placeholders" {
     local pattern
     for pattern in "https://x/{{version}}" "https://x/{version}" "https://x/\$version"; do
-        run bash -c 'source ./lib.sh; resolve_mirror_base "$1" "$2"' -- "$pattern" "1.2.3"
+        run bash -eo pipefail -c 'source ./lib.sh; resolve_mirror_base "$1" "$2"' -- "$pattern" "1.2.3"
         [ "$status" -eq 0 ]
         [ "$output" = "https://x/1.2.3" ]
     done
 }
 
 @test "build_mirror_list outputs default and extra mirrors" {
-    run bash -c 'source ./lib.sh; build_mirror_list "https://a/{version}" '\''https://b/{version},https://c/$version'\'' "1.0"'
+    run bash -eo pipefail -c 'source ./lib.sh; build_mirror_list "https://a/{version}" '\''https://b/{version},https://c/$version'\'' "1.0"'
     [ "$status" -eq 0 ]
     [ "${lines[0]}" = "https://a/1.0" ]
     [ "${lines[1]}" = "https://b/1.0" ]
@@ -211,29 +215,29 @@
 }
 
 @test "xray_geo_dir falls back to XRAY_BIN directory" {
-    run bash -c 'source ./lib.sh; XRAY_BIN="/opt/xray/bin/xray"; XRAY_GEO_DIR=""; xray_geo_dir'
+    run bash -eo pipefail -c 'source ./lib.sh; XRAY_BIN="/opt/xray/bin/xray"; XRAY_GEO_DIR=""; xray_geo_dir'
     [ "$status" -eq 0 ]
     [ "$output" = "/opt/xray/bin" ]
 }
 
 @test "xray_geo_dir prefers explicit XRAY_GEO_DIR" {
-    run bash -c 'source ./lib.sh; XRAY_BIN="/opt/xray/bin/xray"; XRAY_GEO_DIR="/srv/xray/geo"; xray_geo_dir'
+    run bash -eo pipefail -c 'source ./lib.sh; XRAY_BIN="/opt/xray/bin/xray"; XRAY_GEO_DIR="/srv/xray/geo"; xray_geo_dir'
     [ "$status" -eq 0 ]
     [ "$output" = "/srv/xray/geo" ]
 }
 
 @test "validate_curl_target rejects non-https url" {
-    run bash -c 'source ./lib.sh; validate_curl_target "http://example.com/a" true'
+    run bash -eo pipefail -c 'source ./lib.sh; validate_curl_target "http://example.com/a" true'
     [ "$status" -ne 0 ]
 }
 
 @test "strict_validate_runtime_inputs rejects control chars in path vars" {
-    run bash -c 'source ./lib.sh; XRAY_SCRIPT_PATH=$'\''/usr/local/bin/xray-reality.sh\nbad'\''; strict_validate_runtime_inputs install'
+    run bash -eo pipefail -c 'source ./lib.sh; XRAY_SCRIPT_PATH=$'\''/usr/local/bin/xray-reality.sh\nbad'\''; strict_validate_runtime_inputs install'
     [ "$status" -ne 0 ]
 }
 
 @test "strict_validate_runtime_inputs accepts valid update inputs" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     XRAY_MIRRORS="https://github.com/XTLS/Xray-core/releases/download/v1.0.0"
     MINISIGN_MIRRORS="https://github.com/jedisct1/minisign/releases/download/0.11"
@@ -246,7 +250,7 @@
 }
 
 @test "strict_validate_runtime_inputs rejects dangerous XRAY_LOGS for uninstall" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     XRAY_LOGS="/etc"
     strict_validate_runtime_inputs uninstall
@@ -255,7 +259,7 @@
 }
 
 @test "strict_validate_runtime_inputs rejects dangerous XRAY_LOGS for repair" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     XRAY_LOGS="/etc"
     strict_validate_runtime_inputs repair
@@ -264,7 +268,7 @@
 }
 
 @test "strict_validate_runtime_inputs rejects dangerous XRAY_LOGS for diagnose" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     XRAY_LOGS="/etc"
     strict_validate_runtime_inputs diagnose
@@ -273,7 +277,7 @@
 }
 
 @test "strict_validate_runtime_inputs rejects dangerous XRAY_LOGS for rollback" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     XRAY_LOGS="/etc"
     strict_validate_runtime_inputs rollback
@@ -282,7 +286,7 @@
 }
 
 @test "strict_validate_runtime_inputs accepts safe nested custom paths for uninstall" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     base="$(mktemp -d)"
     XRAY_KEYS="$base/etc/xray/private/keys"
@@ -305,7 +309,7 @@
 }
 
 @test "uninstall_is_allowed_file_path allows known xray logs in /var/log" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./service.sh
     uninstall_is_allowed_file_path /var/log/xray-install.log
@@ -320,7 +324,7 @@
 }
 
 @test "uninstall_is_allowed_file_path rejects unrelated /var/log targets" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./service.sh
     uninstall_is_allowed_file_path /var/log/syslog
@@ -329,7 +333,7 @@
 }
 
 @test "uninstall_is_allowed_file_path rejects unrelated file in allowed dirname" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./service.sh
     uninstall_is_allowed_file_path /usr/local/bin/sudo
@@ -338,7 +342,7 @@
 }
 
 @test "strict_validate_runtime_inputs rejects invalid primary domain mode" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     PRIMARY_DOMAIN_MODE="broken"
     strict_validate_runtime_inputs update
@@ -347,7 +351,7 @@
 }
 
 @test "strict_validate_runtime_inputs accepts quarantine and primary controls" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     PRIMARY_DOMAIN_MODE="pinned"
     PRIMARY_PIN_DOMAIN="yandex.ru"
@@ -362,7 +366,7 @@
 }
 
 @test "strict_validate_runtime_inputs rejects invalid DOWNLOAD_HOST_ALLOWLIST host" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     DOWNLOAD_HOST_ALLOWLIST="github.com,bad/host"
     strict_validate_runtime_inputs update
@@ -371,7 +375,7 @@
 }
 
 @test "strict_validate_runtime_inputs rejects invalid GH_PROXY_BASE url" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     GH_PROXY_BASE="http://ghproxy.com/https://github.com"
     strict_validate_runtime_inputs update
@@ -380,7 +384,7 @@
 }
 
 @test "strict_validate_runtime_inputs rejects invalid PROGRESS_MODE" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     PROGRESS_MODE="broken"
     strict_validate_runtime_inputs update
@@ -389,7 +393,7 @@
 }
 
 @test "strict_validate_runtime_inputs rejects invalid HEALTH_CHECK_INTERVAL" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     HEALTH_CHECK_INTERVAL="120
 ExecStart=/tmp/pwn"
@@ -399,7 +403,7 @@ ExecStart=/tmp/pwn"
 }
 
 @test "strict_validate_runtime_inputs rejects invalid LOG_MAX_SIZE_MB" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     LOG_MAX_SIZE_MB="abc"
     strict_validate_runtime_inputs update
@@ -408,7 +412,7 @@ ExecStart=/tmp/pwn"
 }
 
 @test "strict_validate_runtime_inputs rejects invalid DOMAIN_CHECK_PARALLELISM" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     DOMAIN_CHECK_PARALLELISM=0
     strict_validate_runtime_inputs update
@@ -417,7 +421,7 @@ ExecStart=/tmp/pwn"
 }
 
 @test "strict_validate_runtime_inputs rejects invalid AUTO_UPDATE_RANDOM_DELAY" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     AUTO_UPDATE_RANDOM_DELAY="1h;touch /tmp/pwn"
     strict_validate_runtime_inputs update
@@ -426,7 +430,7 @@ ExecStart=/tmp/pwn"
 }
 
 @test "strict_validate_runtime_inputs rejects invalid AUTO_UPDATE_ONCALENDAR" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     AUTO_UPDATE_ONCALENDAR="weekly;touch /tmp/pwn"
     strict_validate_runtime_inputs update
@@ -435,7 +439,7 @@ ExecStart=/tmp/pwn"
 }
 
 @test "strict_validate_runtime_inputs accepts XRAY_DOMAIN_PROFILE global-ms10" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     XRAY_DOMAIN_PROFILE="global-ms10"
     strict_validate_runtime_inputs install
@@ -446,7 +450,7 @@ ExecStart=/tmp/pwn"
 }
 
 @test "strict_validate_runtime_inputs rejects invalid XRAY_DOMAIN_PROFILE" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     XRAY_DOMAIN_PROFILE="global-ms999"
     strict_validate_runtime_inputs install
@@ -455,7 +459,7 @@ ExecStart=/tmp/pwn"
 }
 
 @test "apply_runtime_overrides keeps installed tier for add-clients" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     ACTION="add-clients"
     DOMAIN_TIER="tier_ru"
@@ -468,7 +472,7 @@ ExecStart=/tmp/pwn"
 }
 
 @test "apply_runtime_overrides applies XRAY_DOMAIN_PROFILE for install" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     ACTION="install"
     DOMAIN_TIER="tier_ru"
@@ -481,7 +485,7 @@ ExecStart=/tmp/pwn"
 }
 
 @test "strict_validate_runtime_inputs rejects invalid XRAY_DOMAINS_FILE domain" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     tmp=$(mktemp)
     trap "rm -f \"$tmp\"" EXIT
@@ -497,7 +501,7 @@ EOF
 }
 
 @test "strict_validate_runtime_inputs rejects empty XRAY_DOMAINS_FILE" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     tmp=$(mktemp)
     trap "rm -f \"$tmp\"" EXIT
@@ -509,7 +513,7 @@ EOF
 }
 
 @test "strict_validate_runtime_inputs accepts valid XRAY_DOMAINS_FILE" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     tmp=$(mktemp)
     trap "rm -f \"$tmp\"" EXIT
@@ -527,7 +531,7 @@ EOF
 }
 
 @test "strict_validate_runtime_inputs rejects invalid REALITY_TEST_PORTS values" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     REALITY_TEST_PORTS="443,70000"
     strict_validate_runtime_inputs update
@@ -536,7 +540,7 @@ EOF
 }
 
 @test "strict_validate_runtime_inputs rejects invalid PRIMARY_PIN_DOMAIN" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     PRIMARY_DOMAIN_MODE="pinned"
     PRIMARY_PIN_DOMAIN="bad_domain"
@@ -546,7 +550,7 @@ EOF
 }
 
 @test "validate_export_json_schema accepts minimal singbox shape" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./export.sh
     tmp=$(mktemp)
@@ -561,7 +565,7 @@ EOF
 }
 
 @test "validate_export_json_schema rejects invalid v2rayn shape" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./export.sh
     tmp=$(mktemp)
@@ -572,14 +576,14 @@ EOF
 }
 
 @test "auto-update template supports GEO_VERIFY_STRICT fail-closed mode" {
-    run bash -c '
+    run bash -eo pipefail -c '
     block="$(awk '\''/echo "Updating Geo files..."/,/UPDATEEOF/'\'' ./modules/install/bootstrap.sh)"
-    echo "$block" | grep -q "GEO_VERIFY_STRICT"
-    echo "$block" | grep -q "if \\[\\[ \"\\$GEO_VERIFY_STRICT\" == \"true\" \\]\\]"
-    echo "$block" | grep -q "download_geo_with_verify \"geoip.dat\" \"\\$GEOIP_URL\" \"\\$GEOIP_SHA256_URL\"$"
-    echo "$block" | grep -q "download_geo_with_verify \"geosite.dat\" \"\\$GEOSITE_URL\" \"\\$GEOSITE_SHA256_URL\"$"
-    echo "$block" | grep -q "download_geo_with_verify \"geoip.dat\" \"\\$GEOIP_URL\" \"\\$GEOIP_SHA256_URL\" || true"
-    echo "$block" | grep -q "download_geo_with_verify \"geosite.dat\" \"\\$GEOSITE_URL\" \"\\$GEOSITE_SHA256_URL\" || true"
+    echo "$block" | grep -Fq '\''GEO_VERIFY_STRICT'\''
+    echo "$block" | grep -Fq '\''if [[ "$GEO_VERIFY_STRICT" == "true" ]]; then'\''
+    echo "$block" | grep -Fq '\''download_geo_with_verify "geoip.dat" "$GEOIP_URL" "$GEOIP_SHA256_URL"'\''
+    echo "$block" | grep -Fq '\''download_geo_with_verify "geosite.dat" "$GEOSITE_URL" "$GEOSITE_SHA256_URL"'\''
+    echo "$block" | grep -Fq '\''download_geo_with_verify "geoip.dat" "$GEOIP_URL" "$GEOIP_SHA256_URL" || true'\''
+    echo "$block" | grep -Fq '\''download_geo_with_verify "geosite.dat" "$GEOSITE_URL" "$GEOSITE_SHA256_URL" || true'\''
     echo "ok"
   '
     [ "$status" -eq 0 ]
@@ -587,7 +591,7 @@ EOF
 }
 
 @test "auto-update template escapes XRAY_SCRIPT_PATH in exec line" {
-    run bash -c '
+    run bash -eo pipefail -c '
     grep -q "printf '\''exec %q update --non-interactive" ./modules/install/bootstrap.sh
     echo "ok"
   '
@@ -596,10 +600,10 @@ EOF
 }
 
 @test "setup_logrotate uses runtime log path variables" {
-    run bash -c '
+    run bash -eo pipefail -c '
     grep -q '\''safe_logs_dir='\'' ./modules/install/bootstrap.sh
     grep -q '\''safe_health_log='\'' ./modules/install/bootstrap.sh
-    grep -q '\''\${safe_logs_dir%/}/\\*\\.log \${safe_health_log}'\'' ./modules/install/bootstrap.sh
+    grep -Fq '\''${safe_logs_dir%/}/*.log ${safe_health_log}'\'' ./modules/install/bootstrap.sh
     echo "ok"
   '
     [ "$status" -eq 0 ]
@@ -607,7 +611,7 @@ EOF
 }
 
 @test "temp xray config files use hardened permissions helper" {
-    run bash -c '
+    run bash -eo pipefail -c '
     grep -q '\''set_temp_xray_config_permissions "\$tmp_config"'\'' ./config.sh
     ! grep -q '\''chmod 644 "\$tmp_config"'\'' ./config.sh
     echo "ok"
@@ -617,7 +621,7 @@ EOF
 }
 
 @test "create_temp_xray_config_file uses TMPDIR and json suffix" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./config.sh
     tmpdir=$(mktemp -d)
@@ -634,7 +638,7 @@ EOF
 }
 
 @test "rpm dependency check accepts curl provider even without curl package" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./modules/install/bootstrap.sh
     log() { :; }
     PKG_TYPE="rpm"
@@ -656,7 +660,7 @@ EOF
 }
 
 @test "e2e run_root prefers direct execution as root and falls back to sudo -n" {
-    run bash -c '
+    run bash -eo pipefail -c '
     grep -q '\''EUID'\'' ./tests/e2e/lib.sh
     grep -q '\''sudo -n true'\'' ./tests/e2e/lib.sh
     grep -q '\''sudo -n "\$@"'\'' ./tests/e2e/lib.sh
@@ -667,7 +671,7 @@ EOF
 }
 
 @test "derive_public_key_from_private_key uses strict x25519 -i flow" {
-    run bash -c '
+    run bash -eo pipefail -c '
     grep -q '\''x25519 -i "\$private_key"'\'' ./config.sh
     ! grep -q '\''x25519 "\$private_key"'\'' ./config.sh
     grep -q '\''xray x25519 -i failed while deriving public key'\'' ./config.sh
@@ -678,7 +682,7 @@ EOF
 }
 
 @test "build_config validates IPv6 port presence before jq tonumber" {
-    run bash -c '
+    run bash -eo pipefail -c '
     grep -q '\''if \[\[ -z "\${PORTS_V6\[\$i\]:-}" \]\]'\'' ./config.sh
     grep -q '\''HAS_IPV6=true, но IPv6 порт для конфига'\'' ./config.sh
     grep -q '\''Ошибка генерации IPv6 inbound для конфига'\'' ./config.sh
@@ -689,11 +693,13 @@ EOF
 }
 
 @test "update_xray backs up config and client artifacts before update" {
-    run bash -c '
-    grep -q '\''backup_file "\$XRAY_CONFIG"'\'' ./service.sh
-    grep -q '\''backup_file "\$XRAY_KEYS/keys.txt"'\'' ./service.sh
-    grep -q '\''backup_file "\$XRAY_KEYS/clients.txt"'\'' ./service.sh
-    grep -q '\''backup_file "\$XRAY_KEYS/clients.json"'\'' ./service.sh
+    run bash -eo pipefail -c '
+    grep -q '\''for artifact in'\'' ./service.sh
+    grep -q '\''"\$XRAY_CONFIG"'\'' ./service.sh
+    grep -q '\''"\$XRAY_KEYS/keys.txt"'\'' ./service.sh
+    grep -q '\''"\$XRAY_KEYS/clients.txt"'\'' ./service.sh
+    grep -q '\''"\$XRAY_KEYS/clients.json"'\'' ./service.sh
+    grep -q '\''backup_file "\$artifact"'\'' ./service.sh
     grep -q '\''backup_file "\$XRAY_BIN"'\'' ./service.sh
     echo "ok"
   '
@@ -702,27 +708,25 @@ EOF
 }
 
 @test "release policy gate accepts valid checksum matrix and sbom" {
-    run bash -c '
+    run bash -eo pipefail -c '
     tmpdir=$(mktemp -d)
-    trap "rm -rf \"$tmpdir\"" EXIT
-    archive="$tmpdir/xray-reality-v0.0.1.tar.gz"
-    checksum="$tmpdir/xray-reality-v0.0.1.sha256"
-    matrix="$tmpdir/matrix-result.json"
-    sbom="$tmpdir/xray-reality-v0.0.1.spdx.json"
-    printf "release-asset" > "$archive"
-    sha256sum "$archive" > "$checksum"
-    cat > "$matrix" <<EOF
-[{"name":"ubuntu-24.04","status":"success"}]
-EOF
-    cat > "$sbom" <<EOF
-{"spdxVersion":"SPDX-2.3","SPDXID":"SPDXRef-DOCUMENT","creationInfo":{"created":"2026-02-19T00:00:00Z"},"packages":[],"files":[]}
-EOF
-    bash ./scripts/release-policy-gate.sh \
+    script_path="$PWD/scripts/release-policy-gate.sh"
+    archive="xray-reality-v0.0.1.tar.gz"
+    checksum="xray-reality-v0.0.1.sha256"
+    matrix="matrix-result.json"
+    sbom="xray-reality-v0.0.1.spdx.json"
+    printf "release-asset" > "$tmpdir/$archive"
+    archive_sha=$(sha256sum "$tmpdir/$archive" | awk "{print \$1}")
+    printf "%s  %s\n" "$archive_sha" "$archive" > "$tmpdir/$checksum"
+    printf "%s\n" "[{\"name\":\"ubuntu-24.04\",\"status\":\"success\"}]" > "$tmpdir/$matrix"
+    printf "%s\n" "{\"spdxVersion\":\"SPDX-2.3\",\"SPDXID\":\"SPDXRef-DOCUMENT\",\"creationInfo\":{\"created\":\"2026-02-19T00:00:00Z\"},\"packages\":[],\"files\":[]}" > "$tmpdir/$sbom"
+    (cd "$tmpdir" && bash "$script_path" \
       --tag v0.0.1 \
       --archive "$archive" \
       --checksum "$checksum" \
       --matrix "$matrix" \
-      --sbom "$sbom"
+      --sbom "$sbom")
+    rm -rf "$tmpdir"
     echo "ok"
   '
     [ "$status" -eq 0 ]
@@ -730,30 +734,28 @@ EOF
 }
 
 @test "release policy gate rejects failed matrix entries" {
-    run bash -c '
+    run bash -eo pipefail -c '
     tmpdir=$(mktemp -d)
-    trap "rm -rf \"$tmpdir\"" EXIT
-    archive="$tmpdir/xray-reality-v0.0.1.tar.gz"
-    checksum="$tmpdir/xray-reality-v0.0.1.sha256"
-    matrix="$tmpdir/matrix-result.json"
-    sbom="$tmpdir/xray-reality-v0.0.1.spdx.json"
-    printf "release-asset" > "$archive"
-    sha256sum "$archive" > "$checksum"
-    cat > "$matrix" <<EOF
-[{"name":"ubuntu-24.04","status":"failure"}]
-EOF
-    cat > "$sbom" <<EOF
-{"spdxVersion":"SPDX-2.3","SPDXID":"SPDXRef-DOCUMENT","creationInfo":{"created":"2026-02-19T00:00:00Z"},"packages":[],"files":[]}
-EOF
-    if bash ./scripts/release-policy-gate.sh \
+    script_path="$PWD/scripts/release-policy-gate.sh"
+    archive="xray-reality-v0.0.1.tar.gz"
+    checksum="xray-reality-v0.0.1.sha256"
+    matrix="matrix-result.json"
+    sbom="xray-reality-v0.0.1.spdx.json"
+    printf "release-asset" > "$tmpdir/$archive"
+    archive_sha=$(sha256sum "$tmpdir/$archive" | awk "{print \$1}")
+    printf "%s  %s\n" "$archive_sha" "$archive" > "$tmpdir/$checksum"
+    printf "%s\n" "[{\"name\":\"ubuntu-24.04\",\"status\":\"failure\"}]" > "$tmpdir/$matrix"
+    printf "%s\n" "{\"spdxVersion\":\"SPDX-2.3\",\"SPDXID\":\"SPDXRef-DOCUMENT\",\"creationInfo\":{\"created\":\"2026-02-19T00:00:00Z\"},\"packages\":[],\"files\":[]}" > "$tmpdir/$sbom"
+    if (cd "$tmpdir" && bash "$script_path" \
       --tag v0.0.1 \
       --archive "$archive" \
       --checksum "$checksum" \
       --matrix "$matrix" \
-      --sbom "$sbom"; then
+      --sbom "$sbom"); then
       echo "unexpected-success"
       exit 1
     fi
+    rm -rf "$tmpdir"
     echo "ok"
   '
     [ "$status" -eq 0 ]
@@ -761,7 +763,7 @@ EOF
 }
 
 @test "apply_validated_config accepts successful xray test without marker string" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./config.sh
     tmp=$(mktemp)
@@ -783,7 +785,7 @@ EOF
 }
 
 @test "apply_validated_config rejects non-zero xray test even with marker text" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./config.sh
     tmp=$(mktemp)
@@ -807,7 +809,7 @@ EOF
 }
 
 @test "runtime flows use exit-code config check helper instead of marker grep" {
-    run bash -c '
+    run bash -eo pipefail -c '
     ! grep -q '\''xray_config_test 2>&1 | grep -q "Configuration OK"'\'' ./install.sh
     ! grep -q '\''xray_config_test 2>&1 | grep -q "Configuration OK"'\'' ./service.sh
     ! grep -q '\''xray_config_test 2>&1 | grep -q "Configuration OK"'\'' ./health.sh
@@ -820,7 +822,7 @@ EOF
 }
 
 @test "xray_config_test_file falls back to sudo when runuser fails" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./config.sh
     XRAY_USER="xray"
@@ -835,7 +837,7 @@ EOF
 }
 
 @test "xray_config_test_file falls back to su when runuser and sudo fail" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./config.sh
     XRAY_USER="xray"
@@ -850,7 +852,7 @@ EOF
 }
 
 @test "xray_config_test_file falls back to root execution when user switches fail" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./config.sh
     XRAY_USER="xray"
@@ -873,9 +875,10 @@ EOF
 }
 
 @test "install_xray trap restore does not use eval" {
-    run bash -c '
+    run bash -eo pipefail -c '
     ! grep -q '\''eval "\${_prev_return_trap}"'\'' ./install.sh
-    grep -q '\''trap -- "\$_prev_return_trap_cmd" RETURN'\'' ./install.sh
+    grep -q '\''trap cleanup_install_xray_tmp RETURN'\'' ./install.sh
+    grep -q '\''trap - RETURN'\'' ./install.sh
     echo "ok"
   '
     [ "$status" -eq 0 ]
@@ -883,7 +886,7 @@ EOF
 }
 
 @test "install_minisign supports MINISIGN_BIN override path" {
-    run bash -c '
+    run bash -eo pipefail -c '
     grep -q '\''local minisign_bin="\${MINISIGN_BIN:-/usr/local/bin/minisign}"'\'' ./install.sh
     grep -q '\''install -m 755 "\$bin_path" "\$minisign_bin"'\'' ./install.sh
     echo "ok"
@@ -893,7 +896,7 @@ EOF
 }
 
 @test "install_xray can use MINISIGN_BIN for signature verification" {
-    run bash -c '
+    run bash -eo pipefail -c '
     grep -q '\''local minisign_cmd="minisign"'\'' ./install.sh
     grep -q '\''if \[\[ -n "\${MINISIGN_BIN:-}" && -x "\${MINISIGN_BIN}" \]\]'\'' ./install.sh
     grep -q '\''if "\$minisign_cmd" -Vm "\$zip_file" -p "\$MINISIGN_KEY" -x "\$sig_file"'\'' ./install.sh
@@ -904,10 +907,10 @@ EOF
 }
 
 @test "install_xray suppresses noisy curl 404 lines for optional minisign lookup" {
-    run bash -c '
-    grep -q "sig_err_file=.*\\.sigerr" ./install.sh
-    grep -q "download_file_allowlist .*\\.zip\\.minisig.*2> \"\\$sig_err_file\"" ./install.sh
-    grep -q "minisign signature missing at \\${base} (404)" ./install.sh
+    run bash -eo pipefail -c '
+    grep -Fq '\''sig_err_file=$(mktemp "${tmp_workdir}/xray-${version}.XXXXXX.sigerr"'\'' ./install.sh
+    grep -Fq '\''download_file_allowlist "${base}/Xray-linux-${arch}.zip.minisig" "$sig_file" "Скачиваем minisign подпись..." 2> "$sig_err_file"'\'' ./install.sh
+    grep -Fq '\''debug_file "minisign signature missing at ${base} (404)"'\'' ./install.sh
     echo "ok"
   '
     [ "$status" -eq 0 ]
@@ -915,7 +918,7 @@ EOF
 }
 
 @test "detect_ips ignores invalid auto-detected ipv6" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./install.sh
     log() { :; }
@@ -936,7 +939,7 @@ EOF
 }
 
 @test "validate_clients_json_file accepts object with configs array" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./config.sh
     tmp=$(mktemp)
@@ -952,7 +955,7 @@ EOF
 }
 
 @test "validate_clients_json_file reinitializes invalid clients.json shape" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./config.sh
     atomic_write() {
@@ -977,7 +980,7 @@ EOF
 }
 
 @test "validate_clients_json_file normalizes legacy array format" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./config.sh
     atomic_write() {
@@ -1002,7 +1005,7 @@ EOF
 }
 
 @test "validate_clients_json_file normalizes legacy profiles format" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./config.sh
     atomic_write() {
@@ -1027,7 +1030,7 @@ EOF
 }
 
 @test "secure_clients_json_permissions enforces mode 640" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./config.sh
     tmp=$(mktemp)
@@ -1053,7 +1056,7 @@ EOF
 }
 
 @test "validate_clients_json_file keeps normalized file mode 640" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./config.sh
     atomic_write() {
@@ -1090,8 +1093,8 @@ EOF
 }
 
 @test "ufw delete operations are non-interactive" {
-    run bash -c '
-    grep -q "ufw --force delete allow" ./lib.sh
+    run bash -eo pipefail -c '
+    grep -q "ufw --force delete allow" ./modules/lib/firewall.sh
     grep -q "ufw --force delete allow" ./service.sh
     echo "ok"
   '
@@ -1100,11 +1103,11 @@ EOF
 }
 
 @test "add_clients_flow backs up artifacts before write" {
-    run bash -c '
-    grep -q '\''backup_file "\$keys_file"'\'' ./config.sh
-    grep -q '\''backup_file "\$client_file"'\'' ./config.sh
-    grep -q '\''backup_file "\$json_file"'\'' ./config.sh
-    grep -q '\''validate_clients_json_file "\$json_file"'\'' ./config.sh
+    run bash -eo pipefail -c '
+    grep -q '\''backup_file "\$keys_file"'\'' ./modules/config/add_clients.sh
+    grep -q '\''backup_file "\$json_file"'\'' ./modules/config/add_clients.sh
+    grep -q '\''validate_clients_json_file "\$json_file"'\'' ./modules/config/add_clients.sh
+    grep -q '\''render_clients_txt_from_json "\$json_file" "\$client_file"'\'' ./modules/config/add_clients.sh
     echo "ok"
   '
     [ "$status" -eq 0 ]
@@ -1112,11 +1115,10 @@ EOF
 }
 
 @test "firewall helper records v6 rules with correct family tags" {
-    run bash -c '
-    grep -q '\''record_firewall_rule_add "ufw" "\$port" "v6"'\'' ./lib.sh
-    grep -q '\''record_firewall_rule_add "firewalld" "\$port" "v6"'\'' ./lib.sh
-    grep -q '\''record_firewall_rule_add "ip6tables" "\$port" "v6"'\'' ./lib.sh
-    grep -q '\''open_firewall_ports'\'' ./config.sh
+    run bash -eo pipefail -c '
+    grep -q '\''record_firewall_rule_add "ufw" "\$port" "v6"'\'' ./modules/lib/firewall.sh
+    grep -q '\''record_firewall_rule_add "firewalld" "\$port" "v6"'\'' ./modules/lib/firewall.sh
+    grep -q '\''record_firewall_rule_add "ip6tables" "\$port" "v6"'\'' ./modules/lib/firewall.sh
     grep -q '\''open_firewall_ports'\'' ./service.sh
     echo "ok"
   '
@@ -1125,9 +1127,9 @@ EOF
 }
 
 @test "add_clients_flow validates SERVER_IP before link generation" {
-    run bash -c '
-    grep -q '\''is_valid_ipv4 "\$SERVER_IP"'\'' ./config.sh
-    grep -q '\''не удалось определить корректный ipv4 для add-clients/add-keys'\'' ./config.sh -i
+    run bash -eo pipefail -c '
+    grep -q '\''is_valid_ipv4 "\$SERVER_IP"'\'' ./modules/config/add_clients.sh
+    grep -qi '\''не удалось определить корректный ipv4 для add-clients/add-keys'\'' ./modules/config/add_clients.sh
     echo "ok"
   '
     [ "$status" -eq 0 ]
@@ -1135,7 +1137,7 @@ EOF
 }
 
 @test "client_artifacts_missing detects absent files" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./config.sh
     tmp=$(mktemp -d)
@@ -1154,7 +1156,7 @@ EOF
 }
 
 @test "client_artifacts_missing returns false when all files exist" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./config.sh
     tmp=$(mktemp -d)
@@ -1173,7 +1175,7 @@ EOF
 }
 
 @test "client_artifacts_inconsistent detects mismatched counts" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./config.sh
     tmp=$(mktemp -d)
@@ -1199,7 +1201,7 @@ EOF
 }
 
 @test "client_artifacts_inconsistent returns false for aligned artifacts" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./config.sh
     tmp=$(mktemp -d)
@@ -1228,8 +1230,8 @@ EOF
 }
 
 @test "add_clients_flow checks missing and inconsistent artifacts before finalize" {
-    run bash -c '
-    grep -q '\''client_artifacts_missing || client_artifacts_inconsistent "\$new_total"'\'' ./config.sh
+    run bash -eo pipefail -c '
+    grep -q '\''client_artifacts_missing || client_artifacts_inconsistent "\$new_total"'\'' ./modules/config/add_clients.sh
     echo "ok"
   '
     [ "$status" -eq 0 ]
@@ -1237,7 +1239,7 @@ EOF
 }
 
 @test "save_client_configs renders clients.txt from clients.json source" {
-    run bash -c '
+    run bash -eo pipefail -c '
     grep -q '\''render_clients_txt_from_json "\$json_file" "\$client_file"'\'' ./config.sh
     echo "ok"
   '
@@ -1246,7 +1248,7 @@ EOF
 }
 
 @test "save_client_configs keeps json entries when ipv6 is disabled" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./config.sh
 
@@ -1298,10 +1300,10 @@ EOF
 }
 
 @test "add_clients_flow re-renders clients.txt from clients.json after append" {
-    run bash -c '
-    grep -q '\''jq --argjson new "\$new_json_configs"'\'' ./config.sh
-    grep -q '\''\.configs += \$new'\'' ./config.sh
-    grep -q '\''render_clients_txt_from_json "\$json_file" "\$client_file"'\'' ./config.sh
+    run bash -eo pipefail -c '
+    grep -q '\''jq --argjson new "\$new_json_configs"'\'' ./modules/config/add_clients.sh
+    grep -q '\''\.configs += \$new'\'' ./modules/config/add_clients.sh
+    grep -q '\''render_clients_txt_from_json "\$json_file" "\$client_file"'\'' ./modules/config/add_clients.sh
     echo "ok"
   '
     [ "$status" -eq 0 ]
@@ -1309,7 +1311,7 @@ EOF
 }
 
 @test "rebuild_client_artifacts_from_config rebuilds via stubs" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./config.sh
     load_existing_ports_from_config() { PORTS=(444); PORTS_V6=(); HAS_IPV6=false; }
@@ -1340,7 +1342,7 @@ EOF
 }
 
 @test "load_existing_* supports explicit ipv4 listen and filters non-reality inbounds" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     tmp=$(mktemp)
     trap "rm -f \"$tmp\"" EXIT
@@ -1405,7 +1407,7 @@ EOF
 }
 
 @test "save_environment escapes command substitution and keeps 0600 mode" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./config.sh
     log() { :; }
@@ -1447,7 +1449,7 @@ EOF
 }
 
 @test "save_environment writes legacy aliases for env compatibility" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./config.sh
     log() { :; }
@@ -1498,7 +1500,7 @@ EOF
 }
 
 @test "load_config_file keeps legacy key compatibility" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
 
     cfg=$(mktemp)
@@ -1537,7 +1539,7 @@ EOF
 }
 
 @test "load_config_file strips matching single quotes" {
-    run bash -c "
+    run bash -eo pipefail -c "
     source ./lib.sh
 
     cfg=\$(mktemp)
@@ -1560,7 +1562,7 @@ EOF
 }
 
 @test "build_vless_query_params URL-encodes special characters" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./config.sh
     params=$(build_vless_query_params "exa&mple.com" "fire fox" "abc+123" "s#id" "grpc" "svc/one?x=1")
@@ -1577,7 +1579,7 @@ EOF
 }
 
 @test "generate_uuid falls back when uuidgen output is invalid" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./modules/config/domain_planner.sh
     uuidgen() { echo "broken"; return 0; }
@@ -1592,7 +1594,7 @@ EOF
 }
 
 @test "service unit helpers reject unsafe systemd values" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./service.sh
     sanitize_systemd_value cleaned $'\''xray\r\n\t'\''
@@ -1610,7 +1612,7 @@ EOF
 }
 
 @test "create_systemd_service handles missing systemd dir in non-systemd mode" {
-    run bash -c '
+    run bash -eo pipefail -c '
     grep -q '\''local systemd_dir="/etc/systemd/system"'\'' ./service.sh
     grep -q '\''install -d -m 755 "\$systemd_dir"'\'' ./service.sh
     grep -q '\''создание unit-файла пропущено'\'' ./service.sh
@@ -1621,10 +1623,13 @@ EOF
 }
 
 @test "create_systemd_service cleans conflicting xray drop-ins" {
-    run bash -c '
+    run bash -eo pipefail -c '
     grep -q '\''cleanup_conflicting_xray_service_dropins'\'' ./service.sh
     grep -q '\''/etc/systemd/system/xray.service.d'\'' ./service.sh
-    grep -Eq '\''ExecStart\|ExecStartPre\|ExecStartPost\|User\|Group\|WorkingDirectory\|EnvironmentFile\|DynamicUser'\'' ./service.sh
+    grep -q '\''runtime_override_regex='\'' ./service.sh
+    grep -q '\''Environment(File)?'\'' ./service.sh
+    grep -q '\''safe-mode'\'' ./service.sh
+    grep -Fq -- '\''-type f -o -type l'\'' ./service.sh
     grep -q '\''Отключён конфликтный systemd drop-in'\'' ./service.sh
     echo "ok"
   '
@@ -1633,7 +1638,7 @@ EOF
 }
 
 @test "service systemd flows degrade on nonfatal systemctl errors" {
-    run bash -c '
+    run bash -eo pipefail -c '
     grep -q '\''is_nonfatal_systemctl_error()'\'' ./service.sh
     grep -q '\''local daemon_reload_rc=0'\'' ./service.sh
     grep -q '\''local enable_rc=0'\'' ./service.sh
@@ -1651,7 +1656,7 @@ EOF
 }
 
 @test "systemd_running disables service management in isolated root contexts" {
-    run bash -c '
+    run bash -eo pipefail -c '
     grep -q '\''running_in_isolated_root_context'\'' ./lib.sh
     grep -q '\''/proc/1/root/'\'' ./lib.sh
     echo "ok"
@@ -1661,7 +1666,7 @@ EOF
 }
 
 @test "atomic_write allows canonical systemd unit directories" {
-    run bash -c '
+    run bash -eo pipefail -c '
     grep -q '\''"/usr/lib/systemd"'\'' ./lib.sh
     grep -q '\''"/lib/systemd"'\'' ./lib.sh
     echo "ok"
@@ -1671,7 +1676,7 @@ EOF
 }
 
 @test "status_flow verbose degrades gracefully when free/df are unavailable" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./service.sh
     grep -q '\''mem_info=$(free -m .*|| true)'\'' ./service.sh
@@ -1685,7 +1690,7 @@ EOF
 }
 
 @test "release workflow avoids curl pipe sh and unpinned release action" {
-    run bash -c '
+    run bash -eo pipefail -c '
     grep -q '\''gh release create'\'' ./.github/workflows/release.yml
     ! grep -Eq '\''curl[[:space:]]+-sSfL[[:space:]]+https://raw.githubusercontent.com/anchore/syft/main/install.sh[[:space:]]*\\|[[:space:]]*sudo[[:space:]]+sh'\'' ./.github/workflows/release.yml
     ! grep -q '\''softprops/action-gh-release'\'' ./.github/workflows/release.yml
@@ -1696,7 +1701,7 @@ EOF
 }
 
 @test "release script pushes current branch instead of hardcoded main" {
-    run bash -c '
+    run bash -eo pipefail -c '
     grep -q '\''git push origin "\$push_branch"'\'' ./scripts/release.sh
     ! grep -q '\''git push origin main'\'' ./scripts/release.sh
     echo "ok"
@@ -1706,7 +1711,7 @@ EOF
 }
 
 @test "release script uses portable replacements instead of sed -i" {
-    run bash -c '
+    run bash -eo pipefail -c '
     grep -q '\''replace_with_sed()'\'' ./scripts/release.sh
     ! grep -q '\''sed -i'\'' ./scripts/release.sh
     echo "ok"
@@ -1715,20 +1720,22 @@ EOF
     [ "$output" = "ok" ]
 }
 
-@test "os matrix workflow tracks supported fedora image" {
-    run bash -c '
-    grep -q '\''name: fedora-41'\'' ./.github/workflows/os-matrix-smoke.yml
-    grep -q '\''image: fedora:41'\'' ./.github/workflows/os-matrix-smoke.yml
+@test "os matrix workflow tracks supported ubuntu image" {
+    run bash -eo pipefail -c '
+    grep -q '\''name: ubuntu-24.04'\'' ./.github/workflows/os-matrix-smoke.yml
+    grep -q '\''image: ubuntu:24.04'\'' ./.github/workflows/os-matrix-smoke.yml
     echo "ok"
   '
     [ "$status" -eq 0 ]
     [ "$output" = "ok" ]
 }
 
-@test "os matrix workflow includes almalinux image" {
-    run bash -c '
-    grep -q '\''name: almalinux-9'\'' ./.github/workflows/os-matrix-smoke.yml
-    grep -q '\''image: almalinux:9'\'' ./.github/workflows/os-matrix-smoke.yml
+@test "os matrix workflow excludes legacy fedora/almalinux entries" {
+    run bash -eo pipefail -c '
+    ! grep -q '\''name: fedora-41'\'' ./.github/workflows/os-matrix-smoke.yml
+    ! grep -q '\''image: fedora:41'\'' ./.github/workflows/os-matrix-smoke.yml
+    ! grep -q '\''name: almalinux-9'\'' ./.github/workflows/os-matrix-smoke.yml
+    ! grep -q '\''image: almalinux:9'\'' ./.github/workflows/os-matrix-smoke.yml
     echo "ok"
   '
     [ "$status" -eq 0 ]
@@ -1736,7 +1743,7 @@ EOF
 }
 
 @test "ci workflow includes stability and audit gates" {
-    run bash -c '
+    run bash -eo pipefail -c '
     grep -q '\''name: stability smoke (double bats)'\'' ./.github/workflows/ci.yml
     grep -q '\''bash scripts/check-workflow-pinning.sh'\'' ./.github/workflows/ci.yml
     grep -q '\''bash scripts/check-security-baseline.sh'\'' ./.github/workflows/ci.yml
@@ -1748,7 +1755,7 @@ EOF
 }
 
 @test "audit scripts exist and are wired into lint pipeline" {
-    run bash -c '
+    run bash -eo pipefail -c '
     test -f ./scripts/check-workflow-pinning.sh
     test -f ./scripts/check-security-baseline.sh
     test -f ./scripts/check-docs-commands.sh
@@ -1765,8 +1772,8 @@ EOF
 }
 
 @test "dockerfile runs non-root and defines healthcheck" {
-    run bash -c '
-    grep -q '\''^FROM debian:bookworm-20260112-slim$'\'' ./Dockerfile
+    run bash -eo pipefail -c '
+    grep -Eq '\''^FROM debian:bookworm-[0-9]+-slim(@sha256:[a-f0-9]{64})?$'\'' ./Dockerfile
     grep -q '\''^HEALTHCHECK '\'' ./Dockerfile
     grep -q '\''^USER xray$'\'' ./Dockerfile
     grep -q '\''logrotate'\'' ./Dockerfile
@@ -1778,7 +1785,7 @@ EOF
 }
 
 @test "uninstall_flow exits early when managed artifacts are already absent" {
-    run bash -c '
+    run bash -eo pipefail -c '
     grep -q '\''if ! uninstall_has_managed_artifacts; then'\'' ./install.sh
     grep -q '\''управляемые артефакты не обнаружены'\'' ./install.sh
     echo "ok"

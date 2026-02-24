@@ -66,16 +66,25 @@ cleanup_conflicting_xray_service_dropins() {
     local -a dropin_files=()
     while IFS= read -r -d '' dropin_file; do
         dropin_files+=("$dropin_file")
-    done < <(find "$dropin_dir" -mindepth 1 -maxdepth 1 -type f -name '*.conf' -print0 2> /dev/null | sort -z)
+    done < <(find "$dropin_dir" -mindepth 1 -maxdepth 1 \( -type f -o -type l \) -name '*.conf' -print0 2> /dev/null | sort -z)
 
     if ((${#dropin_files[@]} == 0)); then
         return 0
     fi
 
     local cleaned_any=false
+    local runtime_override_regex='^[[:space:]]*(ExecStart|ExecStartPre|ExecStartPost|ExecReload|User|Group|WorkingDirectory|Environment(File)?|DynamicUser|SupplementaryGroups|RootDirectory|RootImage|PermissionsStartOnly|UMask)[[:space:]]*='
     local dropin_file
     for dropin_file in "${dropin_files[@]}"; do
-        if ! grep -Eq '^[[:space:]]*(ExecStart|ExecStartPre|ExecStartPost|User|Group|WorkingDirectory|EnvironmentFile|DynamicUser)[[:space:]]*=' "$dropin_file"; then
+        local conflicting=false
+        if [[ ! -r "$dropin_file" ]]; then
+            conflicting=true
+            log WARN "systemd drop-in недоступен для чтения; отключаем в safe-mode: ${dropin_file}"
+        elif grep -Eiq "$runtime_override_regex" "$dropin_file"; then
+            conflicting=true
+        fi
+
+        if [[ "$conflicting" != true ]]; then
             continue
         fi
         backup_file "$dropin_file"

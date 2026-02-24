@@ -3,180 +3,180 @@
 # ==================== is_valid_domain ====================
 
 @test "is_valid_domain accepts valid domain" {
-    run bash -c 'source ./lib.sh; is_valid_domain "example.com"'
+    run bash -eo pipefail -c 'source ./lib.sh; is_valid_domain "example.com"'
     [ "$status" -eq 0 ]
 }
 
 @test "is_valid_domain accepts subdomain" {
-    run bash -c 'source ./lib.sh; is_valid_domain "sub.example.com"'
+    run bash -eo pipefail -c 'source ./lib.sh; is_valid_domain "sub.example.com"'
     [ "$status" -eq 0 ]
 }
 
 @test "is_valid_domain accepts deep subdomain" {
-    run bash -c 'source ./lib.sh; is_valid_domain "a.b.c.d.example.com"'
+    run bash -eo pipefail -c 'source ./lib.sh; is_valid_domain "a.b.c.d.example.com"'
     [ "$status" -eq 0 ]
 }
 
 @test "is_valid_domain accepts hyphenated domain" {
-    run bash -c 'source ./lib.sh; is_valid_domain "my-site.example.com"'
+    run bash -eo pipefail -c 'source ./lib.sh; is_valid_domain "my-site.example.com"'
     [ "$status" -eq 0 ]
 }
 
 @test "is_valid_domain rejects empty string" {
-    run bash -c 'source ./lib.sh; is_valid_domain ""'
+    run bash -eo pipefail -c 'source ./lib.sh; is_valid_domain ""'
     [ "$status" -eq 1 ]
 }
 
 @test "is_valid_domain rejects no TLD" {
-    run bash -c 'source ./lib.sh; is_valid_domain "localhost"'
+    run bash -eo pipefail -c 'source ./lib.sh; is_valid_domain "localhost"'
     [ "$status" -eq 1 ]
 }
 
 @test "is_valid_domain rejects consecutive dots" {
-    run bash -c 'source ./lib.sh; is_valid_domain "bad..domain.com"'
+    run bash -eo pipefail -c 'source ./lib.sh; is_valid_domain "bad..domain.com"'
     [ "$status" -eq 1 ]
 }
 
 @test "is_valid_domain rejects leading dot" {
-    run bash -c 'source ./lib.sh; is_valid_domain ".example.com"'
+    run bash -eo pipefail -c 'source ./lib.sh; is_valid_domain ".example.com"'
     [ "$status" -eq 1 ]
 }
 
 @test "is_valid_domain rejects trailing dot" {
-    run bash -c 'source ./lib.sh; is_valid_domain "example.com."'
+    run bash -eo pipefail -c 'source ./lib.sh; is_valid_domain "example.com."'
     [ "$status" -eq 1 ]
 }
 
 @test "is_valid_domain rejects leading hyphen" {
-    run bash -c 'source ./lib.sh; is_valid_domain "-example.com"'
+    run bash -eo pipefail -c 'source ./lib.sh; is_valid_domain "-example.com"'
     [ "$status" -eq 1 ]
 }
 
 @test "is_valid_domain rejects special characters" {
-    run bash -c 'source ./lib.sh; is_valid_domain "exam;ple.com"'
+    run bash -eo pipefail -c 'source ./lib.sh; is_valid_domain "exam;ple.com"'
     [ "$status" -eq 1 ]
 }
 
 @test "is_valid_domain rejects command injection" {
-    run bash -c 'source ./lib.sh; is_valid_domain "example.com;rm -rf /"'
+    run bash -eo pipefail -c 'source ./lib.sh; is_valid_domain "example.com;rm -rf /"'
     [ "$status" -eq 1 ]
 }
 
 @test "is_valid_domain rejects spaces" {
-    run bash -c 'source ./lib.sh; is_valid_domain "example .com"'
+    run bash -eo pipefail -c 'source ./lib.sh; is_valid_domain "example .com"'
     [ "$status" -eq 1 ]
 }
 
 @test "is_valid_domain rejects over 253 chars" {
-    run bash -c 'source ./lib.sh; is_valid_domain "$(printf "a%.0s" {1..250}).com"'
+    run bash -eo pipefail -c 'source ./lib.sh; is_valid_domain "$(printf "a%.0s" {1..250}).com"'
     [ "$status" -eq 1 ]
 }
 
 # ==================== is_valid_port ====================
 
 @test "is_valid_port accepts 443" {
-    run bash -c 'source ./lib.sh; is_valid_port 443'
+    run bash -eo pipefail -c 'source ./lib.sh; is_valid_port 443'
     [ "$status" -eq 0 ]
 }
 
 @test "is_valid_port accepts 1" {
-    run bash -c 'source ./lib.sh; is_valid_port 1'
+    run bash -eo pipefail -c 'source ./lib.sh; is_valid_port 1'
     [ "$status" -eq 0 ]
 }
 
 @test "is_valid_port accepts 65535" {
-    run bash -c 'source ./lib.sh; is_valid_port 65535'
+    run bash -eo pipefail -c 'source ./lib.sh; is_valid_port 65535'
     [ "$status" -eq 0 ]
 }
 
 @test "is_valid_port rejects 0" {
-    run bash -c 'source ./lib.sh; is_valid_port 0'
+    run bash -eo pipefail -c 'source ./lib.sh; is_valid_port 0'
     [ "$status" -eq 1 ]
 }
 
 @test "is_valid_port rejects 65536" {
-    run bash -c 'source ./lib.sh; is_valid_port 65536'
+    run bash -eo pipefail -c 'source ./lib.sh; is_valid_port 65536'
     [ "$status" -eq 1 ]
 }
 
 @test "is_valid_port rejects non-numeric" {
-    run bash -c 'source ./lib.sh; is_valid_port "abc"'
+    run bash -eo pipefail -c 'source ./lib.sh; is_valid_port "abc"'
     [ "$status" -eq 1 ]
 }
 
 @test "is_valid_port rejects negative" {
-    run bash -c 'source ./lib.sh; is_valid_port "-1"'
+    run bash -eo pipefail -c 'source ./lib.sh; is_valid_port "-1"'
     [ "$status" -eq 1 ]
 }
 
 # ==================== is_valid_ipv4 ====================
 
 @test "is_valid_ipv4 accepts valid IP" {
-    run bash -c 'source ./lib.sh; is_valid_ipv4 "192.168.1.1"'
+    run bash -eo pipefail -c 'source ./lib.sh; is_valid_ipv4 "192.168.1.1"'
     [ "$status" -eq 0 ]
 }
 
 @test "is_valid_ipv4 accepts 0.0.0.0" {
-    run bash -c 'source ./lib.sh; is_valid_ipv4 "0.0.0.0"'
+    run bash -eo pipefail -c 'source ./lib.sh; is_valid_ipv4 "0.0.0.0"'
     [ "$status" -eq 0 ]
 }
 
 @test "is_valid_ipv4 accepts 255.255.255.255" {
-    run bash -c 'source ./lib.sh; is_valid_ipv4 "255.255.255.255"'
+    run bash -eo pipefail -c 'source ./lib.sh; is_valid_ipv4 "255.255.255.255"'
     [ "$status" -eq 0 ]
 }
 
 @test "is_valid_ipv4 rejects too few octets" {
-    run bash -c 'source ./lib.sh; is_valid_ipv4 "192.168.1"'
+    run bash -eo pipefail -c 'source ./lib.sh; is_valid_ipv4 "192.168.1"'
     [ "$status" -eq 1 ]
 }
 
 @test "is_valid_ipv4 rejects too many octets" {
-    run bash -c 'source ./lib.sh; is_valid_ipv4 "192.168.1.1.1"'
+    run bash -eo pipefail -c 'source ./lib.sh; is_valid_ipv4 "192.168.1.1.1"'
     [ "$status" -eq 1 ]
 }
 
 @test "is_valid_ipv4 rejects octet over 255" {
-    run bash -c 'source ./lib.sh; is_valid_ipv4 "192.168.1.256"'
+    run bash -eo pipefail -c 'source ./lib.sh; is_valid_ipv4 "192.168.1.256"'
     [ "$status" -eq 1 ]
 }
 
 @test "is_valid_ipv4 rejects non-numeric octet" {
-    run bash -c 'source ./lib.sh; is_valid_ipv4 "192.168.a.1"'
+    run bash -eo pipefail -c 'source ./lib.sh; is_valid_ipv4 "192.168.a.1"'
     [ "$status" -eq 1 ]
 }
 
 @test "is_valid_ipv4 rejects leading zeros (octal bypass)" {
-    run bash -c 'source ./lib.sh; is_valid_ipv4 "010.0.0.1"'
+    run bash -eo pipefail -c 'source ./lib.sh; is_valid_ipv4 "010.0.0.1"'
     [ "$status" -eq 1 ]
 }
 
 @test "is_valid_ipv4 rejects 0377.0.0.1 (octal 255)" {
-    run bash -c 'source ./lib.sh; is_valid_ipv4 "0377.0.0.1"'
+    run bash -eo pipefail -c 'source ./lib.sh; is_valid_ipv4 "0377.0.0.1"'
     [ "$status" -eq 1 ]
 }
 
 @test "is_valid_ipv4 accepts single zero octets" {
-    run bash -c 'source ./lib.sh; is_valid_ipv4 "10.0.0.1"'
+    run bash -eo pipefail -c 'source ./lib.sh; is_valid_ipv4 "10.0.0.1"'
     [ "$status" -eq 0 ]
 }
 
 # ==================== is_valid_domain (label length) ====================
 
 @test "is_valid_domain rejects label over 63 chars" {
-    run bash -c 'source ./lib.sh; is_valid_domain "$(printf "a%.0s" {1..64}).com"'
+    run bash -eo pipefail -c 'source ./lib.sh; is_valid_domain "$(printf "a%.0s" {1..64}).com"'
     [ "$status" -eq 1 ]
 }
 
 @test "is_valid_domain accepts label at exactly 63 chars" {
-    run bash -c 'source ./lib.sh; is_valid_domain "$(printf "a%.0s" {1..63}).com"'
+    run bash -eo pipefail -c 'source ./lib.sh; is_valid_domain "$(printf "a%.0s" {1..63}).com"'
     [ "$status" -eq 0 ]
 }
 
 # ==================== load_map_file key validation ====================
 
 @test "load_map_file rejects key with shell metacharacters" {
-    run bash -c '
+    run bash -eo pipefail -c '
         source ./lib.sh
         declare -A testmap=()
         tmpfile=$(mktemp)
@@ -192,7 +192,7 @@
 }
 
 @test "load_map_file accepts valid domain-like keys" {
-    run bash -c '
+    run bash -eo pipefail -c '
         source ./lib.sh
         declare -A testmap=()
         tmpfile=$(mktemp)
@@ -207,7 +207,7 @@
 }
 
 @test "load_map_file fails on unsafe value characters instead of silent sanitization" {
-    run bash -c '
+    run bash -eo pipefail -c '
         source ./lib.sh
         declare -A testmap=()
         tmpfile=$(mktemp)
@@ -228,53 +228,53 @@
 # ==================== is_valid_ipv6 ====================
 
 @test "is_valid_ipv6 accepts full address" {
-    run bash -c 'source ./lib.sh; is_valid_ipv6 "2001:0db8:85a3:0000:0000:8a2e:0370:7334"'
+    run bash -eo pipefail -c 'source ./lib.sh; is_valid_ipv6 "2001:0db8:85a3:0000:0000:8a2e:0370:7334"'
     [ "$status" -eq 0 ]
 }
 
 @test "is_valid_ipv6 accepts compressed loopback" {
-    run bash -c 'source ./lib.sh; is_valid_ipv6 "::1"'
+    run bash -eo pipefail -c 'source ./lib.sh; is_valid_ipv6 "::1"'
     [ "$status" -eq 0 ]
 }
 
 @test "is_valid_ipv6 accepts trailing compression" {
-    run bash -c 'source ./lib.sh; is_valid_ipv6 "fe80::"'
+    run bash -eo pipefail -c 'source ./lib.sh; is_valid_ipv6 "fe80::"'
     [ "$status" -eq 0 ]
 }
 
 @test "is_valid_ipv6 rejects plain text" {
-    run bash -c 'source ./lib.sh; is_valid_ipv6 "not-an-ip"'
+    run bash -eo pipefail -c 'source ./lib.sh; is_valid_ipv6 "not-an-ip"'
     [ "$status" -eq 1 ]
 }
 
 @test "is_valid_ipv6 rejects ipv4 address" {
-    run bash -c 'source ./lib.sh; is_valid_ipv6 "192.168.1.1"'
+    run bash -eo pipefail -c 'source ./lib.sh; is_valid_ipv6 "192.168.1.1"'
     [ "$status" -eq 1 ]
 }
 
 @test "is_valid_ipv6 rejects triple-colon forms" {
-    run bash -c 'source ./lib.sh; is_valid_ipv6 "2001:::1"'
+    run bash -eo pipefail -c 'source ./lib.sh; is_valid_ipv6 "2001:::1"'
     [ "$status" -eq 1 ]
 }
 
 @test "is_valid_ipv6 rejects leading single-colon form" {
-    run bash -c 'source ./lib.sh; is_valid_ipv6 ":1:2:3:4:5:6:7"'
+    run bash -eo pipefail -c 'source ./lib.sh; is_valid_ipv6 ":1:2:3:4:5:6:7"'
     [ "$status" -eq 1 ]
 }
 
 @test "is_valid_ipv6 rejects trailing single-colon form" {
-    run bash -c 'source ./lib.sh; is_valid_ipv6 "1:2:3:4:5:6:7:"'
+    run bash -eo pipefail -c 'source ./lib.sh; is_valid_ipv6 "1:2:3:4:5:6:7:"'
     [ "$status" -eq 1 ]
 }
 
 # ==================== is_valid_grpc_service_name ====================
 
 @test "is_valid_grpc_service_name accepts dotted service name" {
-    run bash -c 'source ./lib.sh; is_valid_grpc_service_name "com.vk.api.v1.GatewayService"'
+    run bash -eo pipefail -c 'source ./lib.sh; is_valid_grpc_service_name "com.vk.api.v1.GatewayService"'
     [ "$status" -eq 0 ]
 }
 
 @test "is_valid_grpc_service_name rejects invalid segment start" {
-    run bash -c 'source ./lib.sh; is_valid_grpc_service_name "com.2vk.api.v1.GatewayService"'
+    run bash -eo pipefail -c 'source ./lib.sh; is_valid_grpc_service_name "com.2vk.api.v1.GatewayService"'
     [ "$status" -eq 1 ]
 }

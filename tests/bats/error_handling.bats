@@ -173,7 +173,7 @@
     tmpdir="$(mktemp -d)"
     local target="${tmpdir}/sub/dir/test.txt"
 
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     atomic_write_test() {
       local target="$1"
@@ -197,7 +197,7 @@
 }
 
 @test "atomic_write rejects /tmp paths" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     echo "test" | atomic_write "/tmp/should-fail.txt" 0644
   '
@@ -205,7 +205,7 @@
 }
 
 @test "atomic_write rejects path traversal" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     echo "test" | atomic_write "/var/log/../etc/passwd" 0644
   '

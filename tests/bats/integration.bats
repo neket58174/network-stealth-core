@@ -1,39 +1,39 @@
 #!/usr/bin/env bats
 
 @test "help command works" {
-    run bash -c 'bash ./xray-reality.sh --help'
+    run bash -eo pipefail -c 'bash ./xray-reality.sh --help'
     [ "$status" -eq 0 ]
 }
 
 @test "dry-run install exits successfully" {
-    run bash -c 'bash ./xray-reality.sh --dry-run install'
+    run bash -eo pipefail -c 'bash ./xray-reality.sh --dry-run install'
     [ "$status" -eq 0 ]
 }
 
 @test "help shows add-clients command" {
-    run bash -c 'bash ./xray-reality.sh --help'
+    run bash -eo pipefail -c 'bash ./xray-reality.sh --help'
     [ "$status" -eq 0 ]
     [[ "$output" == *"add-clients"* ]]
 }
 
 @test "help shows add-keys command" {
-    run bash -c 'bash ./xray-reality.sh --help'
+    run bash -eo pipefail -c 'bash ./xray-reality.sh --help'
     [ "$status" -eq 0 ]
     [[ "$output" == *"add-keys"* ]]
 }
 
 @test "dry-run add-clients exits successfully" {
-    run bash -c 'bash ./xray-reality.sh --dry-run add-clients'
+    run bash -eo pipefail -c 'bash ./xray-reality.sh --dry-run add-clients'
     [ "$status" -eq 0 ]
 }
 
 @test "dry-run add-keys exits successfully" {
-    run bash -c 'bash ./xray-reality.sh --dry-run add-keys'
+    run bash -eo pipefail -c 'bash ./xray-reality.sh --dry-run add-keys'
     [ "$status" -eq 0 ]
 }
 
 @test "add-clients is parsed as valid action" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     parse_args add-clients 3
     echo "$ACTION:$ADD_CLIENTS_COUNT"
@@ -43,7 +43,7 @@
 }
 
 @test "add-clients without count defaults to empty" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     parse_args add-clients
     echo "$ACTION:${ADD_CLIENTS_COUNT:-empty}"
@@ -53,7 +53,7 @@
 }
 
 @test "add-keys is parsed as valid action" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     parse_args add-keys 2
     echo "$ACTION:$ADD_CLIENTS_COUNT"
@@ -63,12 +63,12 @@
 }
 
 @test "dry-run uninstall exits successfully" {
-    run bash -c 'bash ./xray-reality.sh --dry-run uninstall'
+    run bash -eo pipefail -c 'bash ./xray-reality.sh --dry-run uninstall'
     [ "$status" -eq 0 ]
 }
 
 @test "uninstall is parsed as valid action" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     parse_args uninstall
     echo "$ACTION"
@@ -78,7 +78,7 @@
 }
 
 @test "repair is parsed as valid action" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     parse_args repair
     echo "$ACTION"
@@ -88,13 +88,13 @@
 }
 
 @test "help shows full removal description for uninstall" {
-    run bash -c 'bash ./xray-reality.sh --help'
+    run bash -eo pipefail -c 'bash ./xray-reality.sh --help'
     [ "$status" -eq 0 ]
     [[ "$output" == *"Full removal"* ]]
 }
 
 @test "wrapper rejects unsafe bootstrap repo url" {
-    run bash -c '
+    run bash -eo pipefail -c '
     set -euo pipefail
     tmp="$(mktemp -d)"
     cp ./xray-reality.sh "$tmp/xray-reality.sh"
@@ -106,7 +106,7 @@
 }
 
 @test "wrapper strict pin mode fails without commit pin" {
-    run bash -c '
+    run bash -eo pipefail -c '
     set -euo pipefail
     tmp="$(mktemp -d)"
     cp ./xray-reality.sh "$tmp/xray-reality.sh"
@@ -118,7 +118,7 @@
 }
 
 @test "wrapper falls back to ref clone when ls-remote fails in non-strict mode" {
-    run bash -c '
+    run bash -eo pipefail -c '
     set -euo pipefail
     tmp="$(mktemp -d)"
     cp ./xray-reality.sh "$tmp/xray-reality.sh"
@@ -182,7 +182,7 @@ EOF
 }
 
 @test "wrapper defaults to main branch when no ref is provided" {
-    run bash -c '
+    run bash -eo pipefail -c '
     set -euo pipefail
     tmp="$(mktemp -d)"
     cp ./xray-reality.sh "$tmp/xray-reality.sh"
@@ -241,7 +241,7 @@ EOF
 }
 
 @test "wrapper can default to latest release tag when XRAY_BOOTSTRAP_DEFAULT_REF=release" {
-    run bash -c '
+    run bash -eo pipefail -c '
     set -euo pipefail
     tmp="$(mktemp -d)"
     cp ./xray-reality.sh "$tmp/xray-reality.sh"
@@ -311,7 +311,7 @@ EOF
 }
 
 @test "wrapper resolves annotated tag to peeled commit for pin verification" {
-    run bash -c '
+    run bash -eo pipefail -c '
     set -euo pipefail
     tmp="$(mktemp -d)"
     cp ./xray-reality.sh "$tmp/xray-reality.sh"
@@ -409,7 +409,7 @@ EOF
 }
 
 @test "parse_args accepts --server-ip and --server-ip6 with equals syntax" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     parse_args install --server-ip=1.1.1.1 --server-ip6=2001:db8::1 --num-configs=1
     echo "${ACTION}|${SERVER_IP}|${SERVER_IP6}|${XRAY_NUM_CONFIGS}"
@@ -419,7 +419,7 @@ EOF
 }
 
 @test "parse_args accepts --progress-mode with equals syntax" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     parse_args install --progress-mode=plain --num-configs=1
     echo "${ACTION}|${PROGRESS_MODE}|${XRAY_NUM_CONFIGS}"
@@ -429,7 +429,7 @@ EOF
 }
 
 @test "wrapper does not pass --branch when XRAY_REPO_REF is commit hash" {
-    run bash -c '
+    run bash -eo pipefail -c '
     set -euo pipefail
     tmp="$(mktemp -d)"
     cp ./xray-reality.sh "$tmp/xray-reality.sh"
@@ -508,7 +508,7 @@ EOF
 }
 
 @test "uninstall without tty requires explicit --yes confirmation" {
-    run bash -c '
+    run bash -eo pipefail -c '
     set -euo pipefail
     source ./lib.sh
     source ./service.sh

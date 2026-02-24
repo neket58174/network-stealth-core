@@ -36,7 +36,7 @@ load 'helpers/mocks'
 }
 
 @test "curl_fetch_text_allowlist rejects host outside allowlist" {
-    run bash -c '
+    run bash -eo pipefail -c '
     set -euo pipefail
     source ./lib.sh
     DOWNLOAD_HOST_ALLOWLIST="github.com,api.github.com"
@@ -128,7 +128,7 @@ load 'helpers/mocks'
 }
 
 @test "download_file_allowlist rejects extra unexpected arguments" {
-    run bash -c '
+    run bash -eo pipefail -c '
     set -euo pipefail
     source ./lib.sh
     out_file="$(mktemp)"
@@ -139,7 +139,7 @@ load 'helpers/mocks'
 }
 
 @test "download_file_allowlist rejects host outside allowlist" {
-    run bash -c '
+    run bash -eo pipefail -c '
     set -euo pipefail
     source ./lib.sh
     DOWNLOAD_HOST_ALLOWLIST="github.com,api.github.com"
@@ -151,7 +151,7 @@ load 'helpers/mocks'
 }
 
 @test "download_file_allowlist uses randomized temp files" {
-    run bash -c '
+    run bash -eo pipefail -c '
     grep -Fq '\''mktemp -d "${TMPDIR:-/tmp}/xray-dl.XXXXXX"'\'' ./lib.sh
     ! grep -Fq '\''tmp_file="${out_file}.part.$$"'\'' ./lib.sh
     echo "ok"
@@ -162,8 +162,8 @@ load 'helpers/mocks'
 }
 
 @test "download_file_allowlist cleans temp files on interrupts" {
-    run bash -c '
-    grep -q '\''trap '\''"'"'"'"'"'rm -f "\${tmp_file:-}"; rm -rf "\${tmp_dir:-}"'"'"'"'"'"'\'' EXIT INT TERM'\'' ./lib.sh
+    run bash -eo pipefail -c '
+    grep -Fq "trap '\''rm -f \"\${tmp_file:-}\"; rm -rf \"\${tmp_dir:-}\"'\'' EXIT INT TERM" ./lib.sh
     echo "ok"
   '
 

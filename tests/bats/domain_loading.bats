@@ -1,27 +1,27 @@
 #!/usr/bin/env bats
 
 @test "load_tier_domains_from_file loads tier_ru domains" {
-    run bash -c 'source ./lib.sh; load_tier_domains_from_file "domains.tiers" "tier_ru"'
+    run bash -eo pipefail -c 'source ./lib.sh; load_tier_domains_from_file "domains.tiers" "tier_ru"'
     [ "$status" -eq 0 ]
     [[ "$output" == *"yandex.ru"* ]]
     [[ "$output" == *"vk.com"* ]]
 }
 
 @test "load_tier_domains_from_file loads tier_global_ms10 domains" {
-    run bash -c 'source ./lib.sh; load_tier_domains_from_file "domains.tiers" "tier_global_ms10"'
+    run bash -eo pipefail -c 'source ./lib.sh; load_tier_domains_from_file "domains.tiers" "tier_global_ms10"'
     [ "$status" -eq 0 ]
     [[ "$output" == *"microsoft.com"* ]]
     [[ "$output" == *"microsoftonline.com"* ]]
 }
 
 @test "load_tier_domains_from_file returns empty for unknown tier" {
-    run bash -c 'source ./lib.sh; load_tier_domains_from_file "domains.tiers" "nonexistent"'
+    run bash -eo pipefail -c 'source ./lib.sh; load_tier_domains_from_file "domains.tiers" "nonexistent"'
     [ "$status" -eq 0 ]
     [ -z "$output" ]
 }
 
 @test "setup_domains returns non-zero so caller can handle errors" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./config.sh
     log() { :; }
@@ -41,7 +41,7 @@
 }
 
 @test "tier_global_ms10 has 10 unique domains and full map coverage" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     mapfile -t domains < <(load_tier_domains_from_file "domains.tiers" "tier_global_ms10")
     declare -A SNI=()
@@ -67,7 +67,7 @@
 }
 
 @test "load_domain_list splits comma values" {
-    run bash -c 'source ./lib.sh; load_domain_list "a.com,b.com,c.com"'
+    run bash -eo pipefail -c 'source ./lib.sh; load_domain_list "a.com,b.com,c.com"'
     [ "$status" -eq 0 ]
     [ "${lines[0]}" = "a.com" ]
     [ "${lines[1]}" = "b.com" ]
@@ -75,7 +75,7 @@
 }
 
 @test "load_domain_list trims whitespace around values" {
-    run bash -c 'source ./lib.sh; load_domain_list "  a.com ,  b.com  , c.com  "'
+    run bash -eo pipefail -c 'source ./lib.sh; load_domain_list "  a.com ,  b.com  , c.com  "'
     [ "$status" -eq 0 ]
     [ "${lines[0]}" = "a.com" ]
     [ "${lines[1]}" = "b.com" ]
@@ -83,7 +83,7 @@
 }
 
 @test "load_domain_list splits mixed comma and space separators" {
-    run bash -c 'source ./lib.sh; load_domain_list "a.com, b.com c.com"'
+    run bash -eo pipefail -c 'source ./lib.sh; load_domain_list "a.com, b.com c.com"'
     [ "$status" -eq 0 ]
     [ "${lines[0]}" = "a.com" ]
     [ "${lines[1]}" = "b.com" ]
@@ -91,7 +91,7 @@
 }
 
 @test "load_domains_from_file trims values and skips comments" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     tmp=$(mktemp)
     trap "rm -f \"$tmp\"" EXIT
@@ -111,7 +111,7 @@ EOF
 }
 
 @test "detect_reality_dest accepts CONNECTED marker from openssl output" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./config.sh
     timeout() { printf "CONNECTED(00000003)\n"; }
@@ -122,7 +122,7 @@ EOF
 }
 
 @test "detect_reality_dest accepts CONNECTION ESTABLISHED marker from openssl -brief output" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./config.sh
     timeout() { printf "CONNECTION ESTABLISHED\n"; }
@@ -133,7 +133,7 @@ EOF
 }
 
 @test "load_map_file parses sni_pools.map" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     declare -A MAP=()
     load_map_file "sni_pools.map" MAP
@@ -144,7 +144,7 @@ EOF
 }
 
 @test "load_map_file parses grpc_services.map" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     declare -A MAP=()
     load_map_file "grpc_services.map" MAP
@@ -155,7 +155,7 @@ EOF
 }
 
 @test "load_map_file handles missing file gracefully" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     declare -A MAP=()
     load_map_file "/nonexistent/path" MAP
@@ -166,7 +166,7 @@ EOF
 }
 
 @test "rank_domains_by_health sorts domains by score" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./config.sh
     log() { :; }
@@ -186,7 +186,7 @@ EOF
 }
 
 @test "rank_domains_by_health keeps order when disabled" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./config.sh
     log() { :; }
@@ -206,7 +206,7 @@ EOF
 }
 
 @test "tier_ru has 150 unique domains and full map coverage" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     mapfile -t domains < <(load_tier_domains_from_file "domains.tiers" "tier_ru")
     declare -A SNI=()
@@ -232,7 +232,7 @@ EOF
 }
 
 @test "build_domain_plan avoids repeats before pool exhaustion" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./config.sh
     log() { :; }
@@ -255,7 +255,7 @@ EOF
 }
 
 @test "select_primary_domain uses [priority] section when present" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./config.sh
     log() { :; }
@@ -281,7 +281,7 @@ EOF
 }
 
 @test "build_domain_plan reuses domains only after one full cycle" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./config.sh
     log() { :; }
@@ -301,7 +301,7 @@ EOF
 }
 
 @test "filter_quarantined_domains excludes domain in active cooldown" {
-    run bash -c '
+    run bash -eo pipefail -c '
     source ./lib.sh
     source ./config.sh
     log() { :; }
