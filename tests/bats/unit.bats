@@ -178,6 +178,15 @@
     [ "$output" = "ok" ]
 }
 
+@test "install sysctl profile sets bbr congestion control" {
+    run bash -c '
+    grep -q "^net\\.ipv4\\.tcp_congestion_control = bbr$" ./install.sh
+    echo "ok"
+  '
+    [ "$status" -eq 0 ]
+    [ "$output" = "ok" ]
+}
+
 @test "yaml_escape always returns quoted safe scalar" {
     run bash -c 'source ./lib.sh; source ./export.sh; yaml_escape "a:b # test"'
     [ "$status" -eq 0 ]

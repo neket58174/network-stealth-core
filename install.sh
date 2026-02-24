@@ -30,7 +30,7 @@ optimize_system() {
     atomic_write /etc/sysctl.d/99-xray.conf 0644 << 'EOF'
 # Xray Reality Ultimate - Performance Tuning
 net.core.default_qdisc = fq
-net.ipv4.tcp_congestion_control = bb
+net.ipv4.tcp_congestion_control = bbr
 net.ipv4.tcp_fastopen = 3
 net.ipv4.tcp_slow_start_after_idle = 0
 net.ipv4.tcp_mtu_probing = 1
