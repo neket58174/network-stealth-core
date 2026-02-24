@@ -1,15 +1,15 @@
-# Security Policy
+# Security policy
 
 This document defines the security posture and disclosure process for `Xray Reality Ultimate`.
 
-## Supported Versions
+## Supported versions
 
 | Version Line | Status |
 |---|---|
 | `4.x` | supported |
 | `<4.0` | unsupported |
 
-## Reporting Vulnerabilities
+## Reporting vulnerabilities
 
 Use responsible disclosure:
 
@@ -22,7 +22,7 @@ Target response windows:
 - initial triage: up to 48 hours
 - critical patch target: up to 7 days
 
-## Practical Threat Model
+## Practical threat model
 
 | Threat | Mitigation |
 |---|---|
@@ -32,21 +32,21 @@ Target response windows:
 | failed updates/install | rollback stack + runtime reconciliation |
 | service over-privilege | unprivileged `xray` user + hardened `systemd` unit |
 
-## Security Controls
+## Security controls
 
-### Integrity and Download Surface
+### Integrity and download surface
 
 - HTTPS-only download flows with strict validation
 - allowlisted critical hosts (`DOWNLOAD_HOST_ALLOWLIST`)
 - artifact integrity checks (`sha256`, optional `minisign`)
 - bootstrap pin control via `XRAY_REPO_COMMIT`
 
-### Privilege Separation
+### Privilege separation
 
 - service runs under dedicated non-root account (`xray`)
 - minimal required capabilities (including bind capability for low ports)
 
-### Systemd Hardening
+### Systemd hardening
 
 Project-generated unit applies hardening controls such as:
 
@@ -59,7 +59,7 @@ Project-generated unit applies hardening controls such as:
 - `ProtectControlGroups=true`
 - syscall filtering and restricted address families
 
-### Input and Runtime Validation
+### Input and runtime validation
 
 Validation layer covers:
 
@@ -69,14 +69,14 @@ Validation layer covers:
 - URL and schedule format checks
 - runtime range constraints
 
-### Rollback Safety
+### Rollback safety
 
 - backup snapshot before mutating operations
 - automatic rollback on error paths
 - firewall rollback records for network changes
 - runtime state reconciliation after restore
 
-## Sensitive Paths and Intended Permissions
+## Sensitive paths and intended permissions
 
 | Path | Owner | Mode | Purpose |
 |---|---|---:|---|
@@ -89,7 +89,7 @@ Validation layer covers:
 | `/etc/xray/private/keys/clients.json` | `root:xray` | `0640` | structured client metadata |
 | `/var/backups/xray` | `root:root` | `0700` | rollback sessions |
 
-## Risky Overrides
+## Risky overrides
 
 These flags reduce default security guarantees and should be temporary:
 
@@ -97,7 +97,7 @@ These flags reduce default security guarantees and should be temporary:
 - `ALLOW_UNVERIFIED_MINISIGN_BOOTSTRAP=true`
 - `GEO_VERIFY_HASH=false`
 
-## Operational Security Recommendations
+## Operational security recommendations
 
 1. run production from tagged releases
 2. update regularly via controlled maintenance windows
@@ -105,7 +105,7 @@ These flags reduce default security guarantees and should be temporary:
 4. restrict shell/admin access on the host
 5. rotate/redeploy on compromise suspicion
 
-## Security Testing Signals
+## Security testing signals
 
 Security-sensitive behavior is covered by automated checks including:
 

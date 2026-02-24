@@ -1,4 +1,5 @@
 name: Nightly Smoke
+run-name: "Nightly smoke / ${{ github.ref_name }} / ${{ github.event_name }}"
 
 on:
   schedule:

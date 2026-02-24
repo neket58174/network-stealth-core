@@ -4,14 +4,14 @@ Thanks for contributing to `Xray Reality Ultimate`.
 
 This guide defines the expected workflow for safe, reviewable, production-grade changes.
 
-## Core Rules
+## Core rules
 
 - keep commits focused and easy to review
 - preserve security controls and rollback behavior
 - include tests and docs updates with behavior changes
 - avoid silent compatibility breaks
 
-## Local Setup
+## Local setup
 
 ### Prerequisites
 
@@ -21,7 +21,7 @@ This guide defines the expected workflow for safe, reviewable, production-grade 
 - `shellcheck`, `shfmt`, `bats`, `actionlint`
 - Node.js (or `npx`) for markdown lint
 
-### Clone and Track Upstream
+### Clone and track upstream
 
 ```bash
 git clone https://github.com/YOUR_USERNAME/network-stealth-core.git
@@ -30,7 +30,7 @@ git remote add upstream https://github.com/neket58174/network-stealth-core.git
 git fetch upstream
 ```
 
-## Repository Layout
+## Repository layout
 
 | Path | Purpose |
 |---|---|
@@ -45,7 +45,7 @@ git fetch upstream
 | `tests/bats/` | unit/integration shell tests |
 | `tests/e2e/` | lifecycle and scenario tests |
 
-## Mandatory Local Checks
+## Mandatory local checks
 
 Run before every push:
 
@@ -64,9 +64,9 @@ bats tests/bats
 bash scripts/check-release-consistency.sh
 ```
 
-## Coding Standards
+## Coding standards
 
-### Shell Conventions
+### Shell conventions
 
 1. keep scripts `set -euo pipefail`-safe
 2. quote variables consistently
@@ -75,7 +75,7 @@ bash scripts/check-release-consistency.sh
 5. use atomic writes for critical files
 6. preserve rollback guarantees on mutating flows
 
-### High-Risk Areas
+### High-risk areas
 
 Changes in these areas require extra attention and test coverage:
 
@@ -85,7 +85,7 @@ Changes in these areas require extra attention and test coverage:
 - firewall apply/rollback
 - rollback stack and cleanup traps
 
-## Testing Expectations
+## Testing expectations
 
 - every behavior change should add or adjust BATS coverage
 - lifecycle-sensitive changes should include e2e checks when relevant
@@ -99,16 +99,16 @@ bats tests/bats/integration.bats
 bats tests/bats/health.bats
 ```
 
-## Branches and Commits
+## Branches and commits
 
-### Branch Naming
+### Branch naming
 
 - `fix/<topic>`
 - `feat/<topic>`
 - `docs/<topic>`
 - `security/<topic>`
 
-### Commit Format
+### Commit format
 
 Use short, direct messages:
 
@@ -122,7 +122,7 @@ Examples:
 - `docs(readme): refresh quick-start section`
 - `security(wrapper): tighten bootstrap pin handling`
 
-## Pull Request Checklist
+## Pull request checklist
 
 - [ ] local checks are green (`make ci`)
 - [ ] tests cover changed behavior
@@ -131,7 +131,7 @@ Examples:
 - [ ] no secrets included in commits
 - [ ] rollback/security behavior preserved
 
-## Documentation Update Scope
+## Documentation update scope
 
 Behavior changes usually affect one or more of:
 
@@ -142,7 +142,7 @@ Behavior changes usually affect one or more of:
 - `SECURITY.md`
 - `CHANGELOG.md`
 
-## Security Reporting
+## Security reporting
 
 Do not open public issues for vulnerabilities.
 

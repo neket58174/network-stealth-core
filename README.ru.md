@@ -11,7 +11,7 @@
   <a href="Makefile"><img alt="qa" src="https://img.shields.io/badge/qa-make%20ci-334155"></a>
 </p>
 
-## Что Это За Проект
+## Что это за проект
 
 `Xray Reality Ultimate` — набор Bash-скриптов для установки, сопровождения и обновления Xray Reality.
 
@@ -22,7 +22,7 @@
 - безопасный откат при сбоях
 - готовые клиентские экспорты и понятная эксплуатация
 
-## Официальный Источник
+## Официальный источник
 
 Используйте только каноничный репозиторий:
 
@@ -41,9 +41,9 @@
 | `CONTRIBUTING.md` | Правила контрибьюта и локальная разработка |
 | `CHANGELOG.md` | История релизов |
 
-## Быстрый Старт
+## Быстрый старт
 
-### Рекомендуемый Способ: Universal Install
+### Рекомендуемый способ: universal install
 
 Работает стабильно даже в ограниченных окружениях (`chroot`, проблемы с `/dev/fd`).
 
@@ -52,7 +52,7 @@ curl -fL https://raw.githubusercontent.com/neket58174/network-stealth-core/main/
 sudo bash /tmp/xray-reality.sh install
 ```
 
-### One-Line Install
+### One-line install
 
 ```bash
 sudo bash <(curl -fsSL https://raw.githubusercontent.com/neket58174/network-stealth-core/main/xray-reality.sh) install
@@ -60,14 +60,14 @@ sudo bash <(curl -fsSL https://raw.githubusercontent.com/neket58174/network-stea
 
 Если видите `/dev/fd/...: no such file or directory`, переходите на universal install.
 
-### Усиленный Bootstrap С Pin По Commit
+### Усиленный bootstrap с pin по commit
 
 ```bash
 curl -fL https://raw.githubusercontent.com/neket58174/network-stealth-core/main/xray-reality.sh -o /tmp/xray-reality.sh
 sudo XRAY_REPO_COMMIT=<full_commit_sha> bash /tmp/xray-reality.sh install
 ```
 
-### Выбор Источника Bootstrap
+### Выбор источника bootstrap
 
 По умолчанию bootstrap использует ветку `main` (самые свежие фиксы).
 
@@ -83,9 +83,9 @@ curl -fL https://raw.githubusercontent.com/neket58174/network-stealth-core/main/
 sudo XRAY_BOOTSTRAP_DEFAULT_REF=release bash /tmp/xray-reality.sh install
 ```
 
-## Основные Команды
+## Основные команды
 
-| Команда | Что Делает |
+| Команда | Что делает |
 |---|---|
 | `install` | Полная установка |
 | `add-clients [N]` | Добавляет `N` клиентских конфигов |
@@ -107,9 +107,9 @@ sudo bash xray-reality.sh diagnose
 sudo bash xray-reality.sh logs
 ```
 
-## Профили И Лимиты
+## Профили и лимиты
 
-| Профиль | Внутренний Tier | Лимит Конфигов | Сценарий |
+| Профиль | Внутренний tier | Лимит конфигов | Сценарий |
 |---|---|---:|---|
 | `ru` | `tier_ru` | 100 | Основной RU-пул |
 | `ru-auto` | `tier_ru` | auto 5 | Быстрый старт |
@@ -117,7 +117,7 @@ sudo bash xray-reality.sh logs
 | `global-ms10-auto` | `tier_global_ms10` | auto 10 | Быстрый global-ms10 |
 | `custom` | `custom` | 100 | Пользовательский список доменов |
 
-## Ключевые Флаги
+## Ключевые флаги
 
 ```bash
 --domain-profile ru|ru-auto|global-ms10|global-ms10-auto|custom
@@ -140,7 +140,7 @@ sudo bash xray-reality.sh logs
 
 Подробно: [SECURITY.md](SECURITY.md).
 
-## Экспорт Клиентских Шаблонов
+## Экспорт клиентских шаблонов
 
 Формируются после `install`, `add-clients`, `repair`:
 
@@ -149,7 +149,7 @@ sudo bash xray-reality.sh logs
 - `/etc/xray/private/keys/export/nekoray-fragment.json`
 - `/etc/xray/private/keys/export/v2rayn-fragment.json`
 
-## Поддерживаемая Матрица ОС В CI
+## Поддерживаемая матрица ОС в CI
 
 - `ubuntu-22.04`
 - `ubuntu-24.04`
@@ -157,7 +157,7 @@ sudo bash xray-reality.sh logs
 - `fedora-41`
 - `almalinux-9`
 
-## Локальная Проверка
+## Локальная проверка
 
 ```bash
 make lint

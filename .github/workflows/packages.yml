@@ -1,4 +1,5 @@
 name: Packages
+run-name: "Packages / ${{ github.ref_name }} / ${{ github.event_name }}"
 
 on:
   push:

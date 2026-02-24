@@ -11,7 +11,7 @@
   <a href="Makefile"><img alt="qa" src="https://img.shields.io/badge/qa-make%20ci-334155"></a>
 </p>
 
-## What This Project Is
+## What this project is
 
 `Xray Reality Ultimate` is a Bash-first automation project for deploying and operating Xray Reality on Linux servers.
 
@@ -21,7 +21,7 @@ It is designed around three priorities:
 - security-first defaults (validation, integrity checks, privilege separation)
 - operational clarity (rollback, diagnostics, export artifacts)
 
-## Canonical Source
+## Canonical source
 
 Use only the official repository for scripts, tags, and release artifacts:
 
@@ -40,9 +40,9 @@ If installation instructions are copied from forks or mirrors, verify them befor
 | `CONTRIBUTING.md` | Development workflow and contribution standards |
 | `CHANGELOG.md` | Release history and compatibility notes |
 
-## Quick Start
+## Quick start
 
-### Recommended: Universal Install
+### Recommended: universal install
 
 Works in regular shells and constrained environments (`chroot`, limited `/dev/fd`).
 
@@ -51,7 +51,7 @@ curl -fL https://raw.githubusercontent.com/neket58174/network-stealth-core/main/
 sudo bash /tmp/xray-reality.sh install
 ```
 
-### Alternative: One-Line Install
+### Alternative: one-line install
 
 ```bash
 sudo bash <(curl -fsSL https://raw.githubusercontent.com/neket58174/network-stealth-core/main/xray-reality.sh) install
@@ -59,14 +59,14 @@ sudo bash <(curl -fsSL https://raw.githubusercontent.com/neket58174/network-stea
 
 If you see `/dev/fd/...: no such file or directory`, use universal install.
 
-### Pinned Bootstrap (Supply-Chain Hardened)
+### Pinned bootstrap (supply-chain hardened)
 
 ```bash
 curl -fL https://raw.githubusercontent.com/neket58174/network-stealth-core/main/xray-reality.sh -o /tmp/xray-reality.sh
 sudo XRAY_REPO_COMMIT=<full_commit_sha> bash /tmp/xray-reality.sh install
 ```
 
-### Bootstrap Source Selection
+### Bootstrap source selection
 
 Default bootstrap source is `main` (latest fixes).
 
@@ -82,7 +82,7 @@ curl -fL https://raw.githubusercontent.com/neket58174/network-stealth-core/main/
 sudo XRAY_BOOTSTRAP_DEFAULT_REF=release bash /tmp/xray-reality.sh install
 ```
 
-## Core Commands
+## Core commands
 
 | Command | Description |
 |---|---|
@@ -106,7 +106,7 @@ sudo bash xray-reality.sh diagnose
 sudo bash xray-reality.sh logs
 ```
 
-## Runtime Profiles
+## Runtime profiles
 
 | Profile | Internal Tier | Config Limit | Intended Usage |
 |---|---|---:|---|
@@ -116,7 +116,7 @@ sudo bash xray-reality.sh logs
 | `global-ms10-auto` | `tier_global_ms10` | auto 10 | Fast global-ms10 install |
 | `custom` | `custom` | 100 | User-managed domain set |
 
-## Key CLI Flags
+## Key CLI flags
 
 ```bash
 --domain-profile ru|ru-auto|global-ms10|global-ms10-auto|custom
@@ -129,7 +129,7 @@ sudo bash xray-reality.sh logs
 --verbose
 ```
 
-## Security Highlights
+## Security highlights
 
 - strict runtime input and path validation
 - controlled download surface via allowlisted hosts
@@ -139,7 +139,7 @@ sudo bash xray-reality.sh logs
 
 See [SECURITY.md](SECURITY.md) for full details.
 
-## Export Artifacts
+## Export artifacts
 
 Generated after `install`, `add-clients`, and `repair`:
 
@@ -148,7 +148,7 @@ Generated after `install`, `add-clients`, and `repair`:
 - `/etc/xray/private/keys/export/nekoray-fragment.json`
 - `/etc/xray/private/keys/export/v2rayn-fragment.json`
 
-## Tested OS Matrix
+## Tested OS matrix
 
 CI smoke and lifecycle checks are maintained for:
 

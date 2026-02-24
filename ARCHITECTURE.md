@@ -2,14 +2,14 @@
 
 This document describes the runtime architecture of `Xray Reality Ultimate` and the interaction contract between scripts and modules.
 
-## Design Goals
+## Design goals
 
 - deterministic lifecycle (`install`, `update`, `repair`, `rollback`, `uninstall`)
 - strict runtime validation before destructive actions
 - transactional writes with rollback on failure
 - modular shell code with clear ownership boundaries
 
-## Runtime Topology
+## Runtime topology
 
 ```mermaid
 flowchart TD
@@ -48,7 +48,7 @@ flowchart TD
     I --> MBOOT
 ```
 
-## Bootstrap Stage (`xray-reality.sh`)
+## Bootstrap stage (`xray-reality.sh`)
 
 Wrapper responsibilities:
 
@@ -57,7 +57,7 @@ Wrapper responsibilities:
 3. enforce bootstrap pin checks when configured
 4. source `lib.sh` and forward action arguments
 
-### Bootstrap Resolution Flow
+### Bootstrap resolution flow
 
 ```mermaid
 flowchart LR
@@ -71,7 +71,7 @@ flowchart LR
     G -- no --> H[fail fast]
 ```
 
-## Runtime Core (`lib.sh`)
+## Runtime core (`lib.sh`)
 
 `lib.sh` is the control plane. It centralizes:
 
@@ -81,7 +81,7 @@ flowchart LR
 - logging, download, backup, rollback helpers
 - action dispatch to install/config/service/health/export layers
 
-### Dispatch Graph
+### Dispatch graph
 
 ```mermaid
 flowchart TD
@@ -102,7 +102,7 @@ flowchart TD
     A --> CU[check_update_flow]
 ```
 
-## Module Contracts
+## Module contracts
 
 | Module | Responsibility | Output Contract |
 |---|---|---|
@@ -115,7 +115,7 @@ flowchart TD
 | `modules/config/domain_planner.sh` | domain ranking, quarantine, planning | bounded no-repeat domain allocation |
 | `modules/config/add_clients.sh` | `add-clients`/`add-keys` mutation logic | synchronized client artifacts and inbounds |
 
-## Transaction Model
+## Transaction model
 
 All mutating actions are designed as transactions:
 
@@ -125,7 +125,7 @@ All mutating actions are designed as transactions:
 4. commit changes atomically
 5. rollback automatically on failure
 
-### Failure Path
+### Failure path
 
 ```mermaid
 sequenceDiagram
@@ -147,7 +147,7 @@ sequenceDiagram
     end
 ```
 
-## Domain Planning and Health Feedback
+## Domain planning and health feedback
 
 Domain selection is not random-only. The planner combines:
 
@@ -158,7 +158,7 @@ Domain selection is not random-only. The planner combines:
 
 This reduces repetitive traffic patterns and avoids persistently failing domains.
 
-## Generated Artifacts
+## Generated artifacts
 
 | Path | Produced By | Intended Permissions |
 |---|---|---|
@@ -170,7 +170,7 @@ This reduces repetitive traffic patterns and avoids persistently failing domains
 | `/var/lib/xray/domain-health.json` | `health.sh` | runtime state file |
 | `/etc/systemd/system/xray.service` | `service.sh` | hardened service unit |
 
-## QA and Release Control Layers
+## QA and release control layers
 
 The project keeps three quality layers:
 

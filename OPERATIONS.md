@@ -1,17 +1,17 @@
-# Operations Runbook
+# Operations runbook
 
 This runbook is the production operations reference for `Xray Reality Ultimate`.
 
-## Installation Entry Points
+## Installation entry points
 
-### Universal Install (Recommended)
+### Universal install (recommended)
 
 ```bash
 curl -fL https://raw.githubusercontent.com/neket58174/network-stealth-core/main/xray-reality.sh -o /tmp/xray-reality.sh
 sudo bash /tmp/xray-reality.sh install
 ```
 
-### One-Line Install
+### One-line install
 
 ```bash
 sudo bash <(curl -fsSL https://raw.githubusercontent.com/neket58174/network-stealth-core/main/xray-reality.sh) install
@@ -19,7 +19,7 @@ sudo bash <(curl -fsSL https://raw.githubusercontent.com/neket58174/network-stea
 
 If `/dev/fd` is unavailable, switch to universal install.
 
-## Daily Health Check
+## Daily health check
 
 ```bash
 sudo bash xray-reality.sh status
@@ -28,7 +28,7 @@ sudo journalctl -u xray -n 200 --no-pager
 sudo bash xray-reality.sh diagnose
 ```
 
-## Safe Maintenance Cycle
+## Safe maintenance cycle
 
 ### Update
 
@@ -38,7 +38,7 @@ sudo bash xray-reality.sh update
 sudo bash xray-reality.sh status
 ```
 
-### Add Client Configs
+### Add client configs
 
 ```bash
 sudo bash xray-reality.sh add-clients 2
@@ -52,7 +52,7 @@ Expected artifact set after `add-clients`:
 - `/etc/xray/private/keys/clients.json`
 - `/etc/xray/private/keys/export/*`
 
-## Incident Matrix
+## Incident matrix
 
 | Incident | Immediate Action | Verify |
 |---|---|---|
@@ -62,28 +62,28 @@ Expected artifact set after `add-clients`:
 | domain instability | inspect `/var/lib/xray/domain-health.json` and tuning vars | fail streak trend improves |
 | firewall drift | `sudo bash xray-reality.sh repair` | expected ports are listening/open |
 
-## Rollback Playbook
+## Rollback playbook
 
-### Latest Session
+### Latest session
 
 ```bash
 sudo bash xray-reality.sh rollback
 ```
 
-### Specific Session
+### Specific session
 
 ```bash
 sudo bash xray-reality.sh rollback /var/backups/xray/<session-dir>
 ```
 
-### Post-Rollback Verification
+### Post-rollback verification
 
 ```bash
 sudo bash xray-reality.sh status
 sudo journalctl -u xray -n 100 --no-pager
 ```
 
-## Runtime Tuning Knobs
+## Runtime tuning knobs
 
 | Variable | Practical Effect |
 |---|---|
@@ -104,7 +104,7 @@ PROGRESS_MODE=plain \
 bash xray-reality.sh repair
 ```
 
-## Uninstall Procedure
+## Uninstall procedure
 
 ```bash
 sudo bash xray-reality.sh uninstall --yes --non-interactive
@@ -116,7 +116,7 @@ Post-uninstall checks:
 - `/etc/xray`, `/etc/xray-reality`, `/usr/local/bin/xray` should be removed
 - previously used service ports should not be listening
 
-## Data Collection for Escalation
+## Data collection for escalation
 
 When escalating incidents, collect:
 
@@ -125,7 +125,7 @@ When escalating incidents, collect:
 - `/etc/xray/config.json` (with secrets redacted)
 - `/etc/xray/private/keys/clients.json` (if artifact consistency is involved)
 
-## QA Before Production Changes
+## QA before production changes
 
 ```bash
 make lint
