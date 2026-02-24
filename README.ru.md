@@ -45,7 +45,7 @@
 
 ### Рекомендуемый способ: universal install
 
-Работает стабильно даже в ограниченных окружениях (`chroot`, проблемы с `/dev/fd`).
+Работает стабильно даже в ограниченных окружениях (проблемы с `/dev/fd`).
 
 ```bash
 curl -fL https://raw.githubusercontent.com/neket58174/network-stealth-core/main/xray-reality.sh -o /tmp/xray-reality.sh

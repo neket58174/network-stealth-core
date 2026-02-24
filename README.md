@@ -44,7 +44,7 @@ If installation instructions are copied from forks or mirrors, verify them befor
 
 ### Recommended: universal install
 
-Works in regular shells and constrained environments (`chroot`, limited `/dev/fd`).
+Works in regular shells and constrained environments (limited `/dev/fd`).
 
 ```bash
 curl -fL https://raw.githubusercontent.com/neket58174/network-stealth-core/main/xray-reality.sh -o /tmp/xray-reality.sh

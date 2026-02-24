@@ -1638,9 +1638,9 @@ EOF
     [ "$output" = "ok" ]
 }
 
-@test "systemd_running disables service management in chroot contexts" {
+@test "systemd_running disables service management in isolated root contexts" {
     run bash -c '
-    grep -q '\''systemd-detect-virt --quiet --chroot'\'' ./lib.sh
+    grep -q '\''running_in_isolated_root_context'\'' ./lib.sh
     grep -q '\''/proc/1/root/'\'' ./lib.sh
     echo "ok"
   '

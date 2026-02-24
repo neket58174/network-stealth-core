@@ -50,7 +50,7 @@ is_nonfatal_systemctl_error() {
     local err="${1:-}"
     [[ -n "$err" ]] || return 1
     case "$err" in
-        *"Running in chroot"* | *"System has not been booted with systemd"* | *"Failed to connect to bus"* | *"Host is down"* | *"Transport endpoint is not connected"*)
+        *"System has not been booted with systemd"* | *"Failed to connect to bus"* | *"Host is down"* | *"Transport endpoint is not connected"*)
             return 0
             ;;
         *)

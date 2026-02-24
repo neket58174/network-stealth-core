@@ -764,13 +764,7 @@ systemctl_available() {
     command -v systemctl > /dev/null 2>&1
 }
 
-running_in_chroot_context() {
-    if command -v systemd-detect-virt > /dev/null 2>&1; then
-        if systemd-detect-virt --quiet --chroot; then
-            return 0
-        fi
-    fi
-
+running_in_isolated_root_context() {
     local root_sig pid1_root_sig
     root_sig=$(stat -Lc '%d:%i' / 2> /dev/null || true)
     pid1_root_sig=$(stat -Lc '%d:%i' /proc/1/root/. 2> /dev/null || true)
@@ -787,7 +781,7 @@ systemd_running() {
     if ! systemctl_available; then
         return 1
     fi
-    if running_in_chroot_context; then
+    if running_in_isolated_root_context; then
         return 1
     fi
     [[ -d /run/systemd/system ]] || return 1
