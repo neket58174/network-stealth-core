@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Xray Reality Ultimate 4.1.7 - Wrapper
+# Xray Reality Ultimate 4.1.8 - Wrapper
 
 set -euo pipefail
 

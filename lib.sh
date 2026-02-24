@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Xray Reality Ultimate 4.1.7 - Максимальный обход DPI в РФ
+# Xray Reality Ultimate 4.1.8 - Максимальный обход DPI в РФ
 
 set -euo pipefail
 
 SCRIPT_DIR="${SCRIPT_DIR:-$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)}"
 
-readonly SCRIPT_VERSION="4.1.7"
+readonly SCRIPT_VERSION="4.1.8"
 readonly SCRIPT_NAME="Xray Reality Ultimate"
 
 XRAY_USER="xray"
