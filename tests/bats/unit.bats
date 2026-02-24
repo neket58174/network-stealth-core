@@ -599,6 +599,18 @@ EOF
     [ "$output" = "ok" ]
 }
 
+@test "auto-update template emits shell shebang for systemd ExecStart" {
+    run bash -eo pipefail -c '
+    start="$(grep -n "cat << '\''UPDATEEOF'\''" ./modules/install/bootstrap.sh | head -n1 | cut -d: -f1)"
+    [[ -n "$start" ]]
+    next_line=$((start + 1))
+    sed -n "${next_line}p" ./modules/install/bootstrap.sh | grep -Fq "#!/usr/bin/env bash"
+    echo "ok"
+  '
+    [ "$status" -eq 0 ]
+    [ "$output" = "ok" ]
+}
+
 @test "setup_logrotate uses runtime log path variables" {
     run bash -eo pipefail -c '
     grep -q '\''safe_logs_dir='\'' ./modules/install/bootstrap.sh

@@ -278,6 +278,7 @@ setup_auto_update() {
     {
         # shellcheck disable=SC2016 # Intentional: vars expand at runtime, not build time
         cat << 'UPDATEEOF'
+#!/usr/bin/env bash
 set -euo pipefail
 
 XRAY_BIN_PATH="${XRAY_BIN_PATH:-}"
