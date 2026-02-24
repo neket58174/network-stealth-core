@@ -24,7 +24,6 @@ while IFS=: read -r file line raw; do
             continue
             ;;
         docker://*)
-            # docker:// references are immutable when digest is used.
             if [[ ! "$value" =~ @sha256:[0-9a-f]{64}$ ]]; then
                 echo "un-pinned docker action reference: ${file}:${line}: ${value}" >&2
                 fail=1

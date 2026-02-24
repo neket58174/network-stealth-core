@@ -238,8 +238,6 @@ cli_handle_long_option() {
 }
 
 parse_args() {
-    # Accept options both before and after the command by reordering args for getopts.
-    # This keeps the documented UX: `xray-reality.sh <command> [options]`.
     local args=("$@")
     local cmd=""
     local opts=()
@@ -249,7 +247,6 @@ parse_args() {
     while [[ $i -lt ${#args[@]} ]]; do
         local a="${args[$i]}"
 
-        # POSIX end-of-options marker: treat the rest as positional.
         if [[ "$a" == "--" ]]; then
             i=$((i + 1))
             while [[ $i -lt ${#args[@]} ]]; do
@@ -259,7 +256,6 @@ parse_args() {
             break
         fi
 
-        # Capture the command anywhere (first occurrence only).
         if [[ -z "$cmd" ]] && cli_is_action "$a"; then
             cmd="$a"
             i=$((i + 1))
@@ -269,7 +265,6 @@ parse_args() {
         if [[ "$a" == --* || "$a" == -* ]]; then
             opts+=("$a")
 
-            # Keep option values attached so getopts can parse them after reordering.
             if cli_option_requires_value "$a" && [[ "$a" != *=* ]]; then
                 i=$((i + 1))
                 if [[ $i -ge ${#args[@]} ]]; then
@@ -278,7 +273,6 @@ parse_args() {
                 fi
                 opts+=("${args[$i]}")
             elif [[ "$a" == --rollback && "$a" != *=* ]]; then
-                # Optional dir param (only if next token isn't a long option).
                 local next="${args[$((i + 1))]:-}"
                 if [[ -n "$next" && "$next" != --* ]]; then
                     i=$((i + 1))
@@ -335,13 +329,11 @@ parse_args() {
         ROLLBACK_DIR="$1"
     fi
 
-    # Handle: logs [xray|health|all]
     if [[ "$ACTION" == "logs" && -n "${1:-}" && "${1:-}" != --* ]]; then
         # shellcheck disable=SC2034 # Used in health.sh
         LOGS_TARGET="$1"
     fi
 
-    # Handle: add-clients [N] / add-keys [N]
     if [[ "$ACTION" == "add-clients" || "$ACTION" == "add-keys" ]] && [[ -n "${1:-}" && "${1:-}" != --* ]]; then
         # shellcheck disable=SC2034 # Used in config.sh add_clients_flow
         ADD_CLIENTS_COUNT="$1"

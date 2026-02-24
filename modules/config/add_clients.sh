@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 # shellcheck shell=bash
-# add-clients/add-keys flow extracted from config.sh
 
 GLOBAL_CONTRACT_MODULE="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../lib" && pwd)/globals_contract.sh"
 if [[ ! -f "$GLOBAL_CONTRACT_MODULE" && -n "${XRAY_DATA_DIR:-}" ]]; then
@@ -12,9 +11,7 @@ if [[ ! -f "$GLOBAL_CONTRACT_MODULE" ]]; then
 fi
 # shellcheck source=modules/lib/globals_contract.sh
 source "$GLOBAL_CONTRACT_MODULE"
-# ==================== ADD CLIENTS ====================
 prepare_add_clients_runtime() {
-    # Validate Xray is installed
     if [[ ! -x "$XRAY_BIN" ]]; then
         log ERROR "Xray не установлен. Сначала выполните: xray-reality.sh install"
         exit 1
@@ -24,7 +21,6 @@ prepare_add_clients_runtime() {
         exit 1
     fi
 
-    # Load environment safely (whitelist-based parser, not source)
     if [[ -f "$XRAY_ENV" ]]; then
         load_config_file "$XRAY_ENV"
         apply_runtime_overrides
@@ -36,7 +32,6 @@ prepare_add_clients_runtime() {
         exit 1
     fi
 
-    # Detect IPs from environment or auto-detect
     if [[ -z "$SERVER_IP" ]]; then
         SERVER_IP=$(fetch_ip 4 || echo "")
     fi
@@ -92,7 +87,6 @@ resolve_add_clients_count() {
         has_tty=true
     fi
 
-    # Interactive prompt: ask how many to add (must answer)
     if ((requested_count < 1)); then
         if [[ "$NON_INTERACTIVE" == "true" ]]; then
             log ERROR "Non-interactive режим: укажите количество add-clients/add-keys (1-${max_add})"
@@ -139,7 +133,6 @@ allocate_additional_client_ports() {
     _out_ports=()
     _out_ports_v6=()
 
-    # Collect all existing ports to exclude from allocation
     local all_allocated=""
     local p
     for p in "${PORTS[@]}"; do
@@ -151,14 +144,12 @@ allocate_additional_client_ports() {
         done
     fi
 
-    # Find the highest existing port as starting point
     local max_port=0
     for p in "${PORTS[@]}"; do
         ((p > max_port)) && max_port=$p
     done
     local next_port=$((max_port + 1))
 
-    # Allocate new ports
     local i
     for ((i = 0; i < add_count; i++)); do
         local port
@@ -186,7 +177,6 @@ allocate_additional_client_ports() {
             local v6_port=""
             if ! v6_port=$(find_free_port "$v6_start" "$all_allocated"); then
                 log WARN "Не удалось выделить IPv6 порт для конфига $((i + 1))"
-                # Keep index alignment with _out_ports without disabling IPv6 globally.
                 _out_ports_v6+=("")
             else
                 _out_ports_v6+=("$v6_port")
@@ -775,7 +765,6 @@ verify_ports_listening_after_start() {
         return 0
     fi
 
-    # Xray may take a short moment to bind sockets after systemd reports "active".
     local attempts=0
     local max_attempts=10
     local listening_v4=0

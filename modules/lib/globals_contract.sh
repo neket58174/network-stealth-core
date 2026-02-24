@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 # shellcheck shell=bash
-# shared global defaults for sourced runtime modules.
 
 : "${SCRIPT_DIR:=}"
 : "${MODULE_DIR:=}"

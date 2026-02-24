@@ -13,9 +13,7 @@ trap cleanup EXIT
 export TMPDIR="$WORK_ROOT/tmp"
 mkdir -p "$TMPDIR" "$WORK_ROOT/assets" "$WORK_ROOT/bin"
 
-# Load project functions directly to test install_xray failure-path cleanup.
 source ./lib.sh
-# Avoid global rollback trap from lib.sh in this isolated e2e harness.
 trap - EXIT
 trap cleanup EXIT
 source ./install.sh
@@ -34,7 +32,6 @@ DGST_ASSET="$WORK_ROOT/Xray-linux-64.zip.dgst"
 SIG_ASSET="$WORK_ROOT/Xray-linux-64.zip.minisig"
 
 cat > "$WORK_ROOT/assets/xray" << 'EOF'
-#!/usr/bin/env bash
 if [[ "${1:-}" == "version" ]]; then
     echo "Xray 1.2.3"
     exit 0
@@ -64,7 +61,6 @@ sha256="$(sha256sum "$ZIP_ASSET" | awk '{print $1}')"
 printf 'SHA256 = %s\n' "$sha256" > "$DGST_ASSET"
 printf 'untrusted comment: test minisign\nR%040d\n' 0 > "$SIG_ASSET"
 
-# Mock downloader to use local fixtures.
 download_file_allowlist() {
     local url="$1"
     local out_file="$2"
@@ -84,7 +80,6 @@ download_file_allowlist() {
     esac
 }
 
-# Force minisign verification failure.
 minisign() {
     return 1
 }

@@ -1,17 +1,13 @@
 #!/usr/bin/env bash
 # Xray Reality Ultimate 4.1.7 - Максимальный обход DPI в РФ
-# Fully rewritten with enhanced security & reliability
-# License: MIT
 
 set -euo pipefail
 
 SCRIPT_DIR="${SCRIPT_DIR:-$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)}"
 
-# ==================== CONFIGURATION ====================
 readonly SCRIPT_VERSION="4.1.7"
 readonly SCRIPT_NAME="Xray Reality Ultimate"
 
-# Paths (defaults, can be overridden by resolve_paths)
 XRAY_USER="xray"
 XRAY_GROUP="xray"
 XRAY_HOME="${XRAY_HOME:-/var/lib/xray}"
@@ -26,7 +22,6 @@ INSTALL_LOG="${INSTALL_LOG:-/var/log/xray-install.log}"
 LOG_CONTEXT="${LOG_CONTEXT:-установки}"
 MINISIGN_KEY="${MINISIGN_KEY:-/etc/xray/minisign.pub}"
 
-# Settings
 MAX_BACKUPS="${MAX_BACKUPS:-10}"
 CONNECTION_TIMEOUT="${CONNECTION_TIMEOUT:-10}"
 DOWNLOAD_TIMEOUT="${DOWNLOAD_TIMEOUT:-60}"
@@ -36,7 +31,6 @@ HEALTH_CHECK_INTERVAL="${HEALTH_CHECK_INTERVAL:-120}"
 LOG_RETENTION_DAYS="${LOG_RETENTION_DAYS:-30}"
 LOG_MAX_SIZE_MB="${LOG_MAX_SIZE_MB:-10}"
 KEEP_LOCAL_BACKUPS="${KEEP_LOCAL_BACKUPS:-true}"
-# Транспорт по умолчанию gRPC, можно переключить на HTTP/2 при необходимости.
 XRAY_TRANSPORT="${XRAY_TRANSPORT:-}"
 TRANSPORT="${TRANSPORT:-grpc}" # grpc|http2
 MUX_MODE="${MUX_MODE:-on}"     # on|off|auto (on = максимальная обфускация)
@@ -107,7 +101,6 @@ PRIMARY_PIN_DOMAIN="${PRIMARY_PIN_DOMAIN:-}"
 PRIMARY_ADAPTIVE_TOP_N="${PRIMARY_ADAPTIVE_TOP_N:-5}"
 DOWNLOAD_HOST_ALLOWLIST="${DOWNLOAD_HOST_ALLOWLIST:-github.com,api.github.com,objects.githubusercontent.com,raw.githubusercontent.com,release-assets.githubusercontent.com,ghproxy.com}"
 GH_PROXY_BASE="${GH_PROXY_BASE:-https://ghproxy.com/https://github.com}"
-# Runtime flags (avoid unbound with set -u)
 ACTION="install"
 NON_INTERACTIVE="${NON_INTERACTIVE:-false}"
 ASSUME_YES="${ASSUME_YES:-false}"
@@ -153,7 +146,6 @@ FIREWALL_FIREWALLD_DIRTY=false
 CREATED_PATHS=()
 declare -A CREATED_PATH_SET=()
 
-# Cross-module globals used by other sourced files.
 : "${XRAY_USER}" "${XRAY_GROUP}" "${XRAY_HOME}" "${XRAY_LOGS}" "${MINISIGN_KEY}"
 : "${SKIP_MINISIGN}" "${MUX_ENABLED}" "${MUX_CONCURRENCY}"
 : "${HAS_IPV6}"
@@ -189,8 +181,6 @@ fi
 # shellcheck source=/dev/null
 source "$LIB_COMMON_UTILS_MODULE"
 
-# ==================== PATH RESOLUTION ====================
-# Try to create/verify a directory is writable. Returns 0 on success.
 _try_dir() {
     local dir="$1"
     if [[ -d "$dir" && -w "$dir" ]]; then
@@ -199,7 +189,6 @@ _try_dir() {
     mkdir -p "$dir" 2> /dev/null && [[ -w "$dir" ]]
 }
 
-# Try to verify a parent directory is writable for a file path.
 _try_file_path() {
     local file="$1"
     local dir
@@ -216,8 +205,6 @@ _stat_brief() {
     echo "не существует"
 }
 
-# Resolve a single path: try primary, then fallback, then ask user.
-# Usage: _resolve_path VAR_NAME "description" "primary" "fallback"
 _resolve_path() {
     local var_name="$1"
     local description="$2"
@@ -236,7 +223,6 @@ _resolve_path() {
         return 0
     fi
 
-    # Both failed — ask use
     log ERROR "${description}: не удалось найти подходящий путь"
     echo ""
     echo -e "  Попробованные пути:"
@@ -269,12 +255,10 @@ resolve_paths() {
     log STEP "Проверяем системные пути..."
     local resolve_errors=0
 
-    # Binary
     if ! _resolve_path XRAY_BIN "Бинарник Xray" \
         "/usr/local/bin/xray" "/opt/xray/bin/xray"; then
         resolve_errors=$((resolve_errors + 1))
     fi
-    # Geo assets directory (defaults to directory of XRAY_BIN)
     if [[ -z "${XRAY_GEO_DIR:-}" ]]; then
         XRAY_GEO_DIR="$(dirname "$XRAY_BIN")"
     fi
@@ -282,29 +266,24 @@ resolve_paths() {
         "$XRAY_GEO_DIR" "/usr/local/share/xray"; then
         resolve_errors=$((resolve_errors + 1))
     fi
-    # Config directory
     if ! _resolve_path XRAY_CONFIG "Конфигурация" \
         "/etc/xray/config.json" "/opt/xray/etc/config.json"; then
         resolve_errors=$((resolve_errors + 1))
     fi
-    # Keys
     local config_dir
     config_dir=$(dirname "$XRAY_CONFIG")
     if ! _resolve_path XRAY_KEYS "Ключи клиентов" \
         "${config_dir}/private/keys" "/opt/xray/etc/private/keys"; then
         resolve_errors=$((resolve_errors + 1))
     fi
-    # Minisign key
     if ! _resolve_path MINISIGN_KEY "Ключ Minisign" \
         "${config_dir}/minisign.pub" "/opt/xray/etc/minisign.pub"; then
         resolve_errors=$((resolve_errors + 1))
     fi
-    # Environment
     if ! _resolve_path XRAY_ENV "Файл окружения" \
         "/etc/xray-reality/config.env" "/opt/xray/etc/config.env"; then
         resolve_errors=$((resolve_errors + 1))
     fi
-    # Logs
     if ! _resolve_path XRAY_LOGS "Директория логов" \
         "/var/log/xray" "/opt/xray/log"; then
         resolve_errors=$((resolve_errors + 1))
@@ -315,28 +294,23 @@ resolve_paths() {
     if [[ -z "${HEALTH_LOG:-}" ]]; then
         HEALTH_LOG="${XRAY_LOGS%/}/xray-health.log"
     fi
-    # Home
     if ! _resolve_path XRAY_HOME "Домашняя директория" \
         "/var/lib/xray" "/opt/xray/data"; then
         resolve_errors=$((resolve_errors + 1))
     fi
-    # Backups
     if ! _resolve_path XRAY_BACKUP "Директория бэкапов" \
         "/var/backups/xray" "/opt/xray/backups"; then
         resolve_errors=$((resolve_errors + 1))
     fi
-    # Data di
     if ! _resolve_path XRAY_DATA_DIR "Данные скрипта" \
         "/usr/local/share/xray-reality" "/opt/xray/share"; then
         resolve_errors=$((resolve_errors + 1))
     fi
 
-    # Update derived paths
     XRAY_TIERS_FILE="$XRAY_DATA_DIR/domains.tiers"
     XRAY_SNI_POOLS_FILE="$XRAY_DATA_DIR/sni_pools.map"
     XRAY_GRPC_SERVICES_FILE="$XRAY_DATA_DIR/grpc_services.map"
 
-    # Update script paths based on bin directory
     local bin_dir
     bin_dir=$(dirname "$XRAY_BIN")
     XRAY_SCRIPT_PATH="${bin_dir}/xray-reality.sh"
@@ -350,7 +324,6 @@ resolve_paths() {
     log OK "Все пути проверены"
 }
 
-# ==================== COLORS ====================
 readonly RED='\033[0;31m'
 readonly GREEN='\033[0;32m'
 readonly YELLOW='\033[1;33m'
@@ -445,7 +418,6 @@ ui_section_title_string() {
     fi
 }
 
-# ==================== LOGGING ====================
 setup_logging() {
     local log_dir
     log_dir=$(dirname "$INSTALL_LOG")
@@ -495,7 +467,6 @@ setup_logging() {
     box_bottom=$(ui_box_border_string bottom "$inner_width")
 
     echo "$box_top"
-    # Color codes printed separately from padded text to keep right border aligned.
     printf '%s  %b%-*s%b%s\n' "$UI_BOX_V" "${BOLD}${MAGENTA}" $((inner_width - 2)) "$title" "${NC}" "$UI_BOX_V"
     printf '%s  %-*s%s\n' "$UI_BOX_V" $((inner_width - 2)) "$subtitle" "$UI_BOX_V"
     echo "$box_bottom"
@@ -562,7 +533,6 @@ log() {
     local sanitized_message
     sanitized_message=$(sanitize_log_message "$message")
     if [[ "${PROGRESS_LINE_OPEN:-false}" == "true" ]]; then
-        # Close single-line progress output before printing regular logs.
         printf '\r\033[K\n'
         PROGRESS_LINE_OPEN=false
     fi
@@ -573,7 +543,6 @@ debug() {
     log DEBUG "$@"
 }
 
-# Log to file even when not verbose (for silent errors)
 debug_file() {
     local msg="$*"
     msg=$(sanitize_log_message "$msg")
@@ -648,7 +617,6 @@ can_write_dev_tty() {
     return 0
 }
 
-# Show helpful hint after erro
 hint() {
     if [[ "${PROGRESS_LINE_OPEN:-false}" == "true" ]]; then
         printf '\r\033[K\n'
@@ -803,8 +771,6 @@ running_in_chroot_context() {
         fi
     fi
 
-    # Fallback for minimal images where systemd-detect-virt may be absent or unreliable.
-    # Compare inode/device of current root and PID1 root: mismatch strongly indicates chroot.
     local root_sig pid1_root_sig
     root_sig=$(stat -Lc '%d:%i' / 2> /dev/null || true)
     pid1_root_sig=$(stat -Lc '%d:%i' /proc/1/root/. 2> /dev/null || true)
@@ -821,8 +787,6 @@ systemd_running() {
     if ! systemctl_available; then
         return 1
     fi
-    # In chroot, systemctl may be present and /run/systemd/system may exist,
-    # but service management is not reliable for this rootfs context.
     if running_in_chroot_context; then
         return 1
     fi
@@ -1078,21 +1042,17 @@ atomic_write() {
         target_existed=true
     fi
 
-    # Path validation: prevent path traversal attacks
-    # Resolve to absolute path and check for suspicious patterns
     local resolved
     resolved=$(realpath -m "$target" 2> /dev/null) || {
         log ERROR "atomic_write: не удалось разрешить путь: $target"
         return 1
     }
 
-    # Block obvious path traversal attempts
     if [[ "$resolved" == *".."* ]] || [[ "$target" == *".."* ]]; then
         log ERROR "atomic_write: путь содержит ..: $target"
         return 1
     fi
 
-    # Only allow writes to known safe directories
     local -a safe_prefixes=(
         "/etc/xray" "/etc/systemd" "/usr/lib/systemd" "/lib/systemd" "/var/log" "/var/backups/xray"
         "/usr/local" "/var/lib/xray" "/etc/logrotate.d"
@@ -1101,7 +1061,6 @@ atomic_write() {
     )
     local is_safe=false
     for prefix in "${safe_prefixes[@]}"; do
-        # Exact match OR path within directory (with / boundary)
         if [[ "$resolved" == "$prefix" || "$resolved" == "$prefix"/* ]]; then
             is_safe=true
             break
@@ -1180,8 +1139,6 @@ rand_between() {
         rnd="$RAND_U32_VALUE"
         source_max="$RAND_U32_MAX"
 
-        # Fallback source (e.g. $RANDOM) can be narrower than span.
-        # In this case perfect rejection sampling is impossible; keep modulo fallback.
         if ((source_max < span)); then
             echo "$((rnd % span + min))"
             return
@@ -1872,7 +1829,6 @@ strict_validate_runtime_inputs() {
         fi
     fi
 
-    # Validate known URL-bearing variables
     local url_var
     for url_var in XRAY_GEOIP_URL XRAY_GEOSITE_URL XRAY_GEOIP_SHA256_URL XRAY_GEOSITE_SHA256_URL; do
         if [[ -n "${!url_var:-}" ]] && ! is_valid_https_url "${!url_var}"; then
@@ -1887,7 +1843,6 @@ strict_validate_runtime_inputs() {
     validate_mirror_list_urls "$XRAY_MIRRORS" "XRAY_MIRRORS" || return 1
     validate_mirror_list_urls "$MINISIGN_MIRRORS" "MINISIGN_MIRRORS" || return 1
 
-    # Validate download host allowlist format
     local host
     while read -r host; do
         host=$(trim_ws "${host,,}")
@@ -1898,7 +1853,6 @@ strict_validate_runtime_inputs() {
         fi
     done < <(split_list "$DOWNLOAD_HOST_ALLOWLIST")
 
-    # Validate optional user-provided network values
     if [[ -n "${SERVER_IP:-}" ]] && ! is_valid_ipv4 "$SERVER_IP"; then
         log ERROR "Некорректный SERVER_IP: ${SERVER_IP}"
         return 1
@@ -2243,7 +2197,6 @@ check_domain_alive() {
     local domain="$1"
     local timeout_sec="${DOMAIN_CHECK_TIMEOUT:-3}"
 
-    # Validate domain to prevent injection attacks
     if ! is_valid_domain "$domain"; then
         debug_file "Invalid domain rejected: $domain"
         return 1
@@ -2257,7 +2210,6 @@ check_domain_alive() {
         fi
         local port
         for port in "${ports[@]}"; do
-            # Safe: pass domain/port as positional args to avoid command injection
             # shellcheck disable=SC2016 # Single quotes intentional - args passed via $1/$2
             if timeout "$timeout_sec" bash -c 'echo | openssl s_client -connect "$1:$2" -servername "$1" 2>/dev/null' _ "$domain" "$port" | grep -q "CONNECTED"; then
                 return 0
@@ -2320,7 +2272,6 @@ filter_alive_domains() {
     local -a fallback_pids=()
     local fallback_wait_idx=0
 
-    # Launch checks with bounded parallelism to avoid process/network bursts.
     for i in "${!AVAILABLE_DOMAINS[@]}"; do
         domain="${AVAILABLE_DOMAINS[$i]}"
         (
@@ -2342,7 +2293,6 @@ filter_alive_domains() {
         fi
     done
 
-    # Wait for all checks to complete
     if [[ "$wait_n_supported" == "true" ]]; then
         while ((active > 0)); do
             wait -n 2> /dev/null || true
@@ -2355,7 +2305,6 @@ filter_alive_domains() {
         done
     fi
 
-    # Collect alive domains (preserve original order)
     local -a alive=()
     for i in "${!AVAILABLE_DOMAINS[@]}"; do
         if [[ -f "${tmp_dir}/${i}.ok" ]]; then
@@ -2389,9 +2338,7 @@ load_map_file() {
         key="${key//[[:space:]]/}"
         value="${value#"${value%%[![:space:]]*}"}"
         value="${value%"${value##*[![:space:]]}"}"
-        # Validate key: only allow safe chars (domain-like: alphanumeric, hyphen, dot)
         if [[ -n "$key" && "$key" =~ ^[a-zA-Z0-9._-]+$ ]]; then
-            # Fail-fast on unsafe values to avoid silently corrupted map entries.
             if [[ "$value" =~ [^-a-zA-Z0-9._\ ] ]]; then
                 log ERROR "Невалидное значение в map-файле ${file}:${line_no} (key=${key})"
                 invalid_value_found=true
@@ -2407,7 +2354,6 @@ load_map_file() {
     return 0
 }
 
-# ==================== FIREWALL/ROLLBACK MODULES ====================
 LIB_FIREWALL_MODULE="$MODULE_DIR/modules/lib/firewall.sh"
 if [[ ! -f "$LIB_FIREWALL_MODULE" && -n "${XRAY_DATA_DIR:-}" ]]; then
     LIB_FIREWALL_MODULE="$XRAY_DATA_DIR/modules/lib/firewall.sh"
@@ -2429,7 +2375,6 @@ if [[ ! -f "$LIB_LIFECYCLE_MODULE" ]]; then
 fi
 # shellcheck source=modules/lib/lifecycle.sh
 source "$LIB_LIFECYCLE_MODULE"
-# ==================== ROOT CHECK ====================
 require_root() {
     if [[ $EUID -ne 0 ]]; then
         log ERROR "Запустите скрипт с правами root:"
@@ -2438,7 +2383,6 @@ require_root() {
     fi
 }
 
-# ==================== MAIN EXECUTION ====================
 main() {
     parse_args "$@"
     if [[ -z "$XRAY_CONFIG_FILE" && "$ACTION" != "install" && -f "$XRAY_ENV" ]]; then

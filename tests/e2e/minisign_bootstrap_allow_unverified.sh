@@ -13,9 +13,7 @@ trap cleanup EXIT
 export TMPDIR="$WORK_ROOT/tmp"
 mkdir -p "$TMPDIR" "$WORK_ROOT/assets/bin" "$WORK_ROOT/bin"
 
-# Load project functions directly to test install_minisign bootstrap path.
 source ./lib.sh
-# Avoid global rollback trap from lib.sh in this isolated e2e harness.
 trap - EXIT
 trap cleanup EXIT
 source ./install.sh
@@ -32,13 +30,11 @@ DOWNLOAD_HOST_ALLOWLIST="fixture.test,github.com,ghproxy.com"
 MINISIGN_BIN="$WORK_ROOT/bin/minisign"
 
 cat > "$WORK_ROOT/assets/bin/minisign" << 'EOF'
-#!/usr/bin/env bash
 echo "stub-minisign"
 EOF
 chmod +x "$WORK_ROOT/assets/bin/minisign"
 tar -czf "$WORK_ROOT/minisign-linux-amd64.tar.gz" -C "$WORK_ROOT/assets" .
 
-# Force non-apt branch to exercise ALLOW_UNVERIFIED_MINISIGN_BOOTSTRAP path.
 apt-get() { return 1; }
 apt-cache() { return 1; }
 

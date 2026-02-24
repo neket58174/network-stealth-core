@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 # shellcheck shell=bash
-# firewall transaction and rollback helpers extracted from lib.sh
 
 GLOBAL_CONTRACT_MODULE="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/globals_contract.sh"
 if [[ ! -f "$GLOBAL_CONTRACT_MODULE" && -n "${XRAY_DATA_DIR:-}" ]]; then

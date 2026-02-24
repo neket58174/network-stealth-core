@@ -13,9 +13,7 @@ trap cleanup EXIT
 export TMPDIR="$WORK_ROOT/tmp"
 mkdir -p "$TMPDIR" "$WORK_ROOT/bin"
 
-# Load project functions directly to test install_xray failure-path behavior.
 source ./lib.sh
-# Avoid global rollback trap from lib.sh in this isolated e2e harness.
 trap - EXIT
 trap cleanup EXIT
 source ./install.sh
@@ -30,13 +28,11 @@ MINISIGN_MIRRORS=""
 DOWNLOAD_HOST_ALLOWLIST="example.test,github.com,ghproxy.com"
 
 cat > "$XRAY_BIN" << 'EOF'
-#!/usr/bin/env bash
 echo "old-binary"
 EOF
 chmod +x "$XRAY_BIN"
 old_sha="$(sha256sum "$XRAY_BIN" | awk '{print $1}')"
 
-# Mock downloader: force all mirrors to fail.
 download_file_allowlist() {
     return 1
 }

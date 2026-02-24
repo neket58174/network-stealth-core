@@ -60,9 +60,7 @@ generate_inbound_json() {
     local transport_mode="${12:-$TRANSPORT}"
     local transport_label="${13:-$grpc_service}"
 
-    # Support both JSON array and single string for serverNames
     if ! printf '%s\n' "$sni_json" | jq -e 'type == "array"' > /dev/null 2>&1; then
-        # Not valid JSON array — treat as single SNI string.
         sni_json=$(jq -cn --arg sni "$sni_json" '[$sni]')
     fi
     local primary_sni
@@ -207,7 +205,6 @@ setup_mux_settings() {
     fi
 }
 
-# ==================== CONFIG BUILDING v2 (MODULAR) ====================
 build_config() {
     log STEP "Собираем конфигурацию Xray (modular)..."
 
@@ -228,7 +225,6 @@ build_config() {
     setup_mux_settings
     check_xray_version_for_config_generation
 
-    # Validate array lengths before building config
     if [[ ${#PORTS[@]} -lt $NUM_CONFIGS ]]; then
         log ERROR "Массив портов (${#PORTS[@]}) меньше NUM_CONFIGS ($NUM_CONFIGS)"
         exit 1
@@ -285,7 +281,6 @@ build_config() {
 
     backup_file "$XRAY_CONFIG"
     local tmp_config
-    # Xray v26+ requires .json extension to detect config format
     tmp_config=$(create_temp_xray_config_file)
     jq -n \
         --argjson inbounds "$inbounds" \
@@ -334,7 +329,6 @@ build_config() {
     log OK "Конфигурация создана"
 }
 
-# ==================== CONFIG VALIDATION ====================
 xray_test_config_as_service_user() {
     local file="$1"
 
@@ -425,7 +419,6 @@ apply_validated_config() {
     return 0
 }
 
-# ==================== SAVE ENVIRONMENT ====================
 save_environment() {
     log STEP "Сохраняем окружение..."
 
@@ -500,7 +493,6 @@ save_environment() {
     log OK "Окружение сохранено в $XRAY_ENV"
 }
 
-# ==================== SAVE KEYS & CONFIGS ====================
 BOX60_TOP=""
 BOX60_SEP=""
 BOX60_BOT=""
@@ -514,16 +506,13 @@ box60_init() {
 
 box60_line() {
     local text="$1"
-    # Box width: 62 total, 58 inner text with 1-space padding on each side.
     local width=58
 
     box60_init
 
-    # Avoid breaking the box with newlines/control chars.
     text="${text//$'\n'/ }"
     text="${text//$'\r'/ }"
 
-    # Truncate overly long lines to keep borders aligned.
     if ((${#text} > width)); then
         text="${text:0:$((width - 3))}..."
     fi
@@ -779,7 +768,6 @@ save_client_configs() {
         fi
     done
 
-    # Server keys (private)
     backup_file "$keys_file"
     local tmp_keys
     tmp_keys=$(mktemp "${keys_file}.tmp.XXXXXX")

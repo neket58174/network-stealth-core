@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 # shellcheck shell=bash
-# distro/bootstrap helpers extracted from install.sh
 
 GLOBAL_CONTRACT_MODULE="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../lib" && pwd)/globals_contract.sh"
 if [[ ! -f "$GLOBAL_CONTRACT_MODULE" && -n "${XRAY_DATA_DIR:-}" ]]; then
@@ -13,7 +12,6 @@ fi
 # shellcheck source=modules/lib/globals_contract.sh
 source "$GLOBAL_CONTRACT_MODULE"
 
-# ==================== DISTRO DETECTION ====================
 detect_distro() {
     log STEP "Определяем операционную систему..."
 
@@ -90,7 +88,6 @@ detect_distro() {
     log INFO "Пакетный менеджер: ${PKG_MANAGER}"
 }
 
-# ==================== DISK SPACE CHECK ====================
 check_disk_space() {
     log STEP "Проверяем свободное место на диске..."
 
@@ -111,7 +108,6 @@ check_disk_space() {
     log OK "Свободного места достаточно"
 }
 
-# ==================== DEPENDENCIES ====================
 install_dependencies() {
     log STEP "Проверяем зависимости..."
 
@@ -156,7 +152,6 @@ install_dependencies() {
 install_self() {
     log STEP "Устанавливаем скрипт управления..."
 
-    # Always copy data files from SCRIPT_DIR (works even from curl pipe)
     if [[ -n "$XRAY_DATA_DIR" ]]; then
         mkdir -p "$XRAY_DATA_DIR"
         if [[ -d "$SCRIPT_DIR/modules" ]]; then
@@ -200,12 +195,10 @@ install_self() {
         log OK "Данные установлены в $XRAY_DATA_DIR"
     fi
 
-    # Copy the main script (may fail when running from curl pipe)
     local src
     src=$(readlink -f "$0" 2> /dev/null || realpath "$0" 2> /dev/null || echo "$0")
     if [[ ! -f "$src" ]]; then
         log WARN "Не удалось определить путь скрипта (curl pipe); используйте $XRAY_DATA_DIR/xray-reality.sh"
-        # Copy wrapper from SCRIPT_DIR if available
         if [[ -f "$SCRIPT_DIR/xray-reality.sh" ]]; then
             backup_file "$XRAY_SCRIPT_PATH"
             local tmp
@@ -266,7 +259,6 @@ setup_auto_update() {
         return 0
     fi
 
-    # Validate systemd timer values (reject newlines/control chars that could inject directives)
     if [[ "$AUTO_UPDATE_ONCALENDAR" == *$'\n'* ]] || [[ "$AUTO_UPDATE_ONCALENDAR" =~ [[:cntrl:]] ]]; then
         log ERROR "AUTO_UPDATE_ONCALENDAR содержит недопустимые символы"
         return 1
@@ -282,12 +274,10 @@ setup_auto_update() {
         return 1
     fi
 
-    # Write update script atomically: heredoc (no expansion) + exec line (with expansion)
     backup_file "$XRAY_UPDATE_SCRIPT"
     {
         # shellcheck disable=SC2016 # Intentional: vars expand at runtime, not build time
         cat << 'UPDATEEOF'
-#!/usr/bin/env bash
 set -euo pipefail
 
 XRAY_BIN_PATH="${XRAY_BIN_PATH:-}"
@@ -304,7 +294,6 @@ GEO_VERIFY_STRICT="${GEO_VERIFY_STRICT:-false}"
 
 mkdir -p "$GEO_DIR"
 
-# Download and verify geo file with SHA256
 download_geo_with_verify() {
     local name="$1"
     local url="$2"
@@ -342,7 +331,6 @@ download_geo_with_verify() {
             fi
             echo "WARN: Failed to download $name checksum, skipping verification" >&2
         else
-            # Extract expected hash (format: "hash  filename" or just "hash")
             local expected_hash
             expected_hash=$(sed -n '1{s/[[:space:]].*$//;p;}' "$tmp_sha")
             local actual_hash
@@ -359,7 +347,6 @@ download_geo_with_verify() {
         fi
     fi
 
-    # Move to final destination
     mv -f "$tmp_file" "$dest"
     chmod 644 "$dest"
     rm -f "$tmp_sha"
@@ -376,11 +363,9 @@ else
     download_geo_with_verify "geosite.dat" "$GEOSITE_URL" "$GEOSITE_SHA256_URL" || true
 fi
 UPDATEEOF
-        # Render exec command with shell-escaped path to avoid command injection.
         printf 'exec %q update --non-interactive\n' "$XRAY_SCRIPT_PATH"
     } | atomic_write "$XRAY_UPDATE_SCRIPT" 0755
 
-    # Validate systemd path values
     local _safe_update_script
     _safe_update_script=$(realpath -m "$XRAY_UPDATE_SCRIPT" 2> /dev/null || echo "$XRAY_UPDATE_SCRIPT")
 
@@ -428,5 +413,3 @@ EOF
         log INFO "Авто-обновления отключены"
     fi
 }
-
-# ==================== SYSTEM OPTIMIZATION ====================

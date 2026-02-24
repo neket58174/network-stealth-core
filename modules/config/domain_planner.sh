@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 # shellcheck shell=bash
-# domain planning and key generation helpers extracted from config.sh
 
 GLOBAL_CONTRACT_MODULE="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../lib" && pwd)/globals_contract.sh"
 if [[ ! -f "$GLOBAL_CONTRACT_MODULE" && -n "${XRAY_DATA_DIR:-}" ]]; then
@@ -13,7 +12,6 @@ fi
 # shellcheck source=modules/lib/globals_contract.sh
 source "$GLOBAL_CONTRACT_MODULE"
 
-# ==================== DOMAIN CONFIGURATION v2 ====================
 setup_domains() {
     log STEP "Настраиваем домены (Spider Mode v2)..."
 
@@ -379,11 +377,9 @@ build_domain_plan() {
     return 0
 }
 
-# ==================== DETECT REALITY DEST PORT ====================
 detect_reality_dest() {
     local domain="$1"
 
-    # Validate domain to prevent injection attacks
     if ! is_valid_domain "$domain"; then
         debug_file "Invalid domain rejected in detect_reality_dest: $domain"
         echo "443"
@@ -411,7 +407,6 @@ detect_reality_dest() {
 
     local port
     for port in "${tested_ports[@]}"; do
-        # Safe: pass domain/port as positional args to avoid command injection
         # shellcheck disable=SC2016 # Single quotes intentional - args passed via $1/$2
         if timeout 2 bash -c 'echo | openssl s_client -brief -connect "$1:$2" -servername "$1" 2>&1' _ "$domain" "$port" | grep -Eq 'CONNECTED|CONNECTION ESTABLISHED'; then
             echo "$port"
@@ -419,20 +414,16 @@ detect_reality_dest() {
         fi
     done
 
-    # Fallback to 443
     echo "443"
 }
 
-# ==================== PORT ALLOCATION ====================
 is_port_safe() {
     local port="$1"
-    # Skip well-known service ports
     local -a skip_ports=(22 80 8080 3306 5432 6379 27017)
     local p
     for p in "${skip_ports[@]}"; do
         [[ $port -eq $p ]] && return 1
     done
-    # Skip Linux ephemeral port range (32768-60999) to avoid conflicts
     if ((port >= 32768 && port <= 60999)); then
         return 1
     fi
@@ -458,7 +449,6 @@ find_free_port() {
 
     while ((attempts < max_attempts)); do
         if is_port_safe "$port" && ! port_is_listening "$port"; then
-            # Check if port is in excluded list
             if [[ " $excluded " != *" $port "* ]]; then
                 echo "$port"
                 return 0
@@ -492,7 +482,6 @@ allocate_ports() {
     local all_allocated=""
 
     for ((i = 0; i < NUM_CONFIGS; i++)); do
-        # Find free IPv4 port
         local port
         port=$(find_free_port "$current_port" "$all_allocated") || {
             log ERROR "Нет доступных портов для IPv4"
@@ -503,10 +492,8 @@ allocate_ports() {
         all_allocated="$all_allocated $port"
         current_port=$((port + 1))
 
-        # IPv6 gets separate port in safe range (10000-30000 or 61000-65535)
         if [[ "$HAS_IPV6" == true && "$ipv6_disabled" == false ]]; then
             local v6_start
-            # Use 61000+ range to avoid ephemeral ports
             if ((port < 4535)); then
                 v6_start=$((port + 61000))
                 if ((v6_start > 65535)); then
@@ -578,7 +565,6 @@ count_listening_ports() {
     printf '%s %s\n' "$listening" "$expected"
 }
 
-# ==================== KEY GENERATION ====================
 generate_short_id() {
     local sid_bytes
     sid_bytes=$(rand_between "$SHORT_ID_BYTES_MIN" "$SHORT_ID_BYTES_MAX")
@@ -609,9 +595,6 @@ generate_uuid() {
         hex=$(openssl rand -hex 16 2> /dev/null || true)
         if [[ "$hex" =~ ^[0-9a-fA-F]{32}$ ]]; then
             hex="${hex,,}"
-            # Enforce RFC 4122 UUIDv4 bits:
-            # - version nibble (byte 7 high nibble) must be 4
-            # - variant bits (byte 9 high bits) must be 10xx
             local time_hi clock_seq clock_seq_hi
             time_hi="4${hex:13:3}"
             clock_seq="${hex:16:4}"
@@ -798,7 +781,6 @@ generate_keys() {
         PRIVATE_KEYS+=("$priv")
         PUBLIC_KEYS+=("$pub")
 
-        # Generate UUID (uuidgen -> /proc fallback -> openssl fallback)
         local uuid
         uuid=$(generate_uuid) || {
             log ERROR "Не удалось сгенерировать UUID"
@@ -806,7 +788,6 @@ generate_keys() {
         }
         UUIDS+=("$uuid")
 
-        # Криптостойкий ShortID (минимум 8 байт).
         SHORT_IDS+=("$(generate_short_id)")
 
         progress_bar $((i + 1)) "$NUM_CONFIGS"
@@ -815,7 +796,6 @@ generate_keys() {
     log OK "Ключи сгенерированы"
 }
 
-# ==================== CONFIG HELPERS ====================
 PROFILE_SNI=""
 PROFILE_SNI_JSON='[]'
 PROFILE_GRPC=""

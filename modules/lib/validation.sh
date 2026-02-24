@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 # shellcheck shell=bash
-# validation helpers extracted from lib.sh
 
 trim_ws() {
     local value="$1"
@@ -20,7 +19,6 @@ is_valid_ipv4() {
     local octet
     for octet in "${octets[@]}"; do
         [[ ! "$octet" =~ ^[0-9]+$ ]] && return 1
-        # Reject leading zeros to prevent octal interpretation (e.g., 010 = 8)
         [[ ${#octet} -gt 1 && "$octet" == 0* ]] && return 1
         if ((10#$octet > 255)); then
             return 1
@@ -36,7 +34,6 @@ is_valid_ipv6() {
     local group
 
     [[ -n "$ip" ]] || return 1
-    # Strip zone ID (e.g., fe80::1%eth0) before validation.
     ip="${ip%%%*}"
     [[ -n "$ip" ]] || return 1
     [[ "$ip" == *:* ]] || return 1
@@ -80,23 +77,15 @@ is_valid_ipv6() {
     return 0
 }
 
-# Validate domain name - prevents command injection
-# Only allows: letters, digits, hyphens, dots (standard DNS chars)
 is_valid_domain() {
     local domain="$1"
     [[ -z "$domain" ]] && return 1
-    # Max 253 chars total
     [[ ${#domain} -gt 253 ]] && return 1
-    # Only alphanumeric, hyphen, dot allowed
     [[ ! "$domain" =~ ^[a-zA-Z0-9.-]+$ ]] && return 1
-    # Cannot start/end with dot or hyphen
     [[ "$domain" =~ ^[.-] ]] && return 1
     [[ "$domain" =~ [.-]$ ]] && return 1
-    # No consecutive dots
     [[ "$domain" =~ \.\. ]] && return 1
-    # Must have at least one dot (TLD required)
     [[ ! "$domain" =~ \. ]] && return 1
-    # Each label: max 63 chars, cannot start/end with hyphen (RFC 1035)
     local IFS='.'
     local -a labels
     read -r -a labels <<< "$domain"
@@ -104,17 +93,14 @@ is_valid_domain() {
     for label in "${labels[@]}"; do
         [[ -z "$label" ]] && return 1
         [[ ${#label} -gt 63 ]] && return 1
-        # Label cannot start or end with hyphen
         [[ "$label" == -* || "$label" == *- ]] && return 1
     done
     return 0
 }
 
-# Validate port number
 is_valid_port() {
     local port="$1"
     [[ ! "$port" =~ ^[0-9]+$ ]] && return 1
-    # Prevent arithmetic overflow on very large numbers
     [[ ${#port} -gt 5 ]] && return 1
     [[ "$port" -lt 1 || "$port" -gt 65535 ]] && return 1
     return 0
@@ -177,7 +163,6 @@ version_lt() {
         fi
     done
 
-    # Pre-release is lower than stable release with the same numeric core.
     if [[ -n "$a_suffix" && -z "$b_suffix" ]]; then
         return 0
     fi

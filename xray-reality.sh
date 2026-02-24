@@ -172,9 +172,6 @@ resolve_ref_commit() {
         return 0
     fi
 
-    # Prefer concrete refs in deterministic order:
-    # branch -> peeled tag commit -> lightweight tag commit.
-    # This avoids resolving an annotated tag object hash, which causes pin mismatch.
     local -a candidates=()
     if [[ "$ref" == refs/* ]]; then
         candidates=("$ref")
@@ -219,7 +216,6 @@ resolve_latest_release_tag() {
     if command -v sort > /dev/null 2>&1 && printf '1\n2\n' | sort -V > /dev/null 2>&1; then
         printf '%s\n' "$tags" | sort -V | tail -n 1
     else
-        # Portable semver ordering for systems where sort -V is unavailable.
         printf '%s\n' "$tags" |
             awk -F'[v.]' '{printf "%010d %010d %010d %s\n", $2, $3, $4, $0}' |
             sort |
@@ -236,7 +232,6 @@ is_commit_ref() {
 parse_wrapper_args "$@"
 BOOTSTRAP_DEFAULT_REF=$(normalize_bootstrap_default_ref "$BOOTSTRAP_DEFAULT_REF")
 
-# Find lib.sh: local dir -> installed dir -> clone repo
 LIB_PATH=""
 for dir in "$SCRIPT_DIR" "$XRAY_DATA_DIR"; do
     if [[ -n "$dir" && -f "$dir/lib.sh" ]]; then
@@ -245,8 +240,6 @@ for dir in "$SCRIPT_DIR" "$XRAY_DATA_DIR"; do
     fi
 done
 
-# If lib.sh not found, we're running from curl pipe - clone the repo
-# Also re-clone if install command is given (ensure fresh code)
 if [[ -z "$LIB_PATH" ]] || { [[ -z "$SCRIPT_DIR" || ! -f "$SCRIPT_DIR/config.sh" ]] && has_forwarded_arg "install"; }; then
     echo "Downloading Xray Reality Ultimate..."
     require_safe_repo_url "$REPO_URL"
@@ -277,7 +270,6 @@ if [[ -z "$LIB_PATH" ]] || { [[ -z "$SCRIPT_DIR" || ! -f "$SCRIPT_DIR/config.sh"
     fi
 
     if [[ -z "$REPO_COMMIT" ]] && is_commit_ref "$REPO_REF"; then
-        # Commit-like refs should always be treated as explicit pin.
         REPO_COMMIT="${REPO_REF,,}"
     fi
 
@@ -332,7 +324,6 @@ if [[ ! -f "$LIB_PATH" ]]; then
     exit 1
 fi
 
-# Validate all critical module files exist
 _MISSING_MODULES=()
 for _MOD in install.sh config.sh service.sh health.sh; do
     if [[ ! -f "$SCRIPT_DIR/$_MOD" ]] && [[ ! -f "${XRAY_DATA_DIR:-/usr/local/share/xray-reality}/$_MOD" ]]; then

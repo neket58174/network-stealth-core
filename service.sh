@@ -16,7 +16,6 @@ sanitize_systemd_value() {
     local out_name="$1"
     local value="${2:-}"
     local sanitized
-    # Strip all control chars (including \r, \n, tabs) before writing unit files.
     sanitized=$(printf '%s' "$value" | tr -d '\000-\037\177')
     printf -v "$out_name" '%s' "$sanitized"
 }
@@ -60,7 +59,6 @@ is_nonfatal_systemctl_error() {
     esac
 }
 
-# ==================== SYSTEMD SERVICE ====================
 create_systemd_service() {
     log STEP "Создаём systemd сервис..."
 
@@ -85,7 +83,6 @@ create_systemd_service() {
         fi
     fi
 
-    # Sanitize values for systemd unit (strip control chars to prevent directive injection).
     local _sd_user _sd_group _sd_logs _sd_bin _sd_config
     sanitize_systemd_value_into _sd_user "$XRAY_USER"
     sanitize_systemd_value_into _sd_group "$XRAY_GROUP"
@@ -220,7 +217,6 @@ EOF
     fi
 }
 
-# ==================== FIREWALL CONFIGURATION ====================
 configure_firewall() {
     log STEP "Настраиваем файрвол..."
 
@@ -252,7 +248,6 @@ configure_firewall() {
     esac
 }
 
-# ==================== START SERVICES ====================
 start_services() {
     log STEP "Запускаем Xray..."
 
@@ -265,7 +260,6 @@ start_services() {
         return 0
     fi
 
-    # Use restart to ensure updated unit/config is applied even if service already exists.
     local restart_err=""
     local restart_rc=0
     restart_err=$(systemctl restart xray 2>&1) || restart_rc=$?
@@ -281,7 +275,6 @@ start_services() {
         return 1
     fi
 
-    # Wait for xray to become active (up to 10s)
     local wait_count=0
     while ((wait_count < 10)); do
         if systemctl is-active --quiet xray; then
@@ -320,7 +313,6 @@ start_services() {
     log OK "Xray запущен"
 }
 
-# ==================== MAINTENANCE ACTIONS ====================
 update_xray() {
     log STEP "Обновляем Xray-core..."
     local artifact
@@ -408,7 +400,6 @@ rollback_from_session() {
         safe_restore_prefixes+=("$resolved_candidate")
     done
 
-    # Resolve session_dir to prevent symlink attacks
     local resolved_session
     resolved_session=$(realpath "$session_dir" 2> /dev/null) || resolved_session="$session_dir"
     local resolved_backup
@@ -433,7 +424,6 @@ rollback_from_session() {
             local rel="${file#./}"
             local dest="/${rel}"
 
-            # Resolve dest to prevent path traversal via symlinks
             local resolved_dest
             resolved_dest=$(realpath -m "$dest" 2> /dev/null) || resolved_dest="$dest"
             if [[ "$resolved_dest" == *".."* ]]; then
@@ -493,7 +483,6 @@ uninstall_is_allowed_file_path() {
     resolved_file=$(realpath -m "$file" 2> /dev/null || echo "$file")
     [[ "$resolved_file" == /* ]] || return 1
 
-    # Static allowlist for known non-runtime artifacts.
     case "$resolved_file" in
         /etc/systemd/system/xray.service | /etc/systemd/system/xray-health.service | /etc/systemd/system/xray-health.timer | /etc/systemd/system/xray-auto-update.service | /etc/systemd/system/xray-auto-update.timer | /etc/systemd/system/xray-diagnose@.service | /usr/lib/systemd/system/xray.service | /usr/lib/systemd/system/xray-health.service | /usr/lib/systemd/system/xray-health.timer | /usr/lib/systemd/system/xray-auto-update.service | /usr/lib/systemd/system/xray-auto-update.timer | /usr/lib/systemd/system/xray-diagnose@.service | /lib/systemd/system/xray.service | /lib/systemd/system/xray-health.service | /lib/systemd/system/xray-health.timer | /lib/systemd/system/xray-auto-update.service | /lib/systemd/system/xray-auto-update.timer | /lib/systemd/system/xray-diagnose@.service | /usr/local/bin/xray-health.sh | /etc/cron.d/xray-health | /etc/logrotate.d/xray | /etc/sysctl.d/99-xray.conf | /etc/security/limits.d/99-xray.conf | /var/log/xray-install.log | /var/log/xray-update.log | /var/log/xray-diagnose.log | /var/log/xray-repair.log | /var/log/xray-health.log | /var/log/xray.log)
             return 0
@@ -501,7 +490,6 @@ uninstall_is_allowed_file_path() {
         *) ;;
     esac
 
-    # Runtime files are allowed only when they match expected Xray-managed basenames.
     for candidate in "$XRAY_BIN" "$XRAY_SCRIPT_PATH" "$XRAY_UPDATE_SCRIPT" "$INSTALL_LOG" "$UPDATE_LOG" "$DIAG_LOG" "$HEALTH_LOG"; do
         [[ -n "$candidate" ]] || continue
         resolved_candidate=$(realpath -m "$candidate" 2> /dev/null || echo "$candidate")
@@ -516,7 +504,6 @@ uninstall_is_allowed_file_path() {
         fi
     done
 
-    # Geo-data cleanup: restrict to known geo directories and exact filenames.
     basename_file=$(basename "$resolved_file")
     case "$basename_file" in
         geoip.dat | geosite.dat)
@@ -550,7 +537,6 @@ uninstall_remove_dir() {
 }
 
 uninstall_close_ports() {
-    # Read ports from existing config before deleting it
     local -a ports_to_close=()
     if [[ -f "$XRAY_CONFIG" ]] && command -v jq > /dev/null 2>&1; then
         mapfile -t ports_to_close < <(jq -r '.inbounds[].port // empty' "$XRAY_CONFIG" 2> /dev/null | sort -u)
@@ -631,7 +617,6 @@ uninstall_all() {
     echo ""
     set +e
 
-    # 1. Stop services
     log STEP "Останавливаем сервисы..."
     local -a services=(xray xray-health.service xray-health.timer xray-auto-update.service xray-auto-update.timer)
     for svc in "${services[@]}"; do
@@ -642,11 +627,9 @@ uninstall_all() {
         systemctl disable "$svc" 2> /dev/null || true
     done
 
-    # 2. Close firewall ports (before config is deleted)
     log STEP "Закрываем порты в файрволе..."
     uninstall_close_ports
 
-    # 3. Remove systemd unit files
     log STEP "Удаляем systemd-сервисы..."
     uninstall_remove_file /etc/systemd/system/xray.service
     uninstall_remove_file /etc/systemd/system/xray-health.service
@@ -655,7 +638,6 @@ uninstall_all() {
     uninstall_remove_file /etc/systemd/system/xray-auto-update.timer
     uninstall_remove_file /etc/systemd/system/xray-diagnose@.service
 
-    # 4. Remove binaries and scripts
     log STEP "Удаляем бинарники и скрипты..."
     uninstall_remove_file "$XRAY_BIN"
     uninstall_remove_file "$XRAY_SCRIPT_PATH"
@@ -678,13 +660,11 @@ uninstall_all() {
         uninstall_remove_file "${geo_dir}/geosite.dat"
     done
 
-    # 5. Remove configs, keys, data
     log STEP "Удаляем конфигурации и данные..."
     uninstall_remove_dir /etc/xray
     uninstall_remove_dir /etc/xray-reality
     uninstall_remove_dir "$XRAY_DATA_DIR"
 
-    # 6. Remove logs and backups
     log STEP "Удаляем логи и бэкапы..."
     uninstall_remove_dir "$XRAY_LOGS"
     uninstall_remove_dir "$XRAY_BACKUP"
@@ -693,18 +673,15 @@ uninstall_all() {
     uninstall_remove_file "$DIAG_LOG"
     uninstall_remove_file "$HEALTH_LOG"
 
-    # 7. Remove cron, logrotate
     log STEP "Удаляем cron и logrotate..."
     uninstall_remove_file /etc/cron.d/xray-health
     uninstall_remove_file /etc/logrotate.d/xray
 
-    # 8. Remove system optimizations
     log STEP "Удаляем системные оптимизации..."
     uninstall_remove_file /etc/sysctl.d/99-xray.conf
     uninstall_remove_file /etc/security/limits.d/99-xray.conf
     sysctl --system > /dev/null 2>&1 || true
 
-    # 9. Remove user and group
     log STEP "Удаляем пользователя и группу..."
     if id "$XRAY_USER" > /dev/null 2>&1; then
         userdel -r "$XRAY_USER" 2> /dev/null || userdel "$XRAY_USER" 2> /dev/null || true
@@ -716,7 +693,6 @@ uninstall_all() {
     fi
     uninstall_remove_dir "$XRAY_HOME"
 
-    # 10. Reload systemd
     systemctl daemon-reload 2> /dev/null || true
     echo -e "  ${GREEN}✅ systemctl daemon-reload${NC}"
 
@@ -730,8 +706,6 @@ uninstall_all() {
 }
 
 uninstall_has_managed_artifacts() {
-    # Detect core managed state only (service units, runtime files, config/data, account).
-    # We intentionally ignore log files here so repeated uninstall stays idempotent.
     local candidate
     local -a core_paths=(
         "/etc/systemd/system/xray.service"
@@ -768,7 +742,6 @@ uninstall_has_managed_artifacts() {
     return 1
 }
 
-# ==================== STATUS COMMAND ====================
 status_flow() {
     echo ""
     echo -e "${BOLD}${CYAN}$(ui_box_border_string top 60)${NC}"
@@ -776,7 +749,6 @@ status_flow() {
     echo -e "${BOLD}${CYAN}$(ui_box_border_string bottom 60)${NC}"
     echo ""
 
-    # Xray status
     echo -e "${BOLD}Xray:${NC}"
     if systemctl is-active --quiet xray 2> /dev/null; then
         local xray_uptime
@@ -793,7 +765,6 @@ status_flow() {
     fi
     echo ""
 
-    # Configuration
     if [[ -f "$XRAY_CONFIG" ]]; then
         echo -e "${BOLD}Конфигурация:${NC}"
         local num_inbounds
@@ -820,7 +791,6 @@ status_flow() {
         echo ""
     fi
 
-    # Server IPs
     echo -e "${BOLD}Сервер:${NC}"
     local server_ip="${SERVER_IP:-}"
     [[ -n "$server_ip" ]] || server_ip="недоступен (не задан в config.env)"
@@ -830,7 +800,6 @@ status_flow() {
     echo -e "  IPv6: ${server_ip6}"
     echo ""
 
-    # Client configs
     if [[ -d "$XRAY_KEYS" ]]; then
         echo -e "${BOLD}Клиентские конфиги:${NC}"
         echo -e "  ${XRAY_KEYS}/clients.txt"
@@ -840,12 +809,10 @@ status_flow() {
     fi
     echo ""
 
-    # Verbose details
     if [[ "$VERBOSE" == "true" ]]; then
         echo -e "${BOLD}${CYAN}$(ui_section_title_string "Подробная информация")${NC}"
         echo ""
 
-        # Per-config details
         if [[ -f "$XRAY_CONFIG" ]]; then
             echo -e "${BOLD}Детали конфигураций:${NC}"
             local i=0
@@ -887,7 +854,6 @@ status_flow() {
             ' "$XRAY_CONFIG" 2> /dev/null)
         fi
 
-        # Health monitoring status
         echo -e "${BOLD}Мониторинг:${NC}"
         if systemctl is-active --quiet xray-health.timer 2> /dev/null; then
             echo -e "  Health Timer: ${GREEN}активен${NC}"
@@ -898,7 +864,6 @@ status_flow() {
             echo -e "  Health Timer: ${RED}не активен${NC}"
         fi
 
-        # Health log last entries
         if [[ -f "$HEALTH_LOG" ]]; then
             local last_health
             last_health=$(tail -3 "$HEALTH_LOG" 2> /dev/null || echo "нет данных")
@@ -907,7 +872,6 @@ status_flow() {
         fi
         echo ""
 
-        # Auto-update status
         echo -e "${BOLD}Авто-обновления:${NC}"
         if systemctl is-active --quiet xray-auto-update.timer 2> /dev/null; then
             echo -e "  Статус: ${GREEN}включены${NC}"
@@ -919,7 +883,6 @@ status_flow() {
         fi
         echo ""
 
-        # System resources
         echo -e "${BOLD}Ресурсы системы:${NC}"
         local mem_info
         mem_info=$(free -m 2> /dev/null | awk 'NR==2{printf "  Память: %sMB / %sMB (%.1f%%)", $3, $2, $3*100/$2}' || true)
@@ -943,7 +906,6 @@ status_flow() {
     fi
 }
 
-# ==================== LOGS COMMAND ====================
 logs_flow() {
     local target="${LOGS_TARGET:-all}"
     local lines=50
@@ -982,7 +944,6 @@ logs_flow() {
     echo ""
 }
 
-# ==================== CHECK UPDATE COMMAND ====================
 check_update_flow() {
     echo ""
     echo -e "${BOLD}Проверка обновлений...${NC}"

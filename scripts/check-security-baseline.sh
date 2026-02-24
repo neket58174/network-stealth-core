@@ -95,7 +95,6 @@ check_present_fixed() {
 
 build_scope
 
-# known high-risk patterns
 check_absent_fixed 'mktemp -u' 'race-prone tempfile creation' \
     "${SHELL_SCOPE[@]}"
 check_absent 'DEBIAN_FRONTEND=noninteractive apt-get install' 'broken env assignment in package command' \
@@ -103,18 +102,15 @@ check_absent 'DEBIAN_FRONTEND=noninteractive apt-get install' 'broken env assign
 check_absent 'trap -p' 'fragile trap parsing' \
     "${SHELL_SCOPE[@]}"
 
-# no curl pipe shell in trusted pipeline scripts/workflows
 check_absent 'curl[^\n]*\|[[:space:]]*(sudo[[:space:]]+)?(sh|bash)\b' 'curl pipe shell' \
     "${WORKFLOW_SCOPE[@]}" "${SHELL_SCOPE[@]}"
 
-# hard requirements from closed incidents
 check_present_fixed "atomic_write \"\$XRAY_ENV\" 0600" 'env file permissions' config.sh
 check_present_fixed 'curl_fetch_text_allowlist "https://api.github.com/repos/XTLS/Xray-core/releases/latest"' 'allowlist update check' service.sh
 check_present_fixed 'sanitize_systemd_value' 'systemd unit sanitization helper' service.sh
 check_present_fixed "mapfile -t ports < <(tr ',[:space:]' '\\n' <<< \"\$REALITY_TEST_PORTS\" | awk 'NF')" 'health ports parser without split_list dependency' health.sh
 check_present_fixed "proto-redir '=https'" 'https-only redirects in curl flows' lib.sh
 
-# export schema validations must be enforced, not best-effort.
 while IFS=: read -r _file _line code; do
     if [[ "$code" == *"|| return 1"* ]]; then
         continue

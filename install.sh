@@ -28,7 +28,6 @@ optimize_system() {
 
     backup_file /etc/sysctl.d/99-xray.conf
     atomic_write /etc/sysctl.d/99-xray.conf 0644 << 'EOF'
-# Xray Reality Ultimate - Performance Tuning
 net.core.default_qdisc = fq
 net.ipv4.tcp_congestion_control = bbr
 net.ipv4.tcp_fastopen = 3
@@ -65,18 +64,15 @@ EOF
     log OK "BBR и оптимизации применены"
 }
 
-# ==================== USER CREATION ====================
 create_users() {
     log STEP "Создаём непривилегированных пользователей..."
 
-    # Ensure groups exist
     if ! getent group "$XRAY_GROUP" > /dev/null 2>&1; then
         groupadd -r "$XRAY_GROUP"
         log OK "Группа ${XRAY_GROUP} создана"
     else
         log INFO "Группа ${XRAY_GROUP} уже существует"
     fi
-    # Xray use
     if ! id "$XRAY_USER" > /dev/null 2>&1; then
         useradd -r -g "$XRAY_GROUP" -s /usr/sbin/nologin -d "$XRAY_HOME" -m "$XRAY_USER"
         log OK "Пользователь ${XRAY_USER} создан"
@@ -92,7 +88,6 @@ create_users() {
     chown "root:${XRAY_GROUP}" /etc/xray/private
 }
 
-# ==================== MINISIGN INSTALLATION ====================
 install_minisign() {
     log STEP "Устанавливаем minisign для проверки подписей..."
     local minisign_bin="${MINISIGN_BIN:-/usr/local/bin/minisign}"
@@ -204,7 +199,6 @@ install_minisign() {
     fi
 }
 
-# ==================== XRAY INSTALLATION WITH MINISIGN ====================
 install_xray() {
     log STEP "Устанавливаем Xray-core с криптографической проверкой..."
 
@@ -231,7 +225,6 @@ install_xray() {
             ;;
     esac
 
-    # Get latest version
     local version
     version="$(trim_ws "${XRAY_VERSION:-}")"
     if [[ "${version,,}" == "latest" ]]; then
@@ -254,7 +247,6 @@ install_xray() {
         return 1
     fi
 
-    # Validate version format (semver: X.Y.Z or X.Y.Z-suffix)
     if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9._-]+)?$ ]]; then
         log ERROR "Неверный формат версии Xray: $version"
         return 1
@@ -262,7 +254,6 @@ install_xray() {
 
     log INFO "Версия Xray: ${BOLD}${version}${NC}"
 
-    # Use system temp directory (respects TMPDIR, defaults to /tmp)
     local tmp_base="${TMPDIR:-/tmp}"
     tmp_workdir=$(mktemp -d "${tmp_base}/xray-${version}.XXXXXX") || {
         log ERROR "Не удалось создать временную директорию для загрузки Xray"
@@ -342,10 +333,6 @@ install_xray() {
 
     log OK "✓ SHA256 проверка пройдена"
 
-    # Minisign verification (best-effort).
-    #
-    # NOTE: upstream releases may not ship *.minisig assets. In that case we fall back to SHA256-only
-    # with a warning (SHA256 is still verified against the official .dgst file).
     if [[ "$SKIP_MINISIGN" == true ]]; then
         log INFO "Minisign недоступен; продолжаем только с SHA256"
     else
@@ -381,7 +368,6 @@ install_xray() {
                 sig_err_file="/dev/null"
             fi
             if download_file_allowlist "${base}/Xray-linux-${arch}.zip.minisig" "$sig_file" "Скачиваем minisign подпись..." 2> "$sig_err_file"; then
-                # Some proxies return HTML (200 OK) for missing files; validate minisign format.
                 if ! is_minisig_file "$sig_file"; then
                     log INFO "Источник minisign подписи вернул невалидный формат, пропускаем: $base"
                     debug_file "invalid minisig payload from ${base}"
@@ -415,7 +401,6 @@ install_xray() {
             if [[ -n "${MINISIGN_BIN:-}" && -x "${MINISIGN_BIN}" ]]; then
                 minisign_cmd="${MINISIGN_BIN}"
             fi
-            # XTLS public key (hardcoded for security)
             atomic_write "$MINISIGN_KEY" 0644 << 'MINISIG_KEY'
 untrusted comment: Xray-core public key
 RWQklF4zzcXy3MfHKvEqD1nwJ7rX0kGmKeJFgRsJBMHkPJPjZ2fxJhfU
@@ -436,7 +421,6 @@ MINISIG_KEY
         fi
     fi
 
-    # Extract and install (use secure temp directory)
     temp_dir=$(mktemp -d "${tmp_base}/xray-install.XXXXXX") || {
         log ERROR "Не удалось создать временную директорию"
         return 1
@@ -484,11 +468,9 @@ MINISIG_KEY
     return 0
 }
 
-# ==================== IP DETECTION ====================
 detect_ips() {
     log STEP "Определяем IP-адреса сервера..."
 
-    # IPv4
     if [[ -z "${SERVER_IP:-}" ]]; then
         SERVER_IP=$(fetch_ip 4 || true)
     else
@@ -499,7 +481,6 @@ detect_ips() {
         exit 1
     fi
 
-    # Validate provided SERVER_IP
     if ! is_valid_ipv4 "$SERVER_IP"; then
         log ERROR "Некорректный IPv4 адрес: $SERVER_IP"
         log INFO "Подсказка: используйте формат X.X.X.X (например: 185.100.50.25)"
@@ -508,7 +489,6 @@ detect_ips() {
 
     log OK "IPv4: ${BOLD}${SERVER_IP}${NC}"
 
-    # IPv6
     if [[ -z "${SERVER_IP6:-}" ]]; then
         SERVER_IP6=$(fetch_ip 6 || true)
     else
@@ -533,7 +513,6 @@ detect_ips() {
     echo ""
 }
 
-# ==================== AUTO CONFIGURE ====================
 auto_configure() {
     SPIDER_MODE=$(parse_bool "$SPIDER_MODE" true)
     validate_install_config
@@ -552,7 +531,6 @@ auto_profile_default_num_configs() {
     esac
 }
 
-# ==================== INTERACTIVE PROMPT ====================
 ask_domain_profile() {
     local has_tty=false
     if [[ -t 0 || -t 1 || -t 2 ]]; then
@@ -560,7 +538,6 @@ ask_domain_profile() {
     fi
     AUTO_PROFILE_MODE=false
 
-    # Skip when reusing an existing config.
     if [[ "$REUSE_EXISTING_CONFIG" == true ]]; then
         local requested_profile="${XRAY_DOMAIN_PROFILE:-${XRAY_DOMAIN_TIER:-}}"
         if [[ -n "$requested_profile" ]]; then
@@ -580,7 +557,6 @@ ask_domain_profile() {
         return 0
     fi
 
-    # Respect explicit user-provided profile/tier.
     if [[ -n "${XRAY_DOMAIN_PROFILE:-}" ]] || [[ -n "${XRAY_DOMAIN_TIER:-}" ]]; then
         local explicit_profile="${XRAY_DOMAIN_PROFILE:-${XRAY_DOMAIN_TIER:-$DOMAIN_TIER}}"
         if is_auto_domain_profile_alias "$explicit_profile"; then
@@ -661,7 +637,6 @@ ask_num_configs() {
         has_tty=true
     fi
 
-    # Skip if reusing existing config
     if [[ "$REUSE_EXISTING_CONFIG" == true ]]; then
         return 0
     fi

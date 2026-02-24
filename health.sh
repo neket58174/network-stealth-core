@@ -11,7 +11,6 @@ fi
 # shellcheck source=modules/lib/globals_contract.sh
 source "$GLOBAL_CONTRACT_MODULE"
 
-# ==================== HEALTH MONITORING v2 ====================
 health_monitoring_collect_port_lines() {
     # shellcheck disable=SC2034 # nameref writes caller variables.
     local -n out_v4_ref="$1"
@@ -189,7 +188,6 @@ write_count() {
     ) 200>"$lockfile"
 }
 
-# Xray health
 read_count() {
     local file="$1"
     local lockfile="${file}.lock"
@@ -395,7 +393,6 @@ fi
 
 update_domain_health || echo "[$(date)] WARN: domain health update failed" >> "$LOG"
 
-# Log rotation (configurable retention and max size)
 log_file_size() {
     local file="$1"
     if command -v stat > /dev/null 2>&1; then
@@ -547,7 +544,6 @@ setup_health_monitoring() {
     fi
 }
 
-# ==================== DIAGNOSE ====================
 diagnose() {
     log STEP "Собираем диагностику..."
     set +e
@@ -597,7 +593,6 @@ diagnose() {
     fi
 }
 
-# ==================== REALITY CONNECTIVITY TEST ====================
 test_reality_connectivity() {
     log STEP "Проверяем работоспособность Reality..."
 

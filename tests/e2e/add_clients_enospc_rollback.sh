@@ -57,7 +57,6 @@ if [[ -f "$MODULE_DIR/export.sh" ]]; then
     source "$MODULE_DIR/export.sh"
 fi
 ADD_CLIENTS_COUNT="$ADD_COUNT"
-# Force a deterministic ENOSPC failure at config-apply stage.
 apply_validated_config() {
     local candidate_file="${1:-}"
     echo "No space left on device" >&2

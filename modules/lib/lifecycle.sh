@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 # shellcheck shell=bash
-# backup/rollback lifecycle helpers extracted from lib.sh
 
 GLOBAL_CONTRACT_MODULE="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/globals_contract.sh"
 if [[ ! -f "$GLOBAL_CONTRACT_MODULE" && -n "${XRAY_DATA_DIR:-}" ]]; then
@@ -22,13 +21,10 @@ ensure_backup_session() {
         mkdir -p "$XRAY_BACKUP"
         local ts
         ts=$(date '+%Y%m%d-%H%M%S')
-        # use pid and random suffix to prevent race conditions between parallel scripts
         local unique_suffix
         unique_suffix="${$}-$(head -c4 /dev/urandom | od -An -tx1 | tr -d ' \n')"
         BACKUP_SESSION_DIR="${XRAY_BACKUP}/${ts}-${unique_suffix}"
-        # atomic directory creation - fails if dir exists
         if ! mkdir "$BACKUP_SESSION_DIR" 2> /dev/null; then
-            # fallback: let mktemp create unique di
             BACKUP_SESSION_DIR=$(mktemp -d "${XRAY_BACKUP}/${ts}-XXXXXX")
         fi
     fi

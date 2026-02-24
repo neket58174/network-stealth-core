@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 # shellcheck shell=bash
-# ==================== CONFIG EXPORT (ClashMeta / SingBox) ====================
-# Clash (legacy) удалён — используйте ClashMeta (Mihomo) или SingBox.
 
 GLOBAL_CONTRACT_MODULE="${SCRIPT_DIR:-$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)}/modules/lib/globals_contract.sh"
 if [[ ! -f "$GLOBAL_CONTRACT_MODULE" && -n "${XRAY_DATA_DIR:-}" ]]; then
@@ -14,7 +12,6 @@ fi
 # shellcheck source=modules/lib/globals_contract.sh
 source "$GLOBAL_CONTRACT_MODULE"
 
-# Escape string for safe YAML value (prevents YAML injection)
 yaml_escape() {
     local str="$1"
     str="${str//\\/\\\\}"
@@ -168,8 +165,6 @@ ${transport_block}
     done
 
     cat > "$tmp_out" << EOF
-# ClashMeta (Mihomo) config - Xray Reality Ultimate ${SCRIPT_VERSION}
-# Generated: $(date)
 
 mixed-port: 7890
 allow-lan: false
@@ -533,7 +528,6 @@ export_nekoray_fragment_template() {
     log OK "Nekoray шаблон сохранён: $out_file"
 }
 
-# ==================== EXPORT ALL FORMATS ====================
 export_all_configs() {
     local export_dir="${XRAY_KEYS}/export"
     mkdir -p "$export_dir"
