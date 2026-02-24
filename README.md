@@ -148,15 +148,14 @@ Generated after `install`, `add-clients`, and `repair`:
 - `/etc/xray/private/keys/export/nekoray-fragment.json`
 - `/etc/xray/private/keys/export/v2rayn-fragment.json`
 
-## Tested OS matrix
+## Supported platform
 
-CI smoke and lifecycle checks are maintained for:
+Primary and CI-verified platform:
 
-- `ubuntu-22.04`
-- `ubuntu-24.04`
-- `debian-12`
-- `fedora-41`
-- `almalinux-9`
+- `ubuntu-24.04` (LTS)
+
+Other Linux distributions may work, but are currently outside the active CI contract.
+Ubuntu 22.04 is usually compatible, while Ubuntu 18.04 is considered legacy and is not recommended.
 
 ## Local QA
 

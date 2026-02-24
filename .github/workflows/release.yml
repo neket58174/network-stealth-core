@@ -85,7 +85,7 @@ jobs:
         run: bats tests/bats
 
   e2e-matrix:
-    name: release e2e matrix (${{ matrix.os }})
+    name: release e2e (${{ matrix.os }})
     if: ${{ github.event.repository.private == false || vars.XRAY_ENABLE_HOSTED_ACTIONS == 'true' }}
     runs-on: ${{ matrix.os }}
     needs: quality-gate
@@ -93,7 +93,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-22.04, ubuntu-24.04]
+        os: [ubuntu-24.04]
     steps:
       - name: Checkout
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4

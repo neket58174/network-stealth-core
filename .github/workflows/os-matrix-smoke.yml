@@ -1,5 +1,5 @@
-name: OS Matrix Smoke
-run-name: "OS matrix smoke / ${{ github.ref_name }} / ${{ github.event_name }}"
+name: Ubuntu smoke
+run-name: "Ubuntu smoke / ${{ github.ref_name }} / ${{ github.event_name }}"
 
 on:
   pull_request:
@@ -10,7 +10,7 @@ on:
 
 jobs:
   smoke:
-    name: os smoke (${{ matrix.name }})
+    name: ubuntu smoke (${{ matrix.name }})
     if: ${{ github.event.repository.private == false || vars.XRAY_ENABLE_HOSTED_ACTIONS == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 60
@@ -18,8 +18,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: ubuntu-22.04
-            image: ubuntu:22.04
+          - name: ubuntu-24.04
+            image: ubuntu:24.04
             install_cmd: |
               apt-get update -qq
               DEBIAN_FRONTEND=noninteractive apt-get install -y -qq \
@@ -33,53 +33,6 @@ jobs:
                 procps \
                 sudo \
                 unzip
-          - name: debian-12
-            image: debian:12
-            install_cmd: |
-              apt-get update -qq
-              DEBIAN_FRONTEND=noninteractive apt-get install -y -qq \
-                bash \
-                ca-certificates \
-                curl \
-                iproute2 \
-                jq \
-                logrotate \
-                openssl \
-                procps \
-                sudo \
-                unzip
-          - name: fedora-41
-            image: fedora:41
-            install_cmd: |
-              dnf -y install \
-                bash \
-                ca-certificates \
-                curl \
-                iproute \
-                jq \
-                logrotate \
-                openssl \
-                procps-ng \
-                shadow-utils \
-                sudo \
-                unzip \
-                util-linux
-          - name: almalinux-9
-            image: almalinux:9
-            install_cmd: |
-              dnf -y install \
-                bash \
-                ca-certificates \
-                curl-minimal \
-                iproute \
-                jq \
-                logrotate \
-                openssl \
-                procps-ng \
-                shadow-utils \
-                sudo \
-                unzip \
-                util-linux
     container:
       image: ${{ matrix.image }}
     defaults:

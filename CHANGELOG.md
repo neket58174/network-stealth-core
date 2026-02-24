@@ -9,7 +9,8 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ### Changed
 
-- TODO: summarize release changes
+- CI and docs now use Ubuntu 24.04 as the primary supported and validated platform.
+- Workflow run names were clarified for cleaner Actions history.
 
 ## [4.1.7] - 2026-02-22
 

@@ -149,13 +149,14 @@ sudo bash xray-reality.sh logs
 - `/etc/xray/private/keys/export/nekoray-fragment.json`
 - `/etc/xray/private/keys/export/v2rayn-fragment.json`
 
-## Поддерживаемая матрица ОС в CI
+## Поддерживаемая платформа
 
-- `ubuntu-22.04`
-- `ubuntu-24.04`
-- `debian-12`
-- `fedora-41`
-- `almalinux-9`
+Основная и проверяемая в CI платформа:
+
+- `ubuntu-24.04` (LTS)
+
+Другие Linux-дистрибутивы могут работать, но сейчас не входят в активный CI-контракт.
+Ubuntu 22.04 обычно совместим, а Ubuntu 18.04 считается устаревшим и не рекомендуется.
 
 ## Локальная проверка
 
