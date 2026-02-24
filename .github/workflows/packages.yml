@@ -43,7 +43,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5
         with:
-          images: ghcr.io/neket58174/xray-reality-ultimate
+          images: ghcr.io/neket58174/network-stealth-core
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
             type=ref,event=branch
@@ -78,7 +78,7 @@ jobs:
         if: ${{ vars.GHCR_REQUIRE_PUBLIC == 'true' }}
         run: |
           set -euo pipefail
-          token="$(curl -fsSL "https://ghcr.io/token?service=ghcr.io&scope=repository:neket58174/xray-reality-ultimate:pull" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("token",""))')"
+          token="$(curl -fsSL "https://ghcr.io/token?service=ghcr.io&scope=repository:neket58174/network-stealth-core:pull" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("token",""))')"
           if [[ -z "$token" ]]; then
             echo "Unable to obtain anonymous GHCR token" >&2
             exit 1
@@ -86,4 +86,4 @@ jobs:
           curl -fsSI \
             -H "Authorization: Bearer ${token}" \
             -H "Accept: application/vnd.oci.image.index.v1+json" \
-            "https://ghcr.io/v2/neket58174/xray-reality-ultimate/manifests/latest" > /dev/null
+            "https://ghcr.io/v2/neket58174/network-stealth-core/manifests/latest" > /dev/null

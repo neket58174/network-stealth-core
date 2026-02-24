@@ -176,8 +176,8 @@ pwsh ./scripts/windows/run-validation.ps1
 ## Docker
 
 ```bash
-docker pull ghcr.io/neket58174/xray-reality-ultimate:vX.Y.Z
-docker run --rm ghcr.io/neket58174/xray-reality-ultimate:vX.Y.Z --help
+docker pull ghcr.io/neket58174/network-stealth-core:vX.Y.Z
+docker run --rm ghcr.io/neket58174/network-stealth-core:vX.Y.Z --help
 ```
 
 ## Лицензия

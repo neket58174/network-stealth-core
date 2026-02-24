@@ -1,7 +1,7 @@
 FROM debian:bookworm-20260112-slim@sha256:56ff6d36d4eb3db13a741b342ec466f121480b5edded42e4b7ee850ce7a418ee
 
-LABEL org.opencontainers.image.title="xray-reality-ultimate" \
-    org.opencontainers.image.description="xray reality ultimate runtime image" \
+LABEL org.opencontainers.image.title="network-stealth-core" \
+    org.opencontainers.image.description="network stealth core runtime image" \
     org.opencontainers.image.source="https://github.com/neket58174/network-stealth-core" \
     org.opencontainers.image.licenses="MIT"
 
