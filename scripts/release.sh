@@ -1,0 +1,223 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+    cat << 'EOF'
+Usage: scripts/release.sh <version> [--commit] [--tag] [--push]
+
+Examples:
+  scripts/release.sh 4.1.6
+  scripts/release.sh 4.1.6 --commit
+  scripts/release.sh 4.1.6 --commit --tag --push
+
+What it does:
+  1. Updates SCRIPT_VERSION and header version in lib.sh
+  2. Updates wrapper header version in xray-reality.sh
+  3. Updates release badge versions in README.md and README.ru.md
+  4. Ensures CHANGELOG.md has a section for the target version and auto-generates notes from git log
+  5. Runs shared release consistency checks
+  6. Optionally commits, tags and pushes
+     (push target: current branch, or RELEASE_PUSH_BRANCH override)
+EOF
+}
+
+if [[ $# -lt 1 ]]; then
+    usage
+    exit 1
+fi
+
+VERSION="$1"
+shift
+
+if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+    echo "Invalid version: $VERSION (expected MAJOR.MINOR.PATCH)" >&2
+    exit 1
+fi
+
+DO_COMMIT=false
+DO_TAG=false
+DO_PUSH=false
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --commit)
+            DO_COMMIT=true
+            ;;
+        --tag)
+            DO_TAG=true
+            ;;
+        --push)
+            DO_PUSH=true
+            ;;
+        -h | --help)
+            usage
+            exit 0
+            ;;
+        *)
+            echo "Unknown flag: $1" >&2
+            usage
+            exit 1
+            ;;
+    esac
+    shift
+done
+
+ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+LIB_FILE="$ROOT_DIR/lib.sh"
+WRAPPER_FILE="$ROOT_DIR/xray-reality.sh"
+README_EN="$ROOT_DIR/README.md"
+README_RU="$ROOT_DIR/README.ru.md"
+CHANGELOG="$ROOT_DIR/CHANGELOG.md"
+TAG="v$VERSION"
+TODAY="$(date +%Y-%m-%d)"
+NOTES_TMP="$(mktemp)"
+trap 'rm -f "$NOTES_TMP"' EXIT
+
+cd "$ROOT_DIR"
+
+for file in "$LIB_FILE" "$WRAPPER_FILE" "$README_EN" "$README_RU" "$CHANGELOG"; do
+    [[ -f "$file" ]] || {
+        echo "Missing required file: $file" >&2
+        exit 1
+    }
+done
+
+generate_release_notes() {
+    local previous_tag
+    previous_tag="$(git describe --tags --abbrev=0 --match 'v[0-9]*' 2> /dev/null || true)"
+    local log_range=()
+    if [[ -n "$previous_tag" ]]; then
+        log_range=("$previous_tag..HEAD")
+    fi
+
+    local notes
+    notes="$(git log --no-merges --pretty='- %s (%h)' "${log_range[@]}" 2> /dev/null || true)"
+    if [[ -z "$notes" ]]; then
+        notes="- maintenance release"
+    fi
+    printf '%s\n' "$notes"
+}
+
+insert_changelog_section() {
+    local tmp_file
+    tmp_file="$(mktemp "${CHANGELOG}.tmp.XXXXXX")"
+    awk -v ver="$VERSION" -v day="$TODAY" -v notes_file="$NOTES_TMP" '
+        BEGIN { inserted = 0 }
+        {
+            print
+            if (!inserted && $0 ~ /^## \[Unreleased\]/) {
+                print ""
+                print "## [" ver "] - " day
+                print ""
+                print "### Changed"
+                for (; (getline note_line < notes_file) > 0; ) {
+                    print note_line
+                }
+                close(notes_file)
+                print ""
+                inserted = 1
+            }
+        }
+        END {
+            if (!inserted) {
+                exit 2
+            }
+        }
+    ' "$CHANGELOG" > "$tmp_file" || {
+        rm -f "$tmp_file"
+        echo "Failed to update CHANGELOG.md (missing ## [Unreleased]?)" >&2
+        exit 1
+    }
+    mv "$tmp_file" "$CHANGELOG"
+}
+
+replace_release_todo() {
+    if ! grep -q "^- TODO: summarize release changes$" "$CHANGELOG"; then
+        return 0
+    fi
+    local tmp_file
+    tmp_file="$(mktemp "${CHANGELOG}.tmp.XXXXXX")"
+    awk -v notes_file="$NOTES_TMP" '
+        function emit_notes( line ) {
+            for (; (getline line < notes_file) > 0; ) {
+                print line
+            }
+            close(notes_file)
+        }
+        {
+            if ($0 == "- TODO: summarize release changes") {
+                emit_notes()
+                next
+            }
+            print
+        }
+    ' "$CHANGELOG" > "$tmp_file"
+    mv "$tmp_file" "$CHANGELOG"
+}
+
+replace_with_sed() {
+    local expr="$1"
+    local file="$2"
+    local tmp_file
+    tmp_file="$(mktemp "${file}.tmp.XXXXXX")"
+    sed -E "$expr" "$file" > "$tmp_file"
+    mv "$tmp_file" "$file"
+}
+
+generate_release_notes > "$NOTES_TMP"
+
+replace_with_sed 's/^readonly SCRIPT_VERSION="[^"]+"/readonly SCRIPT_VERSION="'"$VERSION"'"/' "$LIB_FILE"
+replace_with_sed 's/^# Xray Reality Ultimate [0-9]+\.[0-9]+\.[0-9]+ - /# Xray Reality Ultimate '"$VERSION"' - /' "$LIB_FILE"
+replace_with_sed 's/^# Xray Reality Ultimate [0-9]+\.[0-9]+\.[0-9]+ - Wrapper/# Xray Reality Ultimate '"$VERSION"' - Wrapper/' "$WRAPPER_FILE"
+replace_with_sed 's/release-v[0-9]+\.[0-9]+\.[0-9]+/release-v'"$VERSION"'/g' "$README_EN"
+replace_with_sed 's/release-v[0-9]+\.[0-9]+\.[0-9]+/release-v'"$VERSION"'/g' "$README_RU"
+
+if ! grep -q "^## \[$VERSION\]" "$CHANGELOG"; then
+    insert_changelog_section
+fi
+
+replace_release_todo
+
+bash "$ROOT_DIR/scripts/check-release-consistency.sh"
+
+echo "Updated files for $TAG:"
+echo "  - lib.sh"
+echo "  - xray-reality.sh"
+echo "  - README.md"
+echo "  - README.ru.md"
+echo "  - CHANGELOG.md"
+
+if [[ "$DO_COMMIT" == true ]]; then
+    git add lib.sh xray-reality.sh README.md README.ru.md CHANGELOG.md
+    if git diff --cached --quiet; then
+        echo "No staged changes to commit."
+    else
+        git commit -m "release: prepare $TAG"
+        echo "Committed: release: prepare $TAG"
+    fi
+fi
+
+if [[ "$DO_TAG" == true ]]; then
+    if git rev-parse -q --verify "refs/tags/$TAG" > /dev/null; then
+        echo "Tag already exists: $TAG" >&2
+        exit 1
+    fi
+    git tag -a "$TAG" -m "$TAG"
+    echo "Created tag: $TAG"
+fi
+
+if [[ "$DO_PUSH" == true ]]; then
+    push_branch="${RELEASE_PUSH_BRANCH:-$(git symbolic-ref --quiet --short HEAD 2> /dev/null || true)}"
+    if [[ -z "$push_branch" ]]; then
+        echo "Cannot determine push branch (set RELEASE_PUSH_BRANCH explicitly)." >&2
+        exit 1
+    fi
+    if [[ "$DO_COMMIT" == true ]]; then
+        git push origin "$push_branch"
+    fi
+    if [[ "$DO_TAG" == true ]]; then
+        git push origin "$TAG"
+    fi
+fi
+
+echo "Done."

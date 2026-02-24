@@ -1,0 +1,169 @@
+#!/usr/bin/env bash
+# shellcheck shell=bash
+# shared global defaults for sourced runtime modules.
+
+: "${SCRIPT_DIR:=}"
+: "${MODULE_DIR:=}"
+: "${DEFAULT_DATA_DIR:=/usr/local/share/xray-reality}"
+
+: "${SCRIPT_VERSION:=}"
+: "${SCRIPT_NAME:=}"
+
+: "${XRAY_USER:=xray}"
+: "${XRAY_GROUP:=xray}"
+: "${XRAY_HOME:=/var/lib/xray}"
+: "${XRAY_BIN:=/usr/local/bin/xray}"
+: "${XRAY_GEO_DIR:=}"
+: "${XRAY_CONFIG:=/etc/xray/config.json}"
+: "${XRAY_ENV:=/etc/xray-reality/config.env}"
+: "${XRAY_KEYS:=/etc/xray/private/keys}"
+: "${XRAY_BACKUP:=/var/backups/xray}"
+: "${XRAY_LOGS:=/var/log/xray}"
+: "${XRAY_DATA_DIR:=}"
+: "${XRAY_TIERS_FILE:=}"
+: "${XRAY_SNI_POOLS_FILE:=}"
+: "${XRAY_GRPC_SERVICES_FILE:=}"
+: "${XRAY_SCRIPT_PATH:=/usr/local/bin/xray-reality.sh}"
+: "${XRAY_UPDATE_SCRIPT:=/usr/local/bin/xray-reality-update.sh}"
+: "${XRAY_CONFIG_FILE:=}"
+: "${XRAY_DOMAIN_PROFILE:=}"
+: "${XRAY_DOMAIN_TIER:=}"
+: "${XRAY_NUM_CONFIGS:=}"
+: "${XRAY_START_PORT:=}"
+: "${XRAY_SPIDER_MODE:=}"
+: "${XRAY_TRANSPORT:=}"
+: "${XRAY_PROGRESS_MODE:=}"
+: "${XRAY_DOMAINS_FILE:=}"
+: "${XRAY_CUSTOM_DOMAINS:=}"
+: "${XRAY_VERSION:=}"
+: "${XRAY_MIRRORS:=}"
+: "${XRAY_GEOIP_URL:=}"
+: "${XRAY_GEOSITE_URL:=}"
+: "${XRAY_GEOIP_SHA256_URL:=}"
+: "${XRAY_GEOSITE_SHA256_URL:=}"
+
+: "${MINISIGN_KEY:=/etc/xray/minisign.pub}"
+: "${MINISIGN_MIRRORS:=}"
+
+: "${PKG_TYPE:=}"
+: "${PKG_MANAGER:=}"
+: "${PKG_UPDATE:=}"
+: "${PKG_INSTALL:=}"
+
+: "${ACTION:=install}"
+: "${NON_INTERACTIVE:=false}"
+: "${ASSUME_YES:=false}"
+: "${DRY_RUN:=false}"
+: "${VERBOSE:=false}"
+: "${LOG_CONTEXT:=}"
+: "${LOGS_TARGET:=}"
+: "${ADD_CLIENTS_COUNT:=}"
+: "${INSTALL_LOG:=/var/log/xray-install.log}"
+: "${UPDATE_LOG:=/var/log/xray-update.log}"
+: "${DIAG_LOG:=/var/log/xray-diagnose.log}"
+: "${HEALTH_LOG:=}"
+
+: "${SERVER_IP:=}"
+: "${SERVER_IP6:=}"
+
+: "${MAX_BACKUPS:=10}"
+: "${CONNECTION_TIMEOUT:=10}"
+: "${DOWNLOAD_TIMEOUT:=60}"
+: "${DOWNLOAD_RETRIES:=3}"
+: "${DOWNLOAD_RETRY_DELAY:=2}"
+: "${HEALTH_CHECK_INTERVAL:=120}"
+: "${LOG_RETENTION_DAYS:=30}"
+: "${LOG_MAX_SIZE_MB:=10}"
+: "${KEEP_LOCAL_BACKUPS:=true}"
+: "${ALLOW_INSECURE_SHA256:=false}"
+: "${ALLOW_UNVERIFIED_MINISIGN_BOOTSTRAP:=false}"
+
+: "${AUTO_UPDATE:=true}"
+: "${AUTO_UPDATE_ONCALENDAR:=weekly}"
+: "${AUTO_UPDATE_RANDOM_DELAY:=1h}"
+: "${AUTO_ROLLBACK:=true}"
+
+: "${TRANSPORT:=grpc}"
+: "${PROGRESS_MODE:=auto}"
+: "${MUX_MODE:=on}"
+: "${MUX_ENABLED:=false}"
+: "${MUX_CONCURRENCY:=0}"
+: "${MUX_CONCURRENCY_MIN:=3}"
+: "${MUX_CONCURRENCY_MAX:=20}"
+: "${GRPC_IDLE_TIMEOUT_MIN:=60}"
+: "${GRPC_IDLE_TIMEOUT_MAX:=1800}"
+: "${GRPC_HEALTH_TIMEOUT_MIN:=10}"
+: "${GRPC_HEALTH_TIMEOUT_MAX:=30}"
+: "${TCP_KEEPALIVE_MIN:=20}"
+: "${TCP_KEEPALIVE_MAX:=45}"
+: "${SHORT_ID_BYTES_MIN:=8}"
+: "${SHORT_ID_BYTES_MAX:=8}"
+
+: "${DOMAIN_TIER:=tier_ru}"
+: "${NUM_CONFIGS:=5}"
+: "${SPIDER_MODE:=true}"
+: "${START_PORT:=443}"
+: "${DOMAIN_CHECK:=true}"
+: "${DOMAIN_CHECK_TIMEOUT:=3}"
+: "${DOMAIN_CHECK_PARALLELISM:=16}"
+: "${REALITY_TEST_PORTS:=443,8443}"
+: "${SKIP_REALITY_CHECK:=false}"
+: "${DOMAIN_HEALTH_FILE:=/var/lib/xray/domain-health.json}"
+: "${DOMAIN_HEALTH_PROBE_TIMEOUT:=2}"
+: "${DOMAIN_HEALTH_RANKING:=true}"
+: "${DOMAIN_HEALTH_RATE_LIMIT_MS:=250}"
+: "${DOMAIN_HEALTH_MAX_PROBES:=20}"
+: "${DOMAIN_QUARANTINE_FAIL_STREAK:=4}"
+: "${DOMAIN_QUARANTINE_COOLDOWN_MIN:=120}"
+: "${PRIMARY_DOMAIN_MODE:=adaptive}"
+: "${PRIMARY_PIN_DOMAIN:=}"
+: "${PRIMARY_ADAPTIVE_TOP_N:=5}"
+: "${DOWNLOAD_HOST_ALLOWLIST:=}"
+: "${GH_PROXY_BASE:=}"
+: "${QR_ENABLED:=auto}"
+: "${GEO_VERIFY_HASH:=true}"
+: "${GEO_VERIFY_STRICT:=false}"
+: "${REUSE_EXISTING:=true}"
+: "${REUSE_EXISTING_CONFIG:=false}"
+: "${HAS_IPV6:=false}"
+: "${ROLLBACK_DIR:=}"
+: "${PROFILE_SNI:=}"
+: "${PROFILE_GRPC:=}"
+: "${PROFILE_FP:=}"
+: "${PROFILE_SNI_JSON:=}"
+: "${PROFILE_DEST:=}"
+: "${SYSTEMD_MANAGEMENT_DISABLED:=false}"
+
+: "${ID:=}"
+: "${VERSION_ID:=}"
+: "${PRETTY_NAME:=}"
+
+: "${RED:=}"
+: "${GREEN:=}"
+: "${YELLOW:=}"
+: "${BLUE:=}"
+: "${CYAN:=}"
+: "${DIM:=}"
+: "${BOLD:=}"
+: "${NC:=}"
+: "${UI_BOX_H:=-}"
+: "${UI_BOX_V:=|}"
+
+if ! declare -p PORTS > /dev/null 2>&1; then PORTS=(); fi
+if ! declare -p PORTS_V6 > /dev/null 2>&1; then PORTS_V6=(); fi
+if ! declare -p PRIVATE_KEYS > /dev/null 2>&1; then PRIVATE_KEYS=(); fi
+if ! declare -p PUBLIC_KEYS > /dev/null 2>&1; then PUBLIC_KEYS=(); fi
+if ! declare -p UUIDS > /dev/null 2>&1; then UUIDS=(); fi
+if ! declare -p SHORT_IDS > /dev/null 2>&1; then SHORT_IDS=(); fi
+if ! declare -p CONFIG_DOMAINS > /dev/null 2>&1; then CONFIG_DOMAINS=(); fi
+if ! declare -p CONFIG_SNIS > /dev/null 2>&1; then CONFIG_SNIS=(); fi
+if ! declare -p CONFIG_GRPC_SERVICES > /dev/null 2>&1; then CONFIG_GRPC_SERVICES=(); fi
+if ! declare -p CONFIG_FPS > /dev/null 2>&1; then CONFIG_FPS=(); fi
+if ! declare -p AVAILABLE_DOMAINS > /dev/null 2>&1; then AVAILABLE_DOMAINS=(); fi
+if ! declare -p FIREWALL_ROLLBACK_ENTRIES > /dev/null 2>&1; then FIREWALL_ROLLBACK_ENTRIES=(); fi
+if ! declare -p FIREWALL_FIREWALLD_DIRTY > /dev/null 2>&1; then FIREWALL_FIREWALLD_DIRTY=false; fi
+if ! declare -p CREATED_PATHS > /dev/null 2>&1; then CREATED_PATHS=(); fi
+if ! declare -p CREATED_PATH_SET > /dev/null 2>&1; then declare -A CREATED_PATH_SET=(); fi
+if ! declare -p BACKUP_STACK > /dev/null 2>&1; then BACKUP_STACK=(); fi
+if ! declare -p LOCAL_BACKUP_MAP > /dev/null 2>&1; then declare -A LOCAL_BACKUP_MAP=(); fi
+: "${BACKUP_SESSION_DIR:=}"

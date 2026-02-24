@@ -1,0 +1,89 @@
+name: Packages
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  ghcr:
+    if: ${{ github.event.repository.private == false || vars.XRAY_ENABLE_HOSTED_ACTIONS == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - name: Version consistency
+        run: |
+          set -euo pipefail
+          if [[ "${GITHUB_REF:-}" == refs/tags/* ]]; then
+            bash scripts/check-release-consistency.sh --tag "${GITHUB_REF_NAME}"
+          else
+            bash scripts/check-release-consistency.sh
+          fi
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Generate Docker metadata
+        id: meta
+        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5
+        with:
+          images: ghcr.io/neket58174/xray-reality-ultimate
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=ref,event=branch
+            type=ref,event=tag
+            type=sha,format=short
+
+      - name: Smoke test image
+        run: |
+          set -euo pipefail
+          docker build -t "xray-reality-smoke:${GITHUB_SHA}" .
+          docker run --rm "xray-reality-smoke:${GITHUB_SHA}" --help > /tmp/help.txt
+          grep -q "Usage:" /tmp/help.txt
+
+      - name: Build and push image
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Verify pushed image tags
+        run: |
+          set -euo pipefail
+          while IFS= read -r image_tag; do
+            [[ -n "$image_tag" ]] || continue
+            docker buildx imagetools inspect "$image_tag" > /dev/null
+          done <<< "${{ steps.meta.outputs.tags }}"
+
+      - name: Verify anonymous pull access (optional)
+        if: ${{ vars.GHCR_REQUIRE_PUBLIC == 'true' }}
+        run: |
+          set -euo pipefail
+          token="$(curl -fsSL "https://ghcr.io/token?service=ghcr.io&scope=repository:neket58174/xray-reality-ultimate:pull" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("token",""))')"
+          if [[ -z "$token" ]]; then
+            echo "Unable to obtain anonymous GHCR token" >&2
+            exit 1
+          fi
+          curl -fsSI \
+            -H "Authorization: Bearer ${token}" \
+            -H "Accept: application/vnd.oci.image.index.v1+json" \
+            "https://ghcr.io/v2/neket58174/xray-reality-ultimate/manifests/latest" > /dev/null

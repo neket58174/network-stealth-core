@@ -1,0 +1,100 @@
+name: OS Matrix Smoke
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    name: os smoke (${{ matrix.name }})
+    if: ${{ github.event.repository.private == false || vars.XRAY_ENABLE_HOSTED_ACTIONS == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: ubuntu-22.04
+            image: ubuntu:22.04
+            install_cmd: |
+              apt-get update -qq
+              DEBIAN_FRONTEND=noninteractive apt-get install -y -qq \
+                bash \
+                ca-certificates \
+                curl \
+                iproute2 \
+                jq \
+                logrotate \
+                openssl \
+                procps \
+                sudo \
+                unzip
+          - name: debian-12
+            image: debian:12
+            install_cmd: |
+              apt-get update -qq
+              DEBIAN_FRONTEND=noninteractive apt-get install -y -qq \
+                bash \
+                ca-certificates \
+                curl \
+                iproute2 \
+                jq \
+                logrotate \
+                openssl \
+                procps \
+                sudo \
+                unzip
+          - name: fedora-41
+            image: fedora:41
+            install_cmd: |
+              dnf -y install \
+                bash \
+                ca-certificates \
+                curl \
+                iproute \
+                jq \
+                logrotate \
+                openssl \
+                procps-ng \
+                shadow-utils \
+                sudo \
+                unzip \
+                util-linux
+          - name: almalinux-9
+            image: almalinux:9
+            install_cmd: |
+              dnf -y install \
+                bash \
+                ca-certificates \
+                curl-minimal \
+                iproute \
+                jq \
+                logrotate \
+                openssl \
+                procps-ng \
+                shadow-utils \
+                sudo \
+                unzip \
+                util-linux
+    container:
+      image: ${{ matrix.image }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - name: Install base dependencies
+        run: |
+          set -euo pipefail
+          ${{ matrix.install_cmd }}
+
+      - name: Run lifecycle smoke
+        run: |
+          set -euo pipefail
+          chmod +x tests/e2e/os_matrix_smoke.sh
+          tests/e2e/os_matrix_smoke.sh

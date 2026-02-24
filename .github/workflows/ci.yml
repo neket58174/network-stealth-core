@@ -1,0 +1,319 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    if: ${{ github.event.repository.private == false || vars.XRAY_ENABLE_HOSTED_ACTIONS == 'true' }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            coverage: true
+          - os: ubuntu-24.04
+            coverage: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - name: Cache toolchain artifacts
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+            ~/.npm
+            ~/.local/bin
+          key: ${{ runner.os }}-toolchain-${{ hashFiles('.github/workflows/ci.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-toolchain-
+      - name: Version consistency
+        run: bash scripts/check-release-consistency.sh
+      - name: Install tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y shellcheck bats python3-pip tar
+          mkdir -p "$HOME/.local/bin"
+          export PATH="$HOME/.local/bin:$PATH"
+          if ! command -v shfmt >/dev/null 2>&1; then
+            if ! sudo apt-get install -y shfmt; then
+              sudo apt-get install -y golang-go
+              GOBIN="$HOME/.local/bin" go install mvdan.cc/sh/v3/cmd/shfmt@v3.7.0
+            fi
+          fi
+          if [ "${{ matrix.coverage }}" = "false" ] && ! command -v actionlint >/dev/null 2>&1; then
+            sudo apt-get install -y golang-go
+            GOBIN="$HOME/.local/bin" go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.11
+          fi
+          python3 -m pip install --user bashate
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          if [ "${{ matrix.coverage }}" = "true" ]; then
+            sudo apt-get install -y kcov
+          fi
+      - name: Set up Node.js
+        if: ${{ !matrix.coverage }}
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "20"
+      - name: Install markdownlint-cli
+        if: ${{ !matrix.coverage }}
+        run: npm install -g markdownlint-cli@0.41.0
+      - name: Actionlint
+        if: ${{ !matrix.coverage }}
+        run: actionlint -oneline .github/workflows/*.yml
+      - name: Markdown lint
+        if: ${{ !matrix.coverage }}
+        run: |
+          markdownlint --config .markdownlint.json \
+            README.md \
+            README.ru.md \
+            CONTRIBUTING.md \
+            ARCHITECTURE.md \
+            OPERATIONS.md \
+            CHANGELOG.md \
+            SECURITY.md
+      - name: Markdown links
+        if: ${{ !matrix.coverage }}
+        uses: lycheeverse/lychee-action@a8c4c7cb88f0c7386610c35eb25108e448569cb0 # v2
+        with:
+          lycheeVersion: v0.23.0
+          args: --no-progress --accept 200,429 --max-concurrency 6 --retry-wait-time 2 --max-retries 2 --exclude "^https://github\\.com/${{ github.repository }}/.*$" "./**/*.md"
+          fail: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Shellcheck
+        run: |
+          shellcheck -x -e SC1091 \
+            xray-reality.sh \
+            lib.sh \
+            install.sh \
+            config.sh \
+            service.sh \
+            health.sh \
+            export.sh \
+            scripts/release.sh \
+            scripts/check-release-consistency.sh \
+            scripts/release-policy-gate.sh \
+            scripts/check-dead-functions.sh \
+            scripts/check-workflow-pinning.sh \
+            scripts/check-security-baseline.sh \
+            scripts/check-docs-commands.sh \
+            modules/lib/*.sh \
+            modules/config/*.sh \
+            modules/install/*.sh \
+            tests/e2e/*.sh \
+            tests/*.sh
+      - name: shfmt
+        run: |
+          shfmt -d -i 4 -ci -sr \
+            xray-reality.sh \
+            lib.sh \
+            install.sh \
+            config.sh \
+            service.sh \
+            health.sh \
+            export.sh \
+            scripts/release.sh \
+            scripts/check-release-consistency.sh \
+            scripts/release-policy-gate.sh \
+            scripts/check-dead-functions.sh \
+            scripts/check-workflow-pinning.sh \
+            scripts/check-security-baseline.sh \
+            scripts/check-docs-commands.sh \
+            modules/lib/*.sh \
+            modules/config/*.sh \
+            modules/install/*.sh \
+            tests/e2e/*.sh \
+            tests/*.sh
+      - name: Bashate
+        run: |
+          bashate -i E003,E006,E042,E043 \
+            xray-reality.sh \
+            lib.sh \
+            install.sh \
+            config.sh \
+            service.sh \
+            health.sh \
+            export.sh \
+            scripts/release.sh \
+            scripts/check-release-consistency.sh \
+            scripts/release-policy-gate.sh \
+            scripts/check-dead-functions.sh \
+            scripts/check-workflow-pinning.sh \
+            scripts/check-security-baseline.sh \
+            scripts/check-docs-commands.sh \
+            modules/lib/*.sh \
+            modules/config/*.sh \
+            modules/install/*.sh \
+            tests/e2e/*.sh \
+            tests/*.sh
+      - name: Dead function check
+        run: bash scripts/check-dead-functions.sh
+      - name: Workflow pinning check
+        run: bash scripts/check-workflow-pinning.sh
+      - name: Security baseline check
+        run: bash scripts/check-security-baseline.sh
+      - name: Docs command contract check
+        run: bash scripts/check-docs-commands.sh
+      - name: BATS
+        if: ${{ !matrix.coverage }}
+        run: bats tests/bats
+      - name: BATS + coverage (kcov)
+        if: ${{ matrix.coverage }}
+        run: |
+          set -euo pipefail
+          echo "kcov: $(kcov --version || true)"
+          BATS_BIN="$(command -v bats)"
+          BASH_BIN="$(command -v bash)"
+          echo "bats: $BATS_BIN"
+          echo "bash: $BASH_BIN"
+          kcov_cmd() {
+            local method="$1"
+            kcov --bash-method="$method" \
+              --include-path="$PWD" \
+              --exclude-pattern="tests" \
+              coverage "$BASH_BIN" "$BATS_BIN" tests/bats
+          }
+          if ! kcov_cmd DEBUG; then
+            echo "kcov DEBUG failed; retrying with PS4"
+            kcov_cmd PS4
+          fi
+      - name: Upload coverage artifact
+        if: ${{ matrix.coverage }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: coverage
+          path: coverage
+      - name: Upload coverage to Codecov (required token)
+        if: ${{ matrix.coverage && env.CODECOV_TOKEN != '' }}
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238 # v4
+        with:
+          files: coverage/coverage.json
+          token: ${{ env.CODECOV_TOKEN }}
+          fail_ci_if_error: true
+      - name: Upload coverage to Codecov (tokenless best-effort)
+        if: ${{ matrix.coverage && env.CODECOV_TOKEN == '' }}
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238 # v4
+        with:
+          files: coverage/coverage.json
+          fail_ci_if_error: false
+
+  packages-tag-scenario:
+    name: packages tag scenario
+    if: ${{ github.event.repository.private == false || vars.XRAY_ENABLE_HOSTED_ACTIONS == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - name: Matching tag passes release consistency gate
+        run: |
+          set -euo pipefail
+          script_version=$(awk -F'"' '/^readonly SCRIPT_VERSION=/{print $2; exit}' lib.sh)
+          bash scripts/check-release-consistency.sh --tag "v${script_version}"
+      - name: Mismatched tag is rejected (guard test)
+        run: |
+          set -euo pipefail
+          script_version=$(awk -F'"' '/^readonly SCRIPT_VERSION=/{print $2; exit}' lib.sh)
+          IFS='.' read -r major minor patch <<< "$script_version"
+          bad_tag="v${major}.${minor}.$((patch + 1))"
+          if bash scripts/check-release-consistency.sh --tag "$bad_tag"; then
+            echo "Expected mismatch check to fail for ${bad_tag}" >&2
+            exit 1
+          fi
+
+  stability:
+    name: stability smoke (double bats)
+    if: ${{ github.event.repository.private == false || vars.XRAY_ENABLE_HOSTED_ACTIONS == 'true' }}
+    runs-on: ubuntu-24.04
+    needs: test
+    timeout-minutes: 50
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - name: Install stability dependencies
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y bats
+      - name: Run bats twice (flaky detector)
+        run: |
+          set -euo pipefail
+          for round in 1 2; do
+            echo "stability round ${round}"
+            bats tests/bats
+          done
+
+  e2e-lifecycle:
+    name: e2e lifecycle (${{ matrix.os }})
+    if: ${{ github.event.repository.private == false || vars.XRAY_ENABLE_HOSTED_ACTIONS == 'true' }}
+    runs-on: ${{ matrix.os }}
+    needs: [test, stability]
+    timeout-minutes: 70
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, ubuntu-24.04]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - name: Install e2e dependencies
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y expect jq
+      - name: Run lifecycle e2e scripts
+        run: |
+          set -euo pipefail
+          mapfile -t tests < <(find tests/e2e -maxdepth 1 -type f -name '*.sh' \
+            ! -name 'lib.sh' \
+            ! -name 'nightly_smoke_install_add_update_uninstall.sh' | sort)
+          if ((${#tests[@]} == 0)); then
+            echo "no e2e scripts discovered" >&2
+            exit 1
+          fi
+          chmod +x "${tests[@]}"
+          for test_script in "${tests[@]}"; do
+            echo "running ${test_script}"
+            "$test_script"
+          done
+
+  self-hosted-lifecycle:
+    name: self-hosted lifecycle smoke
+    if: ${{ vars.XRAY_ENABLE_SELF_HOSTED_ACTIONS == 'true' }}
+    runs-on: [self-hosted, linux]
+    timeout-minutes: 90
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - name: Install dependencies (best-effort)
+        run: |
+          set -euo pipefail
+          install_cmd=""
+          if command -v apt-get >/dev/null 2>&1; then
+            install_cmd="apt-get update -qq && apt-get install -y expect jq bats shellcheck"
+          elif command -v dnf >/dev/null 2>&1; then
+            install_cmd="dnf -y install expect jq bats shellcheck"
+          elif command -v yum >/dev/null 2>&1; then
+            install_cmd="yum -y install expect jq bats shellcheck"
+          fi
+          if [[ -n "$install_cmd" ]]; then
+            if [[ "${EUID:-$(id -u)}" -eq 0 ]]; then
+              bash -lc "$install_cmd"
+            elif command -v sudo >/dev/null 2>&1; then
+              sudo bash -lc "$install_cmd"
+            fi
+          fi
+      - name: Run lint, complexity stage-3 and self-hosted lifecycle smoke
+        run: |
+          set -euo pipefail
+          bash tests/lint.sh --fast
+          COMPLEXITY_STAGE=3 bash scripts/check-shell-complexity.sh
+          chmod +x tests/e2e/nightly_smoke_install_add_update_uninstall.sh
+          tests/e2e/nightly_smoke_install_add_update_uninstall.sh

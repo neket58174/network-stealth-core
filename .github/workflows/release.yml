@@ -1,0 +1,255 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  verify:
+    if: ${{ github.event.repository.private == false || vars.XRAY_ENABLE_HOSTED_ACTIONS == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          fetch-depth: 0
+      - name: Validate tag against main and script version
+        run: |
+          set -euo pipefail
+          tag="${GITHUB_REF_NAME}"
+          if [[ ! "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Release tag must follow vMAJOR.MINOR.PATCH, got: $tag" >&2
+            exit 1
+          fi
+          git fetch --no-tags origin main
+          tag_sha=$(git rev-parse "$GITHUB_SHA")
+          main_sha=$(git rev-parse origin/main)
+          if [[ "$tag_sha" != "$main_sha" ]]; then
+            echo "Tag $tag points to $tag_sha, but origin/main is $main_sha" >&2
+            echo "Create tags only from the current tip of main." >&2
+            exit 1
+          fi
+          bash scripts/check-release-consistency.sh --tag "$tag"
+      - name: Smoke test wrapper
+        run: |
+          set -euo pipefail
+          bash -n \
+            xray-reality.sh \
+            lib.sh \
+            install.sh \
+            config.sh \
+            service.sh \
+            health.sh \
+            export.sh \
+            scripts/check-workflow-pinning.sh \
+            scripts/check-security-baseline.sh \
+            scripts/check-docs-commands.sh
+          bash xray-reality.sh --help > /tmp/help.txt
+          grep -q "Usage:" /tmp/help.txt
+
+  quality-gate:
+    if: ${{ github.event.repository.private == false || vars.XRAY_ENABLE_HOSTED_ACTIONS == 'true' }}
+    runs-on: ubuntu-latest
+    needs: verify
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "20"
+      - name: Install quality tools
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y shellcheck bats python3-pip tar golang-go
+          mkdir -p "$HOME/.local/bin"
+          export PATH="$HOME/.local/bin:$PATH"
+          if ! command -v shfmt >/dev/null 2>&1; then
+            GOBIN="$HOME/.local/bin" go install mvdan.cc/sh/v3/cmd/shfmt@v3.7.0
+          fi
+          if ! command -v actionlint >/dev/null 2>&1; then
+            GOBIN="$HOME/.local/bin" go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.11
+          fi
+          python3 -m pip install --user bashate
+          npm install -g markdownlint-cli@0.41.0
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+      - name: Run lint gate
+        run: bash tests/lint.sh
+      - name: Run bats gate
+        run: bats tests/bats
+
+  e2e-matrix:
+    name: release e2e matrix (${{ matrix.os }})
+    if: ${{ github.event.repository.private == false || vars.XRAY_ENABLE_HOSTED_ACTIONS == 'true' }}
+    runs-on: ${{ matrix.os }}
+    needs: quality-gate
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, ubuntu-24.04]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - name: Install e2e dependencies
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y expect jq
+      - name: Run release e2e smoke scripts
+        id: smoke
+        run: |
+          set -euo pipefail
+          chmod +x tests/e2e/*.sh
+          for test_script in tests/e2e/*.sh; do
+            echo "running ${test_script}"
+            "$test_script"
+          done
+      - name: Record matrix status
+        if: always()
+        run: |
+          set -euo pipefail
+          mkdir -p matrix-status
+          cat > "matrix-status/${{ matrix.os }}.json" << EOF
+          {"name":"${{ matrix.os }}","status":"${{ steps.smoke.outcome }}"}
+          EOF
+      - name: Upload matrix status fragment
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: matrix-status-${{ matrix.os }}
+          path: matrix-status/${{ matrix.os }}.json
+
+  matrix-report:
+    if: ${{ (github.event.repository.private == false || vars.XRAY_ENABLE_HOSTED_ACTIONS == 'true') && always() }}
+    runs-on: ubuntu-latest
+    needs: e2e-matrix
+    steps:
+      - name: Download matrix status fragments
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          pattern: matrix-status-*
+          merge-multiple: true
+          path: matrix-status
+      - name: Build matrix-result.json
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          files=(matrix-status/*.json)
+          if ((${#files[@]} == 0)); then
+            echo "No matrix status fragments were produced" >&2
+            exit 1
+          fi
+          jq -s 'sort_by(.name)' "${files[@]}" > matrix-result.json
+          cat matrix-result.json
+      - name: Upload matrix-result artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: matrix-result
+          path: matrix-result.json
+      - name: Enforce all matrix jobs passed
+        run: |
+          set -euo pipefail
+          if ! jq -e 'all(.[]; .status == "success")' matrix-result.json > /dev/null; then
+            echo "Matrix gate failed:" >&2
+            cat matrix-result.json >&2
+            exit 1
+          fi
+
+  release:
+    if: ${{ github.event.repository.private == false || vars.XRAY_ENABLE_HOSTED_ACTIONS == 'true' }}
+    needs: [verify, quality-gate, matrix-report]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - name: Download matrix-result artifact
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: matrix-result
+          path: matrix-result
+      - name: Stage matrix-result release asset
+        run: |
+          set -euo pipefail
+          cp matrix-result/matrix-result.json "matrix-result-${GITHUB_REF_NAME}.json"
+      - name: Build tarball
+        run: |
+          set -euo pipefail
+          version="${GITHUB_REF_NAME}"
+          archive="xray-reality-${version}.tar.gz"
+          checksum="xray-reality-${version}.sha256"
+          git archive --format=tar.gz -o "${archive}" HEAD
+          sha256sum "${archive}" > "${checksum}"
+      - name: Install release verification tools
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y jq
+          if ! command -v gh > /dev/null 2>&1; then
+            sudo apt-get install -y gh
+          fi
+          syft_version="v1.41.2"
+          syft_archive="syft_${syft_version#v}_linux_amd64.tar.gz"
+          syft_checksums="syft_${syft_version#v}_checksums.txt"
+          curl -fsSLo "${syft_archive}" "https://github.com/anchore/syft/releases/download/${syft_version}/${syft_archive}"
+          curl -fsSLo "${syft_checksums}" "https://github.com/anchore/syft/releases/download/${syft_version}/${syft_checksums}"
+          checksum_line=$(awk -v file="${syft_archive}" '$2 == file {print; exit}' "${syft_checksums}")
+          [[ -n "${checksum_line}" ]]
+          printf '%s\n' "${checksum_line}" | sha256sum -c -
+          tar -xzf "${syft_archive}" syft
+          sudo install -m 0755 syft /usr/local/bin/syft
+          rm -f syft "${syft_archive}" "${syft_checksums}"
+      - name: Generate SBOM (SPDX JSON)
+        run: |
+          set -euo pipefail
+          version="${GITHUB_REF_NAME}"
+          archive="xray-reality-${version}.tar.gz"
+          sbom="xray-reality-${version}.spdx.json"
+          syft "file:${archive}" -o "spdx-json=${sbom}"
+          test -s "${sbom}"
+      - name: Release policy gate
+        run: |
+          set -euo pipefail
+          version="${GITHUB_REF_NAME}"
+          bash scripts/release-policy-gate.sh \
+            --tag "${version}" \
+            --archive "xray-reality-${version}.tar.gz" \
+            --checksum "xray-reality-${version}.sha256" \
+            --matrix "matrix-result/matrix-result.json" \
+            --sbom "xray-reality-${version}.spdx.json"
+      - name: Build release notes from changelog
+        run: |
+          set -euo pipefail
+          version="${GITHUB_REF_NAME#v}"
+          awk -v ver="$version" '
+            $0 ~ "^## \\[" ver "\\]" {capture=1; next}
+            capture && $0 ~ "^## \\[" {exit}
+            capture {print}
+          ' CHANGELOG.md > RELEASE_NOTES.md
+          if ! grep -q "[^[:space:]]" RELEASE_NOTES.md; then
+            echo "Release ${version}" > RELEASE_NOTES.md
+          fi
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          assets=(
+            xray-reality-*.tar.gz
+            xray-reality-*.sha256
+            xray-reality-*.spdx.json
+            matrix-result-*.json
+          )
+          if gh release view "${GITHUB_REF_NAME}" > /dev/null 2>&1; then
+            gh release edit "${GITHUB_REF_NAME}" --notes-file RELEASE_NOTES.md
+            gh release upload "${GITHUB_REF_NAME}" "${assets[@]}" --clobber
+          else
+            gh release create "${GITHUB_REF_NAME}" "${assets[@]}" \
+              --title "${GITHUB_REF_NAME}" \
+              --notes-file RELEASE_NOTES.md
+          fi

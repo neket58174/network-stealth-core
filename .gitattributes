@@ -1,0 +1,8 @@
+*.sh text eol=lf
+*.bash text eol=lf
+*.bats text eol=lf
+*.md text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.map text eol=lf
+*.tiers text eol=lf

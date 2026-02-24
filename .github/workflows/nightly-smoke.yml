@@ -1,0 +1,78 @@
+name: Nightly Smoke
+
+on:
+  schedule:
+    - cron: "15 3 * * *"
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    name: nightly smoke (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, ubuntu-24.04]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - name: Install dependencies
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y expect jq
+      - name: Assert VM systemd runtime
+        run: |
+          set -euo pipefail
+          pid1="$(ps -p 1 -o comm= | tr -d '[:space:]')"
+          if [[ "$pid1" != "systemd" ]]; then
+            echo "Nightly VM gate requires PID 1 = systemd, got: ${pid1}" >&2
+            exit 1
+          fi
+          sudo systemctl list-unit-files > /dev/null
+      - name: Run nightly smoke lifecycle
+        run: |
+          set -euo pipefail
+          chmod +x tests/e2e/*.sh
+          tests/e2e/nightly_smoke_install_add_update_uninstall.sh
+      - name: Complexity trend gate (stage 3)
+        run: |
+          set -euo pipefail
+          COMPLEXITY_STAGE=3 bash scripts/check-shell-complexity.sh
+
+  smoke-self-hosted:
+    name: nightly smoke self-hosted
+    if: ${{ vars.XRAY_ENABLE_SELF_HOSTED_ACTIONS == 'true' }}
+    runs-on: [self-hosted, linux]
+    timeout-minutes: 90
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - name: Install dependencies (best-effort)
+        run: |
+          set -euo pipefail
+          install_cmd=""
+          if command -v apt-get >/dev/null 2>&1; then
+            install_cmd="apt-get update -qq && apt-get install -y expect jq"
+          elif command -v dnf >/dev/null 2>&1; then
+            install_cmd="dnf -y install expect jq"
+          elif command -v yum >/dev/null 2>&1; then
+            install_cmd="yum -y install expect jq"
+          fi
+          if [[ -n "$install_cmd" ]]; then
+            if [[ "${EUID:-$(id -u)}" -eq 0 ]]; then
+              bash -lc "$install_cmd"
+            elif command -v sudo >/dev/null 2>&1; then
+              sudo bash -lc "$install_cmd"
+            fi
+          fi
+      - name: Run nightly self-hosted lifecycle
+        run: |
+          set -euo pipefail
+          chmod +x tests/e2e/nightly_smoke_install_add_update_uninstall.sh
+          tests/e2e/nightly_smoke_install_add_update_uninstall.sh
+      - name: Complexity trend gate (stage 3)
+        run: |
+          set -euo pipefail
+          COMPLEXITY_STAGE=3 bash scripts/check-shell-complexity.sh

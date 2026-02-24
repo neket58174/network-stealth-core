@@ -1,0 +1,208 @@
+#!/usr/bin/env bash
+# shellcheck shell=bash
+# backup/rollback lifecycle helpers extracted from lib.sh
+
+GLOBAL_CONTRACT_MODULE="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/globals_contract.sh"
+if [[ ! -f "$GLOBAL_CONTRACT_MODULE" && -n "${XRAY_DATA_DIR:-}" ]]; then
+    GLOBAL_CONTRACT_MODULE="$XRAY_DATA_DIR/modules/lib/globals_contract.sh"
+fi
+if [[ ! -f "$GLOBAL_CONTRACT_MODULE" ]]; then
+    echo "ERROR: не найден модуль global contract: $GLOBAL_CONTRACT_MODULE" >&2
+    exit 1
+fi
+# shellcheck source=modules/lib/globals_contract.sh
+source "$GLOBAL_CONTRACT_MODULE"
+
+BACKUP_STACK=()
+declare -A LOCAL_BACKUP_MAP=()
+BACKUP_SESSION_DIR=""
+
+ensure_backup_session() {
+    if [[ -z "$BACKUP_SESSION_DIR" ]]; then
+        mkdir -p "$XRAY_BACKUP"
+        local ts
+        ts=$(date '+%Y%m%d-%H%M%S')
+        # use pid and random suffix to prevent race conditions between parallel scripts
+        local unique_suffix
+        unique_suffix="${$}-$(head -c4 /dev/urandom | od -An -tx1 | tr -d ' \n')"
+        BACKUP_SESSION_DIR="${XRAY_BACKUP}/${ts}-${unique_suffix}"
+        # atomic directory creation - fails if dir exists
+        if ! mkdir "$BACKUP_SESSION_DIR" 2> /dev/null; then
+            # fallback: let mktemp create unique di
+            BACKUP_SESSION_DIR=$(mktemp -d "${XRAY_BACKUP}/${ts}-XXXXXX")
+        fi
+    fi
+}
+
+rotate_backups() {
+    [[ -d "$XRAY_BACKUP" ]] || return 0
+    local to_delete
+    to_delete=$(find "$XRAY_BACKUP" -mindepth 1 -maxdepth 1 -type d -printf '%T@ %p\n' |
+        sort -nr |
+        tail -n +"$((MAX_BACKUPS + 1))" |
+        awk '{print $2}') || true
+    if [[ -n "$to_delete" ]]; then
+        while IFS= read -r dir; do
+            rm -rf "$dir"
+        done <<< "$to_delete"
+    fi
+}
+
+backup_file() {
+    local target="$1"
+    if [[ ! -e "$target" ]]; then
+        record_created_path "$target"
+        return 0
+    fi
+    if [[ -f "$target" ]]; then
+        ensure_backup_session
+        if [[ ! -f "${BACKUP_SESSION_DIR}${target}" ]]; then
+            mkdir -p "${BACKUP_SESSION_DIR}$(dirname "$target")"
+            cp -a "$target" "${BACKUP_SESSION_DIR}${target}"
+            BACKUP_STACK+=("$target")
+            log INFO "Сохранён бэкап: ${BACKUP_SESSION_DIR}${target}"
+        fi
+        if [[ "$KEEP_LOCAL_BACKUPS" == true ]] && [[ ! -f "${target}.backup" ]]; then
+            cp -a "$target" "${target}.backup"
+            LOCAL_BACKUP_MAP["$target"]=1
+            log INFO "Создан бэкап: ${target}.backup"
+        fi
+    fi
+}
+
+is_runtime_critical_path() {
+    local path="${1:-}"
+    case "$path" in
+        "$XRAY_CONFIG" | /etc/xray/* | "$XRAY_BIN" | /usr/local/bin/xray | /etc/systemd/system/xray.service | /etc/systemd/system/xray*.service | /etc/systemd/system/xray*.timer)
+            return 0
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+}
+
+reconcile_runtime_after_restore() {
+    if ! systemctl_available || ! systemd_running; then
+        return 0
+    fi
+
+    local need_reconcile=false
+    local path
+    for path in "${BACKUP_STACK[@]}"; do
+        if is_runtime_critical_path "$path"; then
+            need_reconcile=true
+            break
+        fi
+    done
+    if [[ "$need_reconcile" != true ]]; then
+        for path in "${CREATED_PATHS[@]}"; do
+            if is_runtime_critical_path "$path"; then
+                need_reconcile=true
+                break
+            fi
+        done
+    fi
+    if [[ "$need_reconcile" != true ]]; then
+        return 0
+    fi
+
+    log WARN "Синхронизируем runtime после отката файлов..."
+    if ! systemctl daemon-reload > /dev/null 2>&1; then
+        log WARN "Не удалось выполнить systemctl daemon-reload после rollback"
+    fi
+
+    if ! systemctl list-unit-files --type=service 2> /dev/null | grep -q "^xray.service"; then
+        return 0
+    fi
+    if [[ ! -x "$XRAY_BIN" || ! -f "$XRAY_CONFIG" ]]; then
+        log WARN "Пропускаем restart xray после rollback: бинарник или конфиг отсутствуют"
+        return 0
+    fi
+    if ! "$XRAY_BIN" -test -c "$XRAY_CONFIG" > /dev/null 2>&1; then
+        log WARN "Пропускаем restart xray после rollback: восстановленный конфиг не прошёл xray -test"
+        return 0
+    fi
+    if systemctl restart xray > /dev/null 2>&1; then
+        log INFO "Runtime синхронизирован: xray перезапущен после rollback"
+    else
+        log WARN "Не удалось перезапустить xray после rollback"
+    fi
+}
+
+cleanup_on_error() {
+    local exit_code=$?
+
+    if [[ $exit_code -ne 0 ]]; then
+        echo ""
+        log ERROR "Операция прервана с ошибкой (код: ${exit_code})"
+
+        if [[ ${#FIREWALL_ROLLBACK_ENTRIES[@]} -gt 0 ]]; then
+            rollback_firewall_changes || true
+        fi
+
+        if [[ ${#BACKUP_STACK[@]} -gt 0 ]]; then
+            log WARN "Откатываем изменения..."
+            local _i
+            for ((_i = ${#BACKUP_STACK[@]} - 1; _i >= 0; _i--)); do
+                local backup="${BACKUP_STACK[$_i]}"
+                local restored=false
+                if [[ -n "${LOCAL_BACKUP_MAP[$backup]:-}" ]] && [[ -f "${backup}.backup" ]]; then
+                    mv "${backup}.backup" "$backup"
+                    restored=true
+                    log INFO "Восстановлен: $backup"
+                elif [[ -n "$BACKUP_SESSION_DIR" ]] && [[ -f "${BACKUP_SESSION_DIR}${backup}" ]]; then
+                    mkdir -p "$(dirname "$backup")"
+                    cp -a "${BACKUP_SESSION_DIR}${backup}" "$backup"
+                    restored=true
+                    log INFO "Восстановлен из сессии: $backup"
+                fi
+                [[ "$restored" == true ]] || log WARN "Нет бэкапа для: $backup"
+            done
+        fi
+
+        if [[ ${#CREATED_PATHS[@]} -gt 0 ]]; then
+            log WARN "Удаляем новые файлы, созданные в неуспешной сессии..."
+            local _j created_path
+            for ((_j = ${#CREATED_PATHS[@]} - 1; _j >= 0; _j--)); do
+                created_path="${CREATED_PATHS[$_j]}"
+                [[ -n "$created_path" ]] || continue
+                if [[ -f "$created_path" || -L "$created_path" ]]; then
+                    rm -f "$created_path"
+                    log INFO "Удалён созданный файл: $created_path"
+                elif [[ -d "$created_path" ]]; then
+                    rm -rf "$created_path"
+                    log INFO "Удалена созданная директория: $created_path"
+                fi
+            done
+        fi
+
+        reconcile_runtime_after_restore || true
+
+        log INFO "Лог ошибок: $INSTALL_LOG"
+        if command -v sync > /dev/null 2>&1; then
+            sync > /dev/null 2>&1 || true
+        fi
+        cleanup_logging_processes || true
+        exit "$exit_code"
+    else
+        if [[ ${#LOCAL_BACKUP_MAP[@]} -gt 0 ]]; then
+            log INFO "Очистка временных бэкапов..."
+            local backup
+            for backup in "${!LOCAL_BACKUP_MAP[@]}"; do
+                rm -f "${backup}.backup"
+            done
+        fi
+        if [[ -n "$BACKUP_SESSION_DIR" ]]; then
+            log INFO "Сохранён бэкап: ${BACKUP_SESSION_DIR}"
+            rotate_backups
+        fi
+        FIREWALL_ROLLBACK_ENTRIES=()
+        FIREWALL_FIREWALLD_DIRTY=false
+        CREATED_PATHS=()
+        CREATED_PATH_SET=()
+        cleanup_logging_processes || true
+    fi
+}
+
+trap cleanup_on_error EXIT

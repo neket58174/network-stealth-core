@@ -1,0 +1,28 @@
+#!/usr/bin/env bats
+
+@test "entrypoint exists" {
+    [ -f "xray-reality.sh" ]
+}
+
+@test "core modules exist" {
+    [ -f "lib.sh" ]
+    [ -f "install.sh" ]
+    [ -f "config.sh" ]
+    [ -f "service.sh" ]
+    [ -f "health.sh" ]
+    [ -f "modules/lib/validation.sh" ]
+    [ -f "modules/config/domain_planner.sh" ]
+    [ -f "modules/install/bootstrap.sh" ]
+}
+
+@test "data files exist" {
+    [ -f "domains.tiers" ]
+    [ -f "sni_pools.map" ]
+    [ -f "grpc_services.map" ]
+}
+
+@test "bash syntax is valid" {
+    run bash -n xray-reality.sh lib.sh install.sh config.sh service.sh health.sh export.sh \
+        modules/lib/validation.sh modules/config/domain_planner.sh modules/install/bootstrap.sh
+    [ "$status" -eq 0 ]
+}
