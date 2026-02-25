@@ -371,6 +371,18 @@ HEALTH_EOF_DOMAIN_HEALTH
 
 health_monitoring_emit_health_script_runtime_and_rotation() {
     cat << 'HEALTH_EOF_RUNTIME'
+restart_xray_bounded() {
+    local timeout_s="${HEALTH_SYSTEMCTL_RESTART_TIMEOUT:-60}"
+    if [[ ! "$timeout_s" =~ ^[0-9]+$ ]] || ((timeout_s < 10 || timeout_s > 600)); then
+        timeout_s=60
+    fi
+    if command -v timeout > /dev/null 2>&1; then
+        timeout --signal=TERM --kill-after=10s "${timeout_s}s" systemctl restart xray
+    else
+        systemctl restart xray
+    fi
+}
+
 FAIL_COUNT=$(read_count "$FAIL_COUNT_FILE")
 
 if ! check_xray_health; then
@@ -380,9 +392,12 @@ if ! check_xray_health; then
 
     if [[ $FAIL_COUNT -ge $MAX_FAILS ]]; then
         echo "[$(date)] Max Xray failures reached - restarting" >> "$LOG"
-        systemctl restart xray
-        write_count "$FAIL_COUNT_FILE" "0"
-        sleep 3
+        if restart_xray_bounded; then
+            write_count "$FAIL_COUNT_FILE" "0"
+            sleep 3
+        else
+            echo "[$(date)] WARN: xray restart failed or timed out" >> "$LOG"
+        fi
     fi
 else
     if [[ "$FAIL_COUNT" -gt 0 ]]; then
@@ -465,6 +480,7 @@ After=network.target
 
 [Service]
 Type=oneshot
+TimeoutStartSec=30min
 ExecStart=/usr/local/bin/xray-health.sh
 EOF
 

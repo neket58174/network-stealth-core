@@ -505,7 +505,7 @@ rollback_from_session() {
 
     if systemd_running && systemctl list-unit-files --type=service 2> /dev/null | grep -q "^xray.service"; then
         if systemctl is-active --quiet xray 2> /dev/null; then
-            if ! systemctl stop xray > /dev/null 2>&1; then
+            if ! systemctl_uninstall_bounded stop xray; then
                 log ERROR "Не удалось остановить xray перед откатом"
                 exit 1
             fi
@@ -545,7 +545,9 @@ rollback_from_session() {
     )
 
     if systemd_running; then
-        systemctl daemon-reload > /dev/null 2>&1 || true
+        if ! systemctl_uninstall_bounded daemon-reload; then
+            log WARN "Не удалось выполнить systemctl daemon-reload после отката"
+        fi
         local restart_err=""
         if ! systemctl_restart_xray_bounded restart_err; then
             log WARN "Не удалось перезапустить xray после отката"

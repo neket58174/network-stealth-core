@@ -1791,6 +1791,29 @@ EOF
     [ "$output" = "ok" ]
 }
 
+@test "rollback uses bounded systemctl operations" {
+    run bash -eo pipefail -c '
+    grep -q '\''if ! systemctl_uninstall_bounded stop xray; then'\'' ./service.sh
+    grep -q '\''if ! systemctl_uninstall_bounded daemon-reload; then'\'' ./service.sh
+    ! grep -q '\''if ! systemctl stop xray > /dev/null 2>&1; then'\'' ./service.sh
+    echo "ok"
+  '
+    [ "$status" -eq 0 ]
+    [ "$output" = "ok" ]
+}
+
+@test "health monitoring uses bounded restart and unit timeout" {
+    run bash -eo pipefail -c '
+    grep -q '\''restart_xray_bounded()'\'' ./health.sh
+    grep -q '\''timeout --signal=TERM --kill-after=10s'\'' ./health.sh
+    grep -q '\''if restart_xray_bounded; then'\'' ./health.sh
+    grep -q '\''TimeoutStartSec=30min'\'' ./health.sh
+    echo "ok"
+  '
+    [ "$status" -eq 0 ]
+    [ "$output" = "ok" ]
+}
+
 @test "require_systemd_runtime_for_action blocks install when systemd is unavailable" {
     run bash -eo pipefail -c '
     source ./lib.sh
