@@ -1227,6 +1227,17 @@ EOF
     [ "$output" = "ok" ]
 }
 
+@test "add_clients restart has bounded timeout guard" {
+    run bash -eo pipefail -c '
+    grep -q '\''XRAY_SYSTEMCTL_RESTART_TIMEOUT'\'' ./modules/config/add_clients.sh
+    grep -q '\''timeout --signal=TERM --kill-after=15s'\'' ./modules/config/add_clients.sh
+    grep -q '\''systemctl restart xray превысил таймаут'\'' ./modules/config/add_clients.sh
+    echo "ok"
+  '
+    [ "$status" -eq 0 ]
+    [ "$output" = "ok" ]
+}
+
 @test "interactive prompts use explicit tty fd pattern" {
     run bash -eo pipefail -c '
     grep -Fq '\''exec {tty_fd}<> /dev/tty'\'' ./install.sh

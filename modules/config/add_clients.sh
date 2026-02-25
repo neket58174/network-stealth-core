@@ -530,7 +530,29 @@ restart_and_verify_add_clients_ports() {
     local -n _new_ports="$new_ports_name"
 
     log STEP "Перезапускаем Xray..."
-    systemctl restart xray
+    local restart_timeout="${XRAY_SYSTEMCTL_RESTART_TIMEOUT:-120}"
+    if [[ ! "$restart_timeout" =~ ^[0-9]+$ ]] || ((restart_timeout < 10 || restart_timeout > 600)); then
+        restart_timeout=120
+    fi
+
+    local restart_rc=0
+    local restart_err=""
+    if command -v timeout > /dev/null 2>&1; then
+        restart_err=$(timeout --signal=TERM --kill-after=15s "${restart_timeout}s" systemctl restart xray 2>&1) || restart_rc=$?
+        if ((restart_rc == 124 || restart_rc == 137)); then
+            log ERROR "systemctl restart xray превысил таймаут ${restart_timeout}s"
+            debug_file "systemctl restart xray timeout (${restart_timeout}s): ${restart_err}"
+            return 1
+        fi
+    else
+        restart_err=$(systemctl restart xray 2>&1) || restart_rc=$?
+    fi
+    if ((restart_rc != 0)); then
+        log ERROR "Не удалось перезапустить Xray"
+        debug_file "systemctl restart xray failed: ${restart_err}"
+        return 1
+    fi
+
     sleep 2
     if ! systemctl is-active --quiet xray; then
         log ERROR "Xray не запустился после обновления конфигурации"
