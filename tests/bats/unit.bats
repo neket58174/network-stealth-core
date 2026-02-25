@@ -1241,9 +1241,10 @@ EOF
 @test "interactive prompts use explicit tty fd pattern" {
     run bash -eo pipefail -c '
     grep -Fq '\''exec {tty_fd}<> /dev/tty'\'' ./install.sh
-    grep -Fq '\''read -r -u "$tty_fd" -p "Профиль [1/2/3/4]: " input'\'' ./install.sh
-    grep -Fq '\''read -r -u "$tty_fd" -p "Сколько VPN-ключей создать? (1-${max_configs}): " input'\'' ./install.sh
-    grep -Fq '\''read -r -u "$tty_fd" -p "Сколько VPN-ключей добавить? (1-${max_add}): " input'\'' ./modules/config/add_clients.sh
+    grep -Fq '\''printf "Профиль [1/2/3/4]: " > /dev/tty'\'' ./install.sh
+    grep -Fq '\''read -r -u "$tty_fd" input'\'' ./install.sh
+    grep -Fq '\''printf "Сколько VPN-ключей создать? (1-%s): " "$max_configs" > /dev/tty'\'' ./install.sh
+    grep -Fq '\''printf "Сколько VPN-ключей добавить? (1-%s): " "$max_add" > /dev/tty'\'' ./modules/config/add_clients.sh
     ! grep -Fq '\''read -r -p "Профиль [1/2/3/4]: " input < /dev/tty'\'' ./install.sh
     ! grep -Fq '\''read -r -p "Сколько VPN-ключей создать? (1-${max_configs}): " input < /dev/tty'\'' ./install.sh
     ! grep -Fq '\''read -r -p "Сколько VPN-ключей добавить? (1-${max_add}): " input < /dev/tty'\'' ./modules/config/add_clients.sh

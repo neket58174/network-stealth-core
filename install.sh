@@ -721,7 +721,12 @@ ask_domain_profile() {
         echo "  2) global-ms10 (ручной ввод числа ключей, до 10)"
         echo "  3) ru-auto (автоматически: 5 ключей)"
         echo "  4) global-ms10-auto (автоматически: 10 ключей)"
-        if ! read -r -u "$tty_fd" -p "Профиль [1/2/3/4]: " input; then
+        if ! printf "Профиль [1/2/3/4]: " > /dev/tty; then
+            exec {tty_fd}>&-
+            log ERROR "Не удалось вывести запрос выбора профиля в /dev/tty"
+            exit 1
+        fi
+        if ! read -r -u "$tty_fd" input; then
             exec {tty_fd}>&-
             log ERROR "Не удалось прочитать выбор профиля из /dev/tty"
             exit 1
@@ -821,7 +826,12 @@ ask_num_configs() {
     echo ""
     local input
     while true; do
-        if ! read -r -u "$tty_fd" -p "Сколько VPN-ключей создать? (1-${max_configs}): " input; then
+        if ! printf "Сколько VPN-ключей создать? (1-%s): " "$max_configs" > /dev/tty; then
+            exec {tty_fd}>&-
+            log ERROR "Не удалось вывести запрос NUM_CONFIGS в /dev/tty"
+            exit 1
+        fi
+        if ! read -r -u "$tty_fd" input; then
             exec {tty_fd}>&-
             log ERROR "Не удалось прочитать значение NUM_CONFIGS из /dev/tty"
             exit 1

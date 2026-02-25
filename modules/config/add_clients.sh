@@ -104,7 +104,12 @@ resolve_add_clients_count() {
         echo ""
         local input
         while true; do
-            if ! read -r -u "$tty_fd" -p "Сколько VPN-ключей добавить? (1-${max_add}): " input; then
+            if ! printf "Сколько VPN-ключей добавить? (1-%s): " "$max_add" > /dev/tty; then
+                exec {tty_fd}>&-
+                log ERROR "Не удалось вывести запрос количества новых конфигураций в /dev/tty"
+                exit 1
+            fi
+            if ! read -r -u "$tty_fd" input; then
                 exec {tty_fd}>&-
                 log ERROR "Не удалось прочитать количество новых конфигураций из /dev/tty"
                 exit 1
