@@ -55,6 +55,8 @@ AUTO_UPDATE_ONCALENDAR="${AUTO_UPDATE_ONCALENDAR:-weekly}"
 AUTO_UPDATE_RANDOM_DELAY="${AUTO_UPDATE_RANDOM_DELAY:-1h}"
 ALLOW_INSECURE_SHA256="${ALLOW_INSECURE_SHA256:-false}"
 ALLOW_UNVERIFIED_MINISIGN_BOOTSTRAP="${ALLOW_UNVERIFIED_MINISIGN_BOOTSTRAP:-false}"
+REQUIRE_MINISIGN="${REQUIRE_MINISIGN:-false}"
+ALLOW_NO_SYSTEMD="${ALLOW_NO_SYSTEMD:-false}"
 XRAY_SCRIPT_PATH="${XRAY_SCRIPT_PATH:-/usr/local/bin/xray-reality.sh}"
 XRAY_UPDATE_SCRIPT="${XRAY_UPDATE_SCRIPT:-/usr/local/bin/xray-reality-update.sh}"
 UPDATE_LOG="${UPDATE_LOG:-/var/log/xray-update.log}"
@@ -1311,6 +1313,8 @@ Options:
   --start-port <1-65535>         Starting port (default: 443)
   --transport <grpc|http2>       Transport mode (default: grpc)
   --progress-mode <mode>         Progress output: auto|bar|plain|none
+  --require-minisign             Fail when minisign is unavailable or signature is missing
+  --allow-no-systemd             Allow install/update/repair without systemd (compat mode)
   --server-ip <ipv4>             Set server IPv4
   --server-ip6 <ipv6>            Set server IPv6
   --primary-domain-mode <mode>   First domain mode: adaptive|pinned
@@ -1344,7 +1348,9 @@ Environment variables:
   DOWNLOAD_HOST_ALLOWLIST        Allowlist for critical download hosts (comma-separated)
   GH_PROXY_BASE                  Optional proxy base for github release mirrors
   ALLOW_UNVERIFIED_MINISIGN_BOOTSTRAP
-                                 Allow minisign bootstrap download (default: false)
+                                  Allow minisign bootstrap download (default: false)
+  REQUIRE_MINISIGN               Require minisign on install/update/repair (default: false)
+  ALLOW_NO_SYSTEMD               Allow install/update/repair without systemd (default: false)
   GEO_VERIFY_HASH                Verify GeoIP/GeoSite SHA256 in updater (default: true)
   GEO_VERIFY_STRICT              Fail update when checksum file is unavailable (default: false)
   HEALTH_CHECK_INTERVAL          Health timer interval in seconds (default: 120)
@@ -1461,7 +1467,7 @@ load_config_file() {
             fi
         fi
         case "$key" in
-            XRAY_DOMAIN_TIER | XRAY_DOMAIN_PROFILE | XRAY_NUM_CONFIGS | XRAY_SPIDER_MODE | XRAY_START_PORT | XRAY_PROGRESS_MODE | DOMAIN_PROFILE | DOMAIN_TIER | NUM_CONFIGS | SPIDER_MODE | START_PORT | PROGRESS_MODE | XRAY_TRANSPORT | TRANSPORT | MUX_MODE | MUX_CONCURRENCY_MIN | MUX_CONCURRENCY_MAX | GRPC_IDLE_TIMEOUT_MIN | GRPC_IDLE_TIMEOUT_MAX | GRPC_HEALTH_TIMEOUT_MIN | GRPC_HEALTH_TIMEOUT_MAX | TCP_KEEPALIVE_MIN | TCP_KEEPALIVE_MAX | SHORT_ID_BYTES_MIN | SHORT_ID_BYTES_MAX | KEEP_LOCAL_BACKUPS | MAX_BACKUPS | REUSE_EXISTING | AUTO_ROLLBACK | XRAY_VERSION | XRAY_MIRRORS | MINISIGN_MIRRORS | QR_ENABLED | AUTO_UPDATE | AUTO_UPDATE_ONCALENDAR | AUTO_UPDATE_RANDOM_DELAY | ALLOW_INSECURE_SHA256 | ALLOW_UNVERIFIED_MINISIGN_BOOTSTRAP | GEO_VERIFY_HASH | GEO_VERIFY_STRICT | XRAY_CUSTOM_DOMAINS | XRAY_DOMAINS_FILE | XRAY_SNI_POOLS_FILE | XRAY_GRPC_SERVICES_FILE | XRAY_TIERS_FILE | XRAY_DATA_DIR | XRAY_GEO_DIR | XRAY_SCRIPT_PATH | XRAY_UPDATE_SCRIPT | DOMAIN_CHECK | DOMAIN_CHECK_TIMEOUT | DOMAIN_CHECK_PARALLELISM | REALITY_TEST_PORTS | SKIP_REALITY_CHECK | DOMAIN_HEALTH_FILE | DOMAIN_HEALTH_PROBE_TIMEOUT | DOMAIN_HEALTH_RATE_LIMIT_MS | DOMAIN_HEALTH_MAX_PROBES | DOMAIN_HEALTH_RANKING | DOMAIN_QUARANTINE_FAIL_STREAK | DOMAIN_QUARANTINE_COOLDOWN_MIN | PRIMARY_DOMAIN_MODE | PRIMARY_PIN_DOMAIN | PRIMARY_ADAPTIVE_TOP_N | DOWNLOAD_HOST_ALLOWLIST | GH_PROXY_BASE | DOWNLOAD_TIMEOUT | DOWNLOAD_RETRIES | DOWNLOAD_RETRY_DELAY | SERVER_IP | SERVER_IP6 | DRY_RUN | VERBOSE | HEALTH_CHECK_INTERVAL | LOG_RETENTION_DAYS | LOG_MAX_SIZE_MB | HEALTH_LOG)
+            XRAY_DOMAIN_TIER | XRAY_DOMAIN_PROFILE | XRAY_NUM_CONFIGS | XRAY_SPIDER_MODE | XRAY_START_PORT | XRAY_PROGRESS_MODE | DOMAIN_PROFILE | DOMAIN_TIER | NUM_CONFIGS | SPIDER_MODE | START_PORT | PROGRESS_MODE | XRAY_TRANSPORT | TRANSPORT | MUX_MODE | MUX_CONCURRENCY_MIN | MUX_CONCURRENCY_MAX | GRPC_IDLE_TIMEOUT_MIN | GRPC_IDLE_TIMEOUT_MAX | GRPC_HEALTH_TIMEOUT_MIN | GRPC_HEALTH_TIMEOUT_MAX | TCP_KEEPALIVE_MIN | TCP_KEEPALIVE_MAX | SHORT_ID_BYTES_MIN | SHORT_ID_BYTES_MAX | KEEP_LOCAL_BACKUPS | MAX_BACKUPS | REUSE_EXISTING | AUTO_ROLLBACK | XRAY_VERSION | XRAY_MIRRORS | MINISIGN_MIRRORS | QR_ENABLED | AUTO_UPDATE | AUTO_UPDATE_ONCALENDAR | AUTO_UPDATE_RANDOM_DELAY | ALLOW_INSECURE_SHA256 | ALLOW_UNVERIFIED_MINISIGN_BOOTSTRAP | REQUIRE_MINISIGN | ALLOW_NO_SYSTEMD | GEO_VERIFY_HASH | GEO_VERIFY_STRICT | XRAY_CUSTOM_DOMAINS | XRAY_DOMAINS_FILE | XRAY_SNI_POOLS_FILE | XRAY_GRPC_SERVICES_FILE | XRAY_TIERS_FILE | XRAY_DATA_DIR | XRAY_GEO_DIR | XRAY_SCRIPT_PATH | XRAY_UPDATE_SCRIPT | DOMAIN_CHECK | DOMAIN_CHECK_TIMEOUT | DOMAIN_CHECK_PARALLELISM | REALITY_TEST_PORTS | SKIP_REALITY_CHECK | DOMAIN_HEALTH_FILE | DOMAIN_HEALTH_PROBE_TIMEOUT | DOMAIN_HEALTH_RATE_LIMIT_MS | DOMAIN_HEALTH_MAX_PROBES | DOMAIN_HEALTH_RANKING | DOMAIN_QUARANTINE_FAIL_STREAK | DOMAIN_QUARANTINE_COOLDOWN_MIN | PRIMARY_DOMAIN_MODE | PRIMARY_PIN_DOMAIN | PRIMARY_ADAPTIVE_TOP_N | DOWNLOAD_HOST_ALLOWLIST | GH_PROXY_BASE | DOWNLOAD_TIMEOUT | DOWNLOAD_RETRIES | DOWNLOAD_RETRY_DELAY | SERVER_IP | SERVER_IP6 | DRY_RUN | VERBOSE | HEALTH_CHECK_INTERVAL | LOG_RETENTION_DAYS | LOG_MAX_SIZE_MB | HEALTH_LOG)
                 printf -v "$key" '%s' "$value"
                 ;;
             *) ;;
@@ -2377,6 +2383,40 @@ require_root() {
     fi
 }
 
+require_systemd_runtime_for_action() {
+    local action="${1:-$ACTION}"
+    case "$action" in
+        install | update | repair) ;;
+        *)
+            return 0
+            ;;
+    esac
+
+    if [[ "$ALLOW_NO_SYSTEMD" == "true" ]]; then
+        if ! systemctl_available || ! systemd_running; then
+            log WARN "Включён режим совместимости без systemd (--allow-no-systemd)"
+            log WARN "Часть действий (service/timer/auto-update) будет пропущена"
+        fi
+        return 0
+    fi
+
+    if ! systemctl_available; then
+        log ERROR "Для действия '${action}' требуется systemd (команда systemctl не найдена)"
+        log ERROR "Запустите на системе с systemd или добавьте --allow-no-systemd"
+        return 1
+    fi
+    if ! systemd_running; then
+        if running_in_isolated_root_context; then
+            log ERROR "Для действия '${action}' требуется systemd (обнаружен chroot/isolated root context)"
+        else
+            log ERROR "Для действия '${action}' требуется активный systemd (PID 1 = systemd)"
+        fi
+        log ERROR "Используйте --allow-no-systemd только если понимаете ограничения"
+        return 1
+    fi
+    return 0
+}
+
 main() {
     parse_args "$@"
     if [[ -z "$XRAY_CONFIG_FILE" && "$ACTION" != "install" && -f "$XRAY_ENV" ]]; then
@@ -2394,6 +2434,7 @@ main() {
         install)
             strict_validate_runtime_inputs "install"
             require_root
+            require_systemd_runtime_for_action "install"
             install_flow
             ;;
         add-clients)
@@ -2409,11 +2450,13 @@ main() {
         update)
             strict_validate_runtime_inputs "update"
             require_root
+            require_systemd_runtime_for_action "update"
             update_flow
             ;;
         repair)
             strict_validate_runtime_inputs "repair"
             require_root
+            require_systemd_runtime_for_action "repair"
             repair_flow
             ;;
         diagnose)

@@ -122,6 +122,8 @@ sudo xray-reality.sh logs
 --domain-profile ru|ru-auto|global-ms10|global-ms10-auto|custom
 --transport grpc|http2
 --progress-mode auto|bar|plain|none
+--require-minisign
+--allow-no-systemd
 --num-configs N
 --start-port N
 --server-ip IPV4 --server-ip6 IPV6
@@ -133,7 +135,7 @@ sudo xray-reality.sh logs
 
 - strict runtime input and path validation
 - controlled download surface via allowlisted hosts
-- Xray integrity verification (`sha256` + optional `minisign`)
+- Xray integrity verification (`sha256`, plus optional strict `minisign` mode)
 - transactional file writes with rollback support
 - `systemd` unit with restrictive options and unprivileged runtime user
 

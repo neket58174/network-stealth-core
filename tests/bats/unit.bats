@@ -72,6 +72,17 @@
     [ "$output" = "install:24" ]
 }
 
+@test "parse_args accepts --require-minisign and --allow-no-systemd" {
+    run bash -eo pipefail -c '
+    source ./lib.sh
+    parse_args --require-minisign --allow-no-systemd install
+    apply_runtime_overrides
+    echo "${REQUIRE_MINISIGN}:${ALLOW_NO_SYSTEMD}:${ACTION}"
+  '
+    [ "$status" -eq 0 ]
+    [ "$output" = "true:true:install" ]
+}
+
 @test "trim_ws strips leading and trailing spaces" {
     run bash -eo pipefail -c 'source ./lib.sh; trim_ws "  hello world  "'
     [ "$status" -eq 0 ]
@@ -929,6 +940,53 @@ EOF
     [ "$output" = "ok" ]
 }
 
+@test "install supports strict minisign mode with pinned key fingerprint" {
+    run bash -eo pipefail -c '
+    grep -q '\''REQUIRE_MINISIGN'\'' ./install.sh
+    grep -q '\''XRAY_MINISIGN_PUBKEY_SHA256'\'' ./install.sh
+    grep -q '\''write_pinned_minisign_key()'\'' ./install.sh
+    grep -q '\''handle_minisign_unavailable()'\'' ./install.sh
+    echo "ok"
+  '
+    [ "$status" -eq 0 ]
+    [ "$output" = "ok" ]
+}
+
+@test "handle_minisign_unavailable fails in strict mode without unsafe override" {
+    run bash -eo pipefail -c '
+    source ./lib.sh
+    source ./install.sh
+    log() { :; }
+    hint() { :; }
+    REQUIRE_MINISIGN=true
+    ALLOW_INSECURE_SHA256=false
+    SKIP_MINISIGN=false
+    if handle_minisign_unavailable "test"; then
+      echo "unexpected-success"
+      exit 1
+    fi
+    echo "ok"
+  '
+    [ "$status" -eq 0 ]
+    [ "$output" = "ok" ]
+}
+
+@test "handle_minisign_unavailable allows explicit unsafe SHA256 fallback" {
+    run bash -eo pipefail -c '
+    source ./lib.sh
+    source ./install.sh
+    log() { :; }
+    hint() { :; }
+    REQUIRE_MINISIGN=true
+    ALLOW_INSECURE_SHA256=true
+    SKIP_MINISIGN=false
+    handle_minisign_unavailable "test"
+    echo "$SKIP_MINISIGN"
+  '
+    [ "$status" -eq 0 ]
+    [ "$output" = "true" ]
+}
+
 @test "detect_ips ignores invalid auto-detected ipv6" {
     run bash -eo pipefail -c '
     source ./lib.sh
@@ -1665,6 +1723,37 @@ EOF
   '
     [ "$status" -eq 0 ]
     [ "$output" = "ok" ]
+}
+
+@test "require_systemd_runtime_for_action blocks install when systemd is unavailable" {
+    run bash -eo pipefail -c '
+    source ./lib.sh
+    log() { echo "$*"; }
+    systemctl_available() { return 1; }
+    systemd_running() { return 1; }
+    ALLOW_NO_SYSTEMD=false
+    if require_systemd_runtime_for_action install; then
+      echo "unexpected-success"
+      exit 1
+    fi
+    echo "ok"
+  '
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"ok"* ]]
+}
+
+@test "require_systemd_runtime_for_action allows compat mode with --allow-no-systemd" {
+    run bash -eo pipefail -c '
+    source ./lib.sh
+    log() { echo "$*"; }
+    systemctl_available() { return 1; }
+    systemd_running() { return 1; }
+    ALLOW_NO_SYSTEMD=true
+    require_systemd_runtime_for_action install
+    echo "ok"
+  '
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"ok"* ]]
 }
 
 @test "systemd_running disables service management in isolated root contexts" {

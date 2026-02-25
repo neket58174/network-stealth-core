@@ -300,6 +300,33 @@ EOF
     [ "${lines[1]}" = "unique=3" ]
 }
 
+@test "build_domain_plan avoids adjacent repeats when pool has multiple domains" {
+    run bash -eo pipefail -c '
+    source ./lib.sh
+    source ./config.sh
+    log() { :; }
+    AVAILABLE_DOMAINS=("a.com" "b.com" "c.com")
+    SPIDER_MODE=true
+    PRIMARY_DOMAIN_MODE="pinned"
+    PRIMARY_PIN_DOMAIN="a.com"
+    build_domain_plan 8 true
+
+    adjacent=0
+    for ((i = 1; i < ${#DOMAIN_SELECTION_PLAN[@]}; i++)); do
+      if [[ "${DOMAIN_SELECTION_PLAN[$i]}" == "${DOMAIN_SELECTION_PLAN[$((i - 1))]}" ]]; then
+        adjacent=1
+        break
+      fi
+    done
+
+    echo "total=${#DOMAIN_SELECTION_PLAN[@]}"
+    echo "adjacent=${adjacent}"
+  '
+    [ "$status" -eq 0 ]
+    [ "${lines[0]}" = "total=8" ]
+    [ "${lines[1]}" = "adjacent=0" ]
+}
+
 @test "filter_quarantined_domains excludes domain in active cooldown" {
     run bash -eo pipefail -c '
     source ./lib.sh

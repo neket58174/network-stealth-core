@@ -123,6 +123,8 @@ sudo xray-reality.sh logs
 --domain-profile ru|ru-auto|global-ms10|global-ms10-auto|custom
 --transport grpc|http2
 --progress-mode auto|bar|plain|none
+--require-minisign
+--allow-no-systemd
 --num-configs N
 --start-port N
 --server-ip IPV4 --server-ip6 IPV6
@@ -134,7 +136,7 @@ sudo xray-reality.sh logs
 
 - строгая валидация runtime-параметров
 - allowlist для критичных загрузок
-- проверка целостности Xray (`sha256` + optional `minisign`)
+- проверка целостности Xray (`sha256` + optional strict-режим `minisign`)
 - атомарные записи + rollback при ошибках
 - запуск сервиса от непривилегированного пользователя и ограничивающие параметры `systemd`
 

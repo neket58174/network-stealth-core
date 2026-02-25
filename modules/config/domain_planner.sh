@@ -366,6 +366,24 @@ build_domain_plan() {
         fi
         shuffle_array_inplace cycle
 
+        if [[ ${#DOMAIN_SELECTION_PLAN[@]} -gt 0 && ${#cycle[@]} -gt 1 ]]; then
+            local prev_domain="${DOMAIN_SELECTION_PLAN[$((${#DOMAIN_SELECTION_PLAN[@]} - 1))]}"
+            if [[ "${cycle[0]}" == "$prev_domain" ]]; then
+                local pivot=-1
+                local idx candidate
+                for idx in "${!cycle[@]}"; do
+                    candidate="${cycle[$idx]}"
+                    if [[ "$candidate" != "$prev_domain" ]]; then
+                        pivot=$idx
+                        break
+                    fi
+                done
+                if ((pivot > 0)); then
+                    cycle=("${cycle[@]:$pivot}" "${cycle[@]:0:$pivot}")
+                fi
+            fi
+        fi
+
         local domain
         for domain in "${cycle[@]}"; do
             DOMAIN_SELECTION_PLAN+=("$domain")

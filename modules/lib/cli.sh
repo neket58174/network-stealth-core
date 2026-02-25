@@ -87,6 +87,18 @@ cli_handle_long_option() {
         allow-insecure-sha256)
             ALLOW_INSECURE_SHA256=true
             ;;
+        require-minisign)
+            REQUIRE_MINISIGN=true
+            ;;
+        no-require-minisign)
+            REQUIRE_MINISIGN=false
+            ;;
+        allow-no-systemd)
+            ALLOW_NO_SYSTEMD=true
+            ;;
+        no-allow-no-systemd)
+            ALLOW_NO_SYSTEMD=false
+            ;;
         config | config=*)
             XRAY_CONFIG_FILE="$(cli_read_long_option_value "$optarg")"
             ;;
@@ -353,6 +365,8 @@ apply_runtime_overrides() {
     AUTO_UPDATE=$(parse_bool "$AUTO_UPDATE" true)
     ALLOW_INSECURE_SHA256=$(parse_bool "$ALLOW_INSECURE_SHA256" false)
     ALLOW_UNVERIFIED_MINISIGN_BOOTSTRAP=$(parse_bool "$ALLOW_UNVERIFIED_MINISIGN_BOOTSTRAP" false)
+    REQUIRE_MINISIGN=$(parse_bool "$REQUIRE_MINISIGN" false)
+    ALLOW_NO_SYSTEMD=$(parse_bool "$ALLOW_NO_SYSTEMD" false)
     GEO_VERIFY_HASH=$(parse_bool "$GEO_VERIFY_HASH" true)
     GEO_VERIFY_STRICT=$(parse_bool "$GEO_VERIFY_STRICT" false)
     DRY_RUN=$(parse_bool "$DRY_RUN" false)

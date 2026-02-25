@@ -11,10 +11,15 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 - Normalized operations commands to use installed `xray-reality.sh` invocation form.
 - Aligned docs wording around Ubuntu 24.04 LTS support scope and repository-supported version line.
+- Added explicit compatibility flags: `--allow-no-systemd` and `--require-minisign`.
+- Documented pinned minisign trust-anchor fingerprint policy in security docs.
 
 ### Fixed
 
 - Install now neutralizes conflicting `systemd` drop-ins in `xray.service.d` that override runtime-critical fields (for example `ExecStart`, `User`, `Group`), preventing false startup/listening failures.
+- `install` / `update` / `repair` now fail fast when `systemd` is unavailable (unless explicit compatibility mode is enabled).
+- Strict minisign mode now fails closed when minisign/signature is unavailable, with explicit unsafe bypass only via `ALLOW_INSECURE_SHA256=true`.
+- Domain planning now avoids adjacent duplicate domains across shuffled cycles when pool size is greater than one.
 
 ## [4.1.8] - 2026-02-24
 

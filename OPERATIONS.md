@@ -19,6 +19,12 @@ sudo bash <(curl -fsSL https://raw.githubusercontent.com/neket58174/network-stea
 
 If `/dev/fd` is unavailable, switch to universal install.
 
+### Notes about systemd and strict integrity mode
+
+- default `install`, `update`, `repair` expect working `systemd` runtime
+- for constrained environments (containers/chroot), use `--allow-no-systemd`
+- to enforce fail-closed signature policy, use `--require-minisign`
+
 ## Public release sanity (Ubuntu 24.04 LTS)
 
 Use this list before creating a public release. Supported and verified target for this checklist: **Ubuntu 24.04 LTS**.

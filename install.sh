@@ -88,6 +88,55 @@ create_users() {
     chown "root:${XRAY_GROUP}" /etc/xray/private
 }
 
+readonly XRAY_MINISIGN_PUBKEY_COMMENT="untrusted comment: Xray-core public key"
+readonly XRAY_MINISIGN_PUBKEY_VALUE="RWQklF4zzcXy3MfHKvEqD1nwJ7rX0kGmKeJFgRsJBMHkPJPjZ2fxJhfU"
+readonly XRAY_MINISIGN_PUBKEY_SHA256="294701ab7f6e18646e45b5093033d9e64f3ca181f74c0cf232627628f3d8293e"
+
+handle_minisign_unavailable() {
+    local reason="${1:-Minisign недоступен}"
+
+    if [[ "$ALLOW_INSECURE_SHA256" == "true" ]]; then
+        log WARN "${reason}; продолжаем только с SHA256 (ALLOW_INSECURE_SHA256=true)"
+        SKIP_MINISIGN=true
+        return 0
+    fi
+
+    if [[ "$REQUIRE_MINISIGN" == "true" ]]; then
+        log ERROR "$reason"
+        log ERROR "REQUIRE_MINISIGN=true: продолжение без minisign запрещено"
+        hint "Отключите --require-minisign или явно разрешите fallback: --allow-insecure-sha256"
+        return 1
+    fi
+
+    SKIP_MINISIGN=true
+    return 0
+}
+
+write_pinned_minisign_key() {
+    atomic_write "$MINISIGN_KEY" 0644 << EOF
+${XRAY_MINISIGN_PUBKEY_COMMENT}
+${XRAY_MINISIGN_PUBKEY_VALUE}
+EOF
+
+    if command -v sha256sum > /dev/null 2>&1; then
+        local actual_sha256=""
+        actual_sha256=$(sha256sum "$MINISIGN_KEY" 2> /dev/null | awk '{print $1}')
+        if [[ "$actual_sha256" != "$XRAY_MINISIGN_PUBKEY_SHA256" ]]; then
+            log ERROR "Fingerprint pinned minisign-ключа не совпадает"
+            debug_file "minisign key fingerprint mismatch: got=${actual_sha256:-empty} expected=${XRAY_MINISIGN_PUBKEY_SHA256}"
+            return 1
+        fi
+    else
+        local key_line=""
+        key_line=$(sed -n '2p' "$MINISIGN_KEY" 2> /dev/null | tr -d '\r' || true)
+        if [[ "$key_line" != "$XRAY_MINISIGN_PUBKEY_VALUE" ]]; then
+            log ERROR "Pinned minisign-ключ повреждён"
+            return 1
+        fi
+    fi
+    return 0
+}
+
 install_minisign() {
     log STEP "Устанавливаем minisign для проверки подписей..."
     local minisign_bin="${MINISIGN_BIN:-/usr/local/bin/minisign}"
@@ -114,8 +163,8 @@ install_minisign() {
     if [[ "$ALLOW_UNVERIFIED_MINISIGN_BOOTSTRAP" != "true" ]]; then
         log INFO "Скачивание minisign из интернета отключено по умолчанию"
         log INFO "Для разрешения установите ALLOW_UNVERIFIED_MINISIGN_BOOTSTRAP=true"
-        SKIP_MINISIGN=true
-        return 0
+        handle_minisign_unavailable "Minisign не установлен и интернет-bootstrap отключён"
+        return $?
     fi
 
     local arch
@@ -124,18 +173,17 @@ install_minisign() {
         aarch64) arch="arm64" ;;
         armv7l) arch="armhf" ;;
         *)
-            log WARN "Неподдерживаемая архитектура для minisign, пропускаем"
-            SKIP_MINISIGN=true
-            return 0
+            log WARN "Неподдерживаемая архитектура для minisign"
+            handle_minisign_unavailable "Minisign недоступен для архитектуры $(uname -m)"
+            return $?
             ;;
     esac
 
     local version="0.11"
     local tmp_dir
     tmp_dir=$(mktemp -d) || {
-        log ERROR "Не удалось создать временную директорию"
-        SKIP_MINISIGN=true
-        return 0
+        handle_minisign_unavailable "Не удалось создать временную директорию для minisign"
+        return $?
     }
     local tarball=""
     local -a bases=()
@@ -177,10 +225,10 @@ install_minisign() {
     done
 
     if [[ "$downloaded" != true ]]; then
-        log WARN "Не удалось скачать minisign, используем только SHA256"
-        SKIP_MINISIGN=true
+        log WARN "Не удалось скачать minisign"
         rm -rf "$tmp_dir"
-        return 0
+        handle_minisign_unavailable "Minisign недоступен после попыток загрузки"
+        return $?
     fi
 
     local bin_path
@@ -194,8 +242,9 @@ install_minisign() {
         log OK "minisign установлен"
         SKIP_MINISIGN=false
     else
-        log WARN "Не удалось установить minisign, используем только SHA256"
-        SKIP_MINISIGN=true
+        log WARN "Не удалось установить minisign"
+        handle_minisign_unavailable "Minisign не удалось установить из загруженного архива"
+        return $?
     fi
 }
 
@@ -334,12 +383,20 @@ install_xray() {
     log OK "✓ SHA256 проверка пройдена"
 
     if [[ "$SKIP_MINISIGN" == true ]]; then
+        if [[ "$REQUIRE_MINISIGN" == "true" && "$ALLOW_INSECURE_SHA256" != "true" ]]; then
+            log ERROR "Minisign недоступен, а REQUIRE_MINISIGN=true"
+            return 1
+        fi
         log INFO "Minisign недоступен; продолжаем только с SHA256"
     else
         log INFO "Проверяем minisign подпись (если доступна в релизе)..."
 
         sig_file=$(mktemp "${tmp_workdir}/xray-${version}.XXXXXX.minisig" 2> /dev/null || true)
         if [[ -z "$sig_file" ]]; then
+            if [[ "$REQUIRE_MINISIGN" == "true" && "$ALLOW_INSECURE_SHA256" != "true" ]]; then
+                log ERROR "Не удалось создать временный файл подписи minisign"
+                return 1
+            fi
             log INFO "Не удалось создать временный файл подписи; minisign проверка пропущена"
         fi
         local sig_downloaded=false
@@ -393,6 +450,10 @@ install_xray() {
             [[ "$sig_err_file" != "/dev/null" ]] && rm -f "$sig_err_file"
         done
         if [[ "$sig_downloaded" != true ]]; then
+            if [[ "$REQUIRE_MINISIGN" == "true" && "$ALLOW_INSECURE_SHA256" != "true" ]]; then
+                log ERROR "Minisign подпись не найдена в релизе; режим REQUIRE_MINISIGN=true не допускает fallback"
+                return 1
+            fi
             log INFO "Minisign подпись не найдена в релизе; продолжаем только с SHA256"
         fi
 
@@ -401,10 +462,9 @@ install_xray() {
             if [[ -n "${MINISIGN_BIN:-}" && -x "${MINISIGN_BIN}" ]]; then
                 minisign_cmd="${MINISIGN_BIN}"
             fi
-            atomic_write "$MINISIGN_KEY" 0644 << 'MINISIG_KEY'
-untrusted comment: Xray-core public key
-RWQklF4zzcXy3MfHKvEqD1nwJ7rX0kGmKeJFgRsJBMHkPJPjZ2fxJhfU
-MINISIG_KEY
+            if ! write_pinned_minisign_key; then
+                return 1
+            fi
 
             if "$minisign_cmd" -Vm "$zip_file" -p "$MINISIGN_KEY" -x "$sig_file" > /dev/null 2>&1; then
                 log OK "✓ Minisign подпись верна"

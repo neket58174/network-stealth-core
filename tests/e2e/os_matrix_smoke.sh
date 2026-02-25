@@ -37,6 +37,7 @@ echo "==> install"
 run_root env \
     NON_INTERACTIVE=true \
     ASSUME_YES=true \
+    ALLOW_NO_SYSTEMD=true \
     XRAY_NUM_CONFIGS="$INITIAL_CONFIGS" \
     START_PORT="$START_PORT" \
     SERVER_IP=127.0.0.1 \
@@ -77,6 +78,7 @@ echo "==> update"
 run_root env \
     NON_INTERACTIVE=true \
     ASSUME_YES=true \
+    ALLOW_NO_SYSTEMD=true \
     ALLOW_INSECURE_SHA256=true \
     bash "$SCRIPT_PATH" update
 

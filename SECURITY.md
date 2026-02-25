@@ -26,7 +26,7 @@ Target response windows:
 
 | Threat | Mitigation |
 |---|---|
-| bootstrap/download tampering | pinned bootstrap support, SHA256 checks, optional minisign verification |
+| bootstrap/download tampering | pinned bootstrap support, SHA256 checks, optional strict minisign mode |
 | command/path injection | strict validators, safe path guards, sanitized runtime values |
 | partial write corruption | atomic writes + staged validation |
 | failed updates/install | rollback stack + runtime reconciliation |
@@ -38,8 +38,13 @@ Target response windows:
 
 - HTTPS-only download flows with strict validation
 - allowlisted critical hosts (`DOWNLOAD_HOST_ALLOWLIST`)
-- artifact integrity checks (`sha256`, optional `minisign`)
+- artifact integrity checks (`sha256`, optional strict `REQUIRE_MINISIGN=true`)
+- pinned minisign trust anchor with fingerprint check (`MINISIGN_KEY` content hash)
 - bootstrap pin control via `XRAY_REPO_COMMIT`
+
+Current pinned minisign key fingerprint (`sha256` of `MINISIGN_KEY` file content):
+
+- `294701ab7f6e18646e45b5093033d9e64f3ca181f74c0cf232627628f3d8293e`
 
 ### Privilege separation
 
@@ -95,6 +100,7 @@ These flags reduce default security guarantees and should be temporary:
 
 - `ALLOW_INSECURE_SHA256=true`
 - `ALLOW_UNVERIFIED_MINISIGN_BOOTSTRAP=true`
+- `ALLOW_NO_SYSTEMD=true`
 - `GEO_VERIFY_HASH=false`
 
 ## Operational security recommendations

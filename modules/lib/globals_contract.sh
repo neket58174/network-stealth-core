@@ -76,6 +76,8 @@
 : "${KEEP_LOCAL_BACKUPS:=true}"
 : "${ALLOW_INSECURE_SHA256:=false}"
 : "${ALLOW_UNVERIFIED_MINISIGN_BOOTSTRAP:=false}"
+: "${REQUIRE_MINISIGN:=false}"
+: "${ALLOW_NO_SYSTEMD:=false}"
 
 : "${AUTO_UPDATE:=true}"
 : "${AUTO_UPDATE_ONCALENDAR:=weekly}"
