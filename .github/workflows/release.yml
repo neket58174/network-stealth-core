@@ -117,8 +117,15 @@ jobs:
         id: smoke
         run: |
           set -euo pipefail
-          chmod +x tests/e2e/*.sh
-          for test_script in tests/e2e/*.sh; do
+          mapfile -t tests < <(find tests/e2e -maxdepth 1 -type f -name '*.sh' \
+            ! -name 'lib.sh' \
+            ! -name 'nightly_smoke_install_add_update_uninstall.sh' | sort)
+          if ((${#tests[@]} == 0)); then
+            echo "no e2e scripts discovered" >&2
+            exit 1
+          fi
+          chmod +x "${tests[@]}"
+          for test_script in "${tests[@]}"; do
             echo "running ${test_script}"
             "$test_script"
           done

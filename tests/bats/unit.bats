@@ -422,6 +422,15 @@ ExecStart=/tmp/pwn"
     [ "$status" -ne 0 ]
 }
 
+@test "strict_validate_runtime_inputs rejects invalid MAX_BACKUPS" {
+    run bash -eo pipefail -c '
+    source ./lib.sh
+    MAX_BACKUPS="abc"
+    strict_validate_runtime_inputs update
+  '
+    [ "$status" -ne 0 ]
+}
+
 @test "strict_validate_runtime_inputs rejects invalid DOMAIN_CHECK_PARALLELISM" {
     run bash -eo pipefail -c '
     source ./lib.sh
@@ -1870,6 +1879,23 @@ EOF
     [[ "$output" == *"ok"* ]]
 }
 
+@test "require_systemd_runtime_for_action blocks add-clients without systemd even in compat mode" {
+    run bash -eo pipefail -c '
+    source ./lib.sh
+    log() { echo "$*"; }
+    systemctl_available() { return 1; }
+    systemd_running() { return 1; }
+    ALLOW_NO_SYSTEMD=true
+    if require_systemd_runtime_for_action add-clients; then
+      echo "unexpected-success"
+      exit 1
+    fi
+    echo "ok"
+  '
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"ok"* ]]
+}
+
 @test "systemd_running disables service management in isolated root contexts" {
     run bash -eo pipefail -c '
     grep -q '\''running_in_isolated_root_context'\'' ./lib.sh
@@ -1909,6 +1935,17 @@ EOF
     grep -q '\''gh release create'\'' ./.github/workflows/release.yml
     ! grep -Eq '\''curl[[:space:]]+-sSfL[[:space:]]+https://raw.githubusercontent.com/anchore/syft/main/install.sh[[:space:]]*\\|[[:space:]]*sudo[[:space:]]+sh'\'' ./.github/workflows/release.yml
     ! grep -q '\''softprops/action-gh-release'\'' ./.github/workflows/release.yml
+    echo "ok"
+  '
+    [ "$status" -eq 0 ]
+    [ "$output" = "ok" ]
+}
+
+@test "release workflow excludes helper/nightly e2e scripts from release matrix" {
+    run bash -eo pipefail -c '
+    grep -Fq "find tests/e2e -maxdepth 1 -type f -name" ./.github/workflows/release.yml
+    grep -Fq "! -name '\''lib.sh'\''" ./.github/workflows/release.yml
+    grep -Fq "! -name '\''nightly_smoke_install_add_update_uninstall.sh'\''" ./.github/workflows/release.yml
     echo "ok"
   '
     [ "$status" -eq 0 ]
@@ -2022,6 +2059,25 @@ EOF
     rotate_backups
     [[ ! -d "$XRAY_BACKUP/old backup" ]]
     [[ -d "$XRAY_BACKUP/new backup" ]]
+    echo "ok"
+  '
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"ok"* ]]
+}
+
+@test "rotate_backups falls back to default when MAX_BACKUPS is invalid" {
+    run bash -eo pipefail -c '
+    set -euo pipefail
+    source ./lib.sh
+    XRAY_BACKUP="$(mktemp -d)"
+    MAX_BACKUPS="abc"
+    mkdir -p "$XRAY_BACKUP/older"
+    mkdir -p "$XRAY_BACKUP/newer"
+    touch -d "2020-01-01 00:00:00" "$XRAY_BACKUP/older"
+    touch -d "2030-01-01 00:00:00" "$XRAY_BACKUP/newer"
+    rotate_backups
+    [[ -d "$XRAY_BACKUP/older" ]]
+    [[ -d "$XRAY_BACKUP/newer" ]]
     echo "ok"
   '
     [ "$status" -eq 0 ]

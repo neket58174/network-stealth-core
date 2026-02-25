@@ -1589,6 +1589,7 @@ strict_validate_numeric_range() {
 
 runtime_common_range_specs() {
     cat << 'EOF'
+MAX_BACKUPS 1 1000 10
 HEALTH_CHECK_INTERVAL 10 86400 120
 LOG_RETENTION_DAYS 1 3650 30
 LOG_MAX_SIZE_MB 1 1024 10
@@ -2472,11 +2473,27 @@ require_root() {
 require_systemd_runtime_for_action() {
     local action="${1:-$ACTION}"
     case "$action" in
-        install | update | repair) ;;
+        install | update | repair | add-clients | add-keys) ;;
         *)
             return 0
             ;;
     esac
+
+    if [[ "$action" == "add-clients" || "$action" == "add-keys" ]]; then
+        if ! systemctl_available; then
+            log ERROR "Для действия '${action}' требуется systemd (команда systemctl не найдена)"
+            return 1
+        fi
+        if ! systemd_running; then
+            if running_in_isolated_root_context; then
+                log ERROR "Для действия '${action}' требуется systemd (обнаружен chroot/isolated root context)"
+            else
+                log ERROR "Для действия '${action}' требуется активный systemd (PID 1 = systemd)"
+            fi
+            return 1
+        fi
+        return 0
+    fi
 
     if [[ "$ALLOW_NO_SYSTEMD" == "true" ]]; then
         if ! systemctl_available || ! systemd_running; then
@@ -2526,11 +2543,13 @@ main() {
         add-clients)
             strict_validate_runtime_inputs "add-clients"
             require_root
+            require_systemd_runtime_for_action "add-clients"
             add_clients_flow
             ;;
         add-keys)
             strict_validate_runtime_inputs "add-keys"
             require_root
+            require_systemd_runtime_for_action "add-keys"
             add_clients_flow
             ;;
         update)
