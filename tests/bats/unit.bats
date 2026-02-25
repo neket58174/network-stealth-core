@@ -987,6 +987,27 @@ EOF
     [ "$output" = "true" ]
 }
 
+@test "handle_minisign_unavailable fails in non-interactive mode without unsafe override" {
+    run bash -eo pipefail -c '
+    source ./lib.sh
+    source ./install.sh
+    log() { :; }
+    hint() { :; }
+    REQUIRE_MINISIGN=false
+    ALLOW_INSECURE_SHA256=false
+    NON_INTERACTIVE=true
+    ASSUME_YES=true
+    SKIP_MINISIGN=false
+    if handle_minisign_unavailable "test"; then
+      echo "unexpected-success"
+      exit 1
+    fi
+    echo "ok"
+  '
+    [ "$status" -eq 0 ]
+    [ "$output" = "ok" ]
+}
+
 @test "detect_ips ignores invalid auto-detected ipv6" {
     run bash -eo pipefail -c '
     source ./lib.sh

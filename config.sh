@@ -807,6 +807,8 @@ EOF
     json_configs=$(jq -n '[]')
     local -a vless_links_v4=()
     local -a vless_links_v6=()
+    local link_prefix
+    link_prefix=$(client_link_prefix_for_tier "$DOMAIN_TIER")
 
     for ((i = 0; i < NUM_CONFIGS; i++)); do
         local domain="${CONFIG_DOMAINS[$i]:-unknown}"
@@ -826,11 +828,11 @@ EOF
         local params
         params=$(build_vless_query_params "$sni" "$fp" "${PUBLIC_KEYS[$i]}" "${SHORT_IDS[$i]}" "$TRANSPORT" "$endpoint")
 
-        local vless_v4="vless://${UUIDS[$i]}@${SERVER_IP}:${PORTS[$i]}?${params}#RU-${clean_name}-$((i + 1))"
+        local vless_v4="vless://${UUIDS[$i]}@${SERVER_IP}:${PORTS[$i]}?${params}#${link_prefix}-${clean_name}-$((i + 1))"
         vless_links_v4+=("$vless_v4")
 
         if [[ "$HAS_IPV6" == true && -n "${SERVER_IP6:-}" && -n "${PORTS_V6[$i]:-}" ]]; then
-            local vless_v6="vless://${UUIDS[$i]}@[${SERVER_IP6}]:${PORTS_V6[$i]}?${params}#RU-${clean_name}-v6-$((i + 1))"
+            local vless_v6="vless://${UUIDS[$i]}@[${SERVER_IP6}]:${PORTS_V6[$i]}?${params}#${link_prefix}-${clean_name}-v6-$((i + 1))"
             vless_links_v6+=("$vless_v6")
         else
             vless_links_v6+=("")

@@ -369,6 +369,8 @@ build_add_clients_links() {
     _out_vless_v6=()
 
     local i
+    local link_prefix
+    link_prefix=$(client_link_prefix_for_tier "$DOMAIN_TIER")
     for ((i = 0; i < add_count; i++)); do
         local config_num=$((existing_count + i + 1))
         local domain="${_add_domains[$i]}"
@@ -383,10 +385,10 @@ build_add_clients_links() {
             endpoint=$(grpc_service_to_http2_path "$grpc")
         fi
         params=$(build_vless_query_params "$sni" "$fp" "${_new_public_keys[$i]}" "${_new_short_ids[$i]}" "$TRANSPORT" "$endpoint")
-        _out_vless_v4+=("vless://${_new_uuids[$i]}@${SERVER_IP}:${_new_ports[$i]}?${params}#RU-${clean_name}-${config_num}")
+        _out_vless_v4+=("vless://${_new_uuids[$i]}@${SERVER_IP}:${_new_ports[$i]}?${params}#${link_prefix}-${clean_name}-${config_num}")
 
         if [[ "$HAS_IPV6" == true && -n "${SERVER_IP6:-}" && -n "${_new_ports_v6[$i]:-}" ]]; then
-            _out_vless_v6+=("vless://${_new_uuids[$i]}@[${SERVER_IP6}]:${_new_ports_v6[$i]}?${params}#RU-${clean_name}-v6-${config_num}")
+            _out_vless_v6+=("vless://${_new_uuids[$i]}@[${SERVER_IP6}]:${_new_ports_v6[$i]}?${params}#${link_prefix}-${clean_name}-v6-${config_num}")
         else
             _out_vless_v6+=("")
         fi

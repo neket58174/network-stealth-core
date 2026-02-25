@@ -87,3 +87,23 @@ build_vless_query_params() {
     local IFS='&'
     printf '%s' "${params[*]}"
 }
+
+client_link_prefix_for_tier() {
+    local tier_raw="${1:-${DOMAIN_TIER:-tier_ru}}"
+    local tier
+    if ! tier=$(normalize_domain_tier "$tier_raw" 2> /dev/null); then
+        tier="tier_ru"
+    fi
+
+    case "$tier" in
+        tier_global_ms10)
+            printf '%s' "GLOBAL"
+            ;;
+        custom)
+            printf '%s' "CUSTOM"
+            ;;
+        *)
+            printf '%s' "RU"
+            ;;
+    esac
+}

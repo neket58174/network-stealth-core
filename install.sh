@@ -92,6 +92,57 @@ readonly XRAY_MINISIGN_PUBKEY_COMMENT="untrusted comment: Xray-core public key"
 readonly XRAY_MINISIGN_PUBKEY_VALUE="RWQklF4zzcXy3MfHKvEqD1nwJ7rX0kGmKeJFgRsJBMHkPJPjZ2fxJhfU"
 readonly XRAY_MINISIGN_PUBKEY_SHA256="294701ab7f6e18646e45b5093033d9e64f3ca181f74c0cf232627628f3d8293e"
 
+confirm_minisign_fallback() {
+    local reason="${1:-Minisign проверка недоступна}"
+
+    if [[ "$REQUIRE_MINISIGN" == "true" ]]; then
+        log ERROR "$reason"
+        log ERROR "REQUIRE_MINISIGN=true: продолжение без minisign запрещено"
+        hint "Отключите --require-minisign или явно разрешите fallback: --allow-insecure-sha256"
+        return 1
+    fi
+
+    if [[ "$ALLOW_INSECURE_SHA256" == "true" ]]; then
+        return 0
+    fi
+
+    if [[ "$NON_INTERACTIVE" == "true" || "$ASSUME_YES" == "true" ]]; then
+        log ERROR "$reason"
+        log ERROR "Без minisign требуется явное подтверждение yes/no, но включён non-interactive режим"
+        hint "Для осознанного продолжения используйте --allow-insecure-sha256"
+        return 1
+    fi
+
+    if [[ ! -r /dev/tty ]]; then
+        log ERROR "$reason"
+        log ERROR "Нет /dev/tty для подтверждения fallback-режима"
+        hint "Для осознанного продолжения используйте --allow-insecure-sha256"
+        return 1
+    fi
+
+    echo ""
+    echo -e "${YELLOW}⚠️  Внимание: minisign недоступен или не пройден.${NC}"
+    echo -e "${YELLOW}Продолжить установку только по SHA256? [yes/no]${NC}"
+
+    local answer=""
+    while true; do
+        read -r -p "Подтвердите (yes/no): " answer < /dev/tty
+        case "${answer,,}" in
+            yes | y | да | д)
+                log WARN "Подтверждено продолжение без minisign (только SHA256)"
+                return 0
+                ;;
+            no | n | нет | н | "")
+                log ERROR "Операция остановлена пользователем: minisign fallback отклонён"
+                return 1
+                ;;
+            *)
+                echo "Введите yes или no"
+                ;;
+        esac
+    done
+}
+
 handle_minisign_unavailable() {
     local reason="${1:-Minisign недоступен}"
 
@@ -101,14 +152,12 @@ handle_minisign_unavailable() {
         return 0
     fi
 
-    if [[ "$REQUIRE_MINISIGN" == "true" ]]; then
-        log ERROR "$reason"
-        log ERROR "REQUIRE_MINISIGN=true: продолжение без minisign запрещено"
-        hint "Отключите --require-minisign или явно разрешите fallback: --allow-insecure-sha256"
+    if ! confirm_minisign_fallback "$reason"; then
         return 1
     fi
 
     SKIP_MINISIGN=true
+    log INFO "Продолжаем установку только с SHA256 после подтверждения"
     return 0
 }
 
@@ -393,11 +442,14 @@ install_xray() {
 
         sig_file=$(mktemp "${tmp_workdir}/xray-${version}.XXXXXX.minisig" 2> /dev/null || true)
         if [[ -z "$sig_file" ]]; then
-            if [[ "$REQUIRE_MINISIGN" == "true" && "$ALLOW_INSECURE_SHA256" != "true" ]]; then
-                log ERROR "Не удалось создать временный файл подписи minisign"
+            if ! confirm_minisign_fallback "Не удалось создать временный файл подписи minisign"; then
                 return 1
             fi
-            log INFO "Не удалось создать временный файл подписи; minisign проверка пропущена"
+            if [[ "$ALLOW_INSECURE_SHA256" == "true" ]]; then
+                log WARN "Не удалось создать временный файл подписи; продолжаем только с SHA256 (ALLOW_INSECURE_SHA256=true)"
+            else
+                log INFO "Не удалось создать временный файл подписи; продолжаем только с SHA256 после подтверждения"
+            fi
         fi
         local sig_downloaded=false
         is_minisig_file() {
@@ -450,11 +502,14 @@ install_xray() {
             [[ "$sig_err_file" != "/dev/null" ]] && rm -f "$sig_err_file"
         done
         if [[ "$sig_downloaded" != true ]]; then
-            if [[ "$REQUIRE_MINISIGN" == "true" && "$ALLOW_INSECURE_SHA256" != "true" ]]; then
-                log ERROR "Minisign подпись не найдена в релизе; режим REQUIRE_MINISIGN=true не допускает fallback"
+            if ! confirm_minisign_fallback "Minisign подпись не найдена в релизе"; then
                 return 1
             fi
-            log INFO "Minisign подпись не найдена в релизе; продолжаем только с SHA256"
+            if [[ "$ALLOW_INSECURE_SHA256" == "true" ]]; then
+                log INFO "Minisign подпись не найдена в релизе; продолжаем только с SHA256 (ALLOW_INSECURE_SHA256=true)"
+            else
+                log INFO "Minisign подпись не найдена в релизе; продолжаем только с SHA256 после подтверждения"
+            fi
         fi
 
         if [[ "$sig_downloaded" == true && -n "$sig_file" && -f "$sig_file" ]]; then
@@ -472,9 +527,10 @@ install_xray() {
                 if [[ "$ALLOW_INSECURE_SHA256" == true ]]; then
                     log WARN "Minisign подпись не прошла (возможно, ключ обновился); продолжаем с SHA256"
                 else
-                    log ERROR "Ошибка проверки minisign подписи!"
-                    hint "Добавьте ALLOW_INSECURE_SHA256=true или --allow-insecure-sha256 для продолжения только с SHA256"
-                    return 1
+                    if ! confirm_minisign_fallback "Ошибка проверки minisign подписи"; then
+                        return 1
+                    fi
+                    log WARN "Продолжаем только с SHA256 после подтверждения оператора"
                 fi
             fi
             rm -f "$sig_file"

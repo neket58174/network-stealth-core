@@ -667,15 +667,28 @@ uninstall_all() {
     echo ""
     set +e
 
+    local manage_systemd_uninstall=true
+    if ! systemctl_available; then
+        manage_systemd_uninstall=false
+        log INFO "systemctl не найден; systemd-операции удаления пропущены"
+    elif ! systemd_running; then
+        manage_systemd_uninstall=false
+        log INFO "systemd не запущен; systemd-операции удаления пропущены"
+    fi
+
     log STEP "Останавливаем сервисы..."
     local -a services=(xray xray-health.service xray-health.timer xray-auto-update.service xray-auto-update.timer)
-    for svc in "${services[@]}"; do
-        if systemctl is-active --quiet "$svc" 2> /dev/null; then
-            systemctl stop "$svc" 2> /dev/null
-            echo -e "  ${GREEN}✅ Остановлен ${svc}${NC}"
-        fi
-        systemctl disable "$svc" 2> /dev/null || true
-    done
+    if [[ "$manage_systemd_uninstall" == true ]]; then
+        for svc in "${services[@]}"; do
+            if systemctl is-active --quiet "$svc" 2> /dev/null; then
+                systemctl stop "$svc" 2> /dev/null
+                echo -e "  ${GREEN}✅ Остановлен ${svc}${NC}"
+            fi
+            systemctl disable "$svc" 2> /dev/null || true
+        done
+    else
+        echo -e "  ${DIM}Пропущено: systemd недоступен${NC}"
+    fi
 
     log STEP "Закрываем порты в файрволе..."
     uninstall_close_ports
@@ -743,8 +756,10 @@ uninstall_all() {
     fi
     uninstall_remove_dir "$XRAY_HOME"
 
-    systemctl daemon-reload 2> /dev/null || true
-    echo -e "  ${GREEN}✅ systemctl daemon-reload${NC}"
+    if [[ "$manage_systemd_uninstall" == true ]]; then
+        systemctl daemon-reload 2> /dev/null || true
+        echo -e "  ${GREEN}✅ systemctl daemon-reload${NC}"
+    fi
 
     set -e
 
