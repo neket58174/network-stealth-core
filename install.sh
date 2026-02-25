@@ -702,7 +702,13 @@ ask_domain_profile() {
         return 0
     fi
 
-    if [[ "$has_tty" != "true" ]] || [[ ! -r /dev/tty ]]; then
+    if [[ "$has_tty" != "true" ]]; then
+        log ERROR "Не удалось открыть /dev/tty для выбора профиля доменов"
+        exit 1
+    fi
+
+    local tty_fd=""
+    if ! exec {tty_fd}<> /dev/tty 2> /dev/null; then
         log ERROR "Не удалось открыть /dev/tty для выбора профиля доменов"
         exit 1
     fi
@@ -715,7 +721,11 @@ ask_domain_profile() {
         echo "  2) global-ms10 (ручной ввод числа ключей, до 10)"
         echo "  3) ru-auto (автоматически: 5 ключей)"
         echo "  4) global-ms10-auto (автоматически: 10 ключей)"
-        read -r -p "Профиль [1/2/3/4]: " input < /dev/tty
+        if ! read -r -u "$tty_fd" -p "Профиль [1/2/3/4]: " input; then
+            exec {tty_fd}>&-
+            log ERROR "Не удалось прочитать выбор профиля из /dev/tty"
+            exit 1
+        fi
         case "${input,,}" in
             "" | 1 | ru | russia | rf | tier_ru)
                 DOMAIN_TIER="tier_ru"
@@ -742,6 +752,7 @@ ask_domain_profile() {
                 ;;
         esac
     done
+    exec {tty_fd}>&-
     if ! DOMAIN_TIER=$(normalize_domain_tier "$DOMAIN_TIER"); then
         DOMAIN_TIER="tier_ru"
     fi
@@ -796,7 +807,13 @@ ask_num_configs() {
         exit 1
     fi
 
-    if [[ "$has_tty" != "true" ]] || [[ ! -r /dev/tty ]]; then
+    if [[ "$has_tty" != "true" ]]; then
+        log ERROR "Не удалось открыть /dev/tty для обязательного ввода NUM_CONFIGS"
+        exit 1
+    fi
+
+    local tty_fd=""
+    if ! exec {tty_fd}<> /dev/tty 2> /dev/null; then
         log ERROR "Не удалось открыть /dev/tty для обязательного ввода NUM_CONFIGS"
         exit 1
     fi
@@ -804,8 +821,13 @@ ask_num_configs() {
     echo ""
     local input
     while true; do
-        read -r -p "Сколько VPN-ключей создать? (1-${max_configs}): " input < /dev/tty
+        if ! read -r -u "$tty_fd" -p "Сколько VPN-ключей создать? (1-${max_configs}): " input; then
+            exec {tty_fd}>&-
+            log ERROR "Не удалось прочитать значение NUM_CONFIGS из /dev/tty"
+            exit 1
+        fi
         if [[ "$input" =~ ^[0-9]+$ ]] && ((input >= 1 && input <= max_configs)); then
+            exec {tty_fd}>&-
             NUM_CONFIGS="$input"
             log OK "Количество ключей: ${NUM_CONFIGS}"
             echo ""

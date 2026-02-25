@@ -1227,6 +1227,32 @@ EOF
     [ "$output" = "ok" ]
 }
 
+@test "interactive prompts use explicit tty fd pattern" {
+    run bash -eo pipefail -c '
+    grep -Fq '\''exec {tty_fd}<> /dev/tty'\'' ./install.sh
+    grep -Fq '\''read -r -u "$tty_fd" -p "Профиль [1/2/3/4]: " input'\'' ./install.sh
+    grep -Fq '\''read -r -u "$tty_fd" -p "Сколько VPN-ключей создать? (1-${max_configs}): " input'\'' ./install.sh
+    grep -Fq '\''read -r -u "$tty_fd" -p "Сколько VPN-ключей добавить? (1-${max_add}): " input'\'' ./modules/config/add_clients.sh
+    ! grep -Fq '\''read -r -p "Профиль [1/2/3/4]: " input < /dev/tty'\'' ./install.sh
+    ! grep -Fq '\''read -r -p "Сколько VPN-ключей создать? (1-${max_configs}): " input < /dev/tty'\'' ./install.sh
+    ! grep -Fq '\''read -r -p "Сколько VPN-ключей добавить? (1-${max_add}): " input < /dev/tty'\'' ./modules/config/add_clients.sh
+    echo "ok"
+  '
+    [ "$status" -eq 0 ]
+    [ "$output" = "ok" ]
+}
+
+@test "lifecycle cleanup handles missing cleanup_logging_processes function" {
+    run bash -eo pipefail -c '
+    count=$(grep -c '\''declare -F cleanup_logging_processes > /dev/null'\'' ./modules/lib/lifecycle.sh)
+    [[ "$count" -ge 2 ]]
+    ! grep -q '\''^[[:space:]]*cleanup_logging_processes || true$'\'' ./modules/lib/lifecycle.sh
+    echo "ok"
+  '
+    [ "$status" -eq 0 ]
+    [ "$output" = "ok" ]
+}
+
 @test "client_artifacts_missing detects absent files" {
     run bash -eo pipefail -c '
     source ./lib.sh

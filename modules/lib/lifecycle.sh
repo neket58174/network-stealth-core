@@ -179,7 +179,9 @@ cleanup_on_error() {
         if command -v sync > /dev/null 2>&1; then
             sync > /dev/null 2>&1 || true
         fi
-        cleanup_logging_processes || true
+        if declare -F cleanup_logging_processes > /dev/null; then
+            cleanup_logging_processes || true
+        fi
         exit "$exit_code"
     else
         if [[ ${#LOCAL_BACKUP_MAP[@]} -gt 0 ]]; then
@@ -197,7 +199,9 @@ cleanup_on_error() {
         FIREWALL_FIREWALLD_DIRTY=false
         CREATED_PATHS=()
         CREATED_PATH_SET=()
-        cleanup_logging_processes || true
+        if declare -F cleanup_logging_processes > /dev/null; then
+            cleanup_logging_processes || true
+        fi
     fi
 }
 

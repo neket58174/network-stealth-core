@@ -92,20 +92,30 @@ resolve_add_clients_count() {
             log ERROR "Non-interactive режим: укажите количество add-clients/add-keys (1-${max_add})"
             exit 1
         fi
-        if [[ "$has_tty" != "true" ]] || [[ ! -r /dev/tty ]]; then
+        if [[ "$has_tty" != "true" ]]; then
+            log ERROR "Не удалось открыть /dev/tty для ввода количества новых конфигураций"
+            exit 1
+        fi
+        local tty_fd=""
+        if ! exec {tty_fd}<> /dev/tty 2> /dev/null; then
             log ERROR "Не удалось открыть /dev/tty для ввода количества новых конфигураций"
             exit 1
         fi
         echo ""
         local input
         while true; do
-            read -r -p "Сколько VPN-ключей добавить? (1-${max_add}): " input < /dev/tty
+            if ! read -r -u "$tty_fd" -p "Сколько VPN-ключей добавить? (1-${max_add}): " input; then
+                exec {tty_fd}>&-
+                log ERROR "Не удалось прочитать количество новых конфигураций из /dev/tty"
+                exit 1
+            fi
             if [[ "$input" =~ ^[0-9]+$ ]] && ((input >= 1 && input <= max_add)); then
                 requested_count="$input"
                 break
             fi
             echo -e "${RED}Введите число от 1 до ${max_add}${NC}"
         done
+        exec {tty_fd}>&-
     fi
 
     if ((requested_count > max_add)); then
