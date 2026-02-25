@@ -1245,15 +1245,23 @@ EOF
 
 @test "common bounded systemctl helper is used for daemon-reload and timers" {
     run bash -eo pipefail -c '
-    grep -q '\''systemctl_run_bounded()'\'' ./lib.sh
-    grep -q '\''XRAY_SYSTEMCTL_OP_TIMEOUT'\'' ./lib.sh
-    grep -q '\''timeout --signal=TERM --kill-after=10s'\'' ./lib.sh
-    grep -q '\''if ! systemctl_run_bounded daemon-reload; then'\'' ./modules/lib/lifecycle.sh
-    grep -q '\''if ! systemctl_run_bounded daemon-reload; then'\'' ./health.sh
-    grep -q '\''if systemctl_run_bounded enable --now xray-health.timer; then'\'' ./health.sh
-    grep -q '\''if ! systemctl_run_bounded daemon-reload; then'\'' ./modules/install/bootstrap.sh
-    grep -q '\''if systemctl_run_bounded enable --now xray-auto-update.timer; then'\'' ./modules/install/bootstrap.sh
-    grep -q '\''if ! systemctl_run_bounded disable --now xray-auto-update.timer; then'\'' ./modules/install/bootstrap.sh
+    grep -Fq '\''systemctl_run_bounded()'\'' ./lib.sh
+    grep -Fq '\''if [[ $# -ge 2 && "$1" == "--err-var" ]]; then'\'' ./lib.sh
+    grep -Fq '\''printf -v "$out_err_var"'\'' ./lib.sh
+    grep -Fq '\''XRAY_SYSTEMCTL_OP_TIMEOUT'\'' ./lib.sh
+    grep -Fq '\''timeout --signal=TERM --kill-after=10s'\'' ./lib.sh
+    grep -Fq '\''systemctl_run_bounded --err-var daemon_reload_err daemon-reload'\'' ./service.sh
+    grep -Fq '\''systemctl_run_bounded --err-var enable_err enable xray'\'' ./service.sh
+    grep -Fq '\''if systemctl_run_bounded daemon-reload; then'\'' ./service.sh
+    grep -Fq '\''if ! systemctl_run_bounded daemon-reload; then'\'' ./modules/lib/lifecycle.sh
+    grep -Fq '\''if ! systemctl_run_bounded daemon-reload; then'\'' ./health.sh
+    grep -Fq '\''if systemctl_run_bounded enable --now xray-health.timer; then'\'' ./health.sh
+    grep -Fq '\''if ! systemctl_run_bounded daemon-reload; then'\'' ./modules/install/bootstrap.sh
+    grep -Fq '\''if systemctl_run_bounded enable --now xray-auto-update.timer; then'\'' ./modules/install/bootstrap.sh
+    grep -Fq '\''if ! systemctl_run_bounded disable --now xray-auto-update.timer; then'\'' ./modules/install/bootstrap.sh
+    ! grep -Fq '\''daemon_reload_err=$(systemctl daemon-reload 2>&1)'\'' ./service.sh
+    ! grep -Fq '\''enable_err=$(systemctl enable xray 2>&1)'\'' ./service.sh
+    ! grep -Fq '\''if systemctl daemon-reload > /dev/null 2>&1; then'\'' ./service.sh
     echo "ok"
   '
     [ "$status" -eq 0 ]

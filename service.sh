@@ -235,7 +235,7 @@ EOF
     if [[ "$manage_systemd" == true ]]; then
         local daemon_reload_err=""
         local daemon_reload_rc=0
-        daemon_reload_err=$(systemctl daemon-reload 2>&1) || daemon_reload_rc=$?
+        systemctl_run_bounded --err-var daemon_reload_err daemon-reload || daemon_reload_rc=$?
         if ((daemon_reload_rc != 0)); then
             if is_nonfatal_systemctl_error "$daemon_reload_err"; then
                 log WARN "systemd недоступен для активации unit; продолжаем без enable"
@@ -252,7 +252,7 @@ EOF
         if [[ "$manage_systemd" == true ]]; then
             local enable_err=""
             local enable_rc=0
-            enable_err=$(systemctl enable xray 2>&1) || enable_rc=$?
+            systemctl_run_bounded --err-var enable_err enable xray || enable_rc=$?
             if ((enable_rc != 0)); then
                 if is_nonfatal_systemctl_error "$enable_err"; then
                     log WARN "systemd недоступен для enable xray; продолжаем без активации"
@@ -306,7 +306,7 @@ Environment=FAILED_UNIT=%i
 ExecStart=${safe_script_path} diagnose --non-interactive
 EOF
 
-    if systemctl daemon-reload > /dev/null 2>&1; then
+    if systemctl_run_bounded daemon-reload; then
         log OK "Диагностика включена"
     else
         log WARN "Не удалось включить диагностику через systemd"

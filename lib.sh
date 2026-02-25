@@ -776,6 +776,12 @@ systemctl_available() {
 }
 
 systemctl_run_bounded() {
+    local out_err_var=""
+    if [[ $# -ge 2 && "$1" == "--err-var" ]]; then
+        out_err_var="$2"
+        shift 2
+    fi
+
     local op_timeout="${XRAY_SYSTEMCTL_OP_TIMEOUT:-60}"
     if [[ ! "$op_timeout" =~ ^[0-9]+$ ]] || ((op_timeout < 5 || op_timeout > 600)); then
         op_timeout=60
@@ -797,6 +803,10 @@ systemctl_run_bounded() {
         fi
     else
         op_err=$(systemctl "$@" 2>&1) || op_rc=$?
+    fi
+
+    if [[ -n "$out_err_var" ]]; then
+        printf -v "$out_err_var" '%s' "$op_err"
     fi
 
     if ((op_rc != 0)); then
