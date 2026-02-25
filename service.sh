@@ -400,9 +400,9 @@ assign_latest_backup_dir() {
     if [[ -d "$XRAY_BACKUP" ]]; then
         while IFS= read -r latest; do
             break
-        done < <(find "$XRAY_BACKUP" -mindepth 1 -maxdepth 1 -type d -printf '%T@ %p\n' |
+        done < <(find "$XRAY_BACKUP" -mindepth 1 -maxdepth 1 -type d -printf '%T@\t%p\n' |
             sort -nr |
-            awk '{print $2}')
+            cut -f2-)
     fi
     printf -v "$out_name" '%s' "$latest"
     [[ -n "$latest" ]]
@@ -644,17 +644,28 @@ uninstall_all() {
             hint "Повторите команду с --yes --non-interactive для явного подтверждения"
             exit 1
         fi
-        local confirm
+        local confirm tty_fd
+        if ! exec {tty_fd}<> /dev/tty 2> /dev/null; then
+            log ERROR "Требуется интерактивное подтверждение удаления, но /dev/tty недоступен"
+            hint "Повторите команду с --yes --non-interactive для явного подтверждения"
+            exit 1
+        fi
         while true; do
-            read -r -p "Вы уверены? Введите yes для подтверждения: " confirm < /dev/tty
+            if ! read -r -u "$tty_fd" -p "Вы уверены? Введите yes для подтверждения: " confirm; then
+                exec {tty_fd}>&-
+                log ERROR "Не удалось прочитать подтверждение из /dev/tty"
+                exit 1
+            fi
             if [[ "$confirm" == "yes" ]]; then
                 break
             elif [[ "$confirm" == "no" || "$confirm" == "n" ]]; then
+                exec {tty_fd}>&-
                 log INFO "Удаление отменено"
                 exit 0
             fi
             echo -e "${RED}Введите 'yes' для подтверждения или 'no' для отмены${NC}"
         done
+        exec {tty_fd}>&-
     else
         log INFO "Неблокирующее удаление: подтверждение пропущено (--yes/non-interactive)"
     fi

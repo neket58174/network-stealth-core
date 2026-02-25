@@ -237,14 +237,23 @@ _resolve_path() {
         return 1
     fi
 
-    local custom_path
+    local custom_path tty_fd
+    if ! exec {tty_fd}<> /dev/tty 2> /dev/null; then
+        log ERROR "Терминал /dev/tty недоступен: невозможно запросить путь вручную"
+        return 1
+    fi
     while true; do
-        read -r -p "  Укажите путь вручную для ${description}: " custom_path < /dev/tty
+        if ! read -r -u "$tty_fd" -p "  Укажите путь вручную для ${description}: " custom_path; then
+            exec {tty_fd}>&-
+            log ERROR "Не удалось прочитать путь из /dev/tty"
+            return 1
+        fi
         if [[ -z "$custom_path" ]]; then
             echo -e "  ${RED}Путь не может быть пустым${NC}"
             continue
         fi
         if _try_file_path "$custom_path" || _try_dir "$custom_path"; then
+            exec {tty_fd}>&-
             printf -v "$var_name" '%s' "$custom_path"
             log OK "${description}: используем ${custom_path}"
             return 0

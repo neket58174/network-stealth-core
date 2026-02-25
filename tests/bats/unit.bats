@@ -1915,3 +1915,40 @@ EOF
     [ "$status" -eq 0 ]
     [ "$output" = "ok" ]
 }
+
+@test "rotate_backups safely handles backup directories with spaces" {
+    run bash -eo pipefail -c '
+    set -euo pipefail
+    source ./lib.sh
+    XRAY_BACKUP="$(mktemp -d)"
+    MAX_BACKUPS=1
+    mkdir -p "$XRAY_BACKUP/old backup"
+    mkdir -p "$XRAY_BACKUP/new backup"
+    touch -d "2020-01-01 00:00:00" "$XRAY_BACKUP/old backup"
+    touch -d "2030-01-01 00:00:00" "$XRAY_BACKUP/new backup"
+    rotate_backups
+    [[ ! -d "$XRAY_BACKUP/old backup" ]]
+    [[ -d "$XRAY_BACKUP/new backup" ]]
+    echo "ok"
+  '
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"ok"* ]]
+}
+
+@test "assign_latest_backup_dir preserves full path with spaces" {
+    run bash -eo pipefail -c '
+    set -euo pipefail
+    source ./lib.sh
+    source ./service.sh
+    XRAY_BACKUP="$(mktemp -d)"
+    mkdir -p "$XRAY_BACKUP/older session"
+    mkdir -p "$XRAY_BACKUP/latest session"
+    touch -d "2020-01-01 00:00:00" "$XRAY_BACKUP/older session"
+    touch -d "2030-01-01 00:00:00" "$XRAY_BACKUP/latest session"
+    assign_latest_backup_dir latest_path
+    [[ "$latest_path" == "$XRAY_BACKUP/latest session" ]]
+    echo "ok"
+  '
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"ok"* ]]
+}

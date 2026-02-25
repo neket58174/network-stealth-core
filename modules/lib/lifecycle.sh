@@ -33,10 +33,10 @@ ensure_backup_session() {
 rotate_backups() {
     [[ -d "$XRAY_BACKUP" ]] || return 0
     local to_delete
-    to_delete=$(find "$XRAY_BACKUP" -mindepth 1 -maxdepth 1 -type d -printf '%T@ %p\n' |
+    to_delete=$(find "$XRAY_BACKUP" -mindepth 1 -maxdepth 1 -type d -printf '%T@\t%p\n' |
         sort -nr |
         tail -n +"$((MAX_BACKUPS + 1))" |
-        awk '{print $2}') || true
+        cut -f2-) || true
     if [[ -n "$to_delete" ]]; then
         while IFS= read -r dir; do
             rm -rf "$dir"

@@ -117,6 +117,18 @@
     [[ "$output" == *"XRAY_BOOTSTRAP_REQUIRE_PIN=true"* ]]
 }
 
+@test "wrapper treats invalid XRAY_BOOTSTRAP_REQUIRE_PIN as strict mode" {
+    run bash -eo pipefail -c '
+    set -euo pipefail
+    tmp="$(mktemp -d)"
+    cp ./xray-reality.sh "$tmp/xray-reality.sh"
+    chmod +x "$tmp/xray-reality.sh"
+    XRAY_BOOTSTRAP_REQUIRE_PIN=broken XRAY_BOOTSTRAP_AUTO_PIN=false bash "$tmp/xray-reality.sh" install
+  '
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"XRAY_BOOTSTRAP_REQUIRE_PIN=true"* ]]
+}
+
 @test "wrapper falls back to ref clone when ls-remote fails in non-strict mode" {
     run bash -eo pipefail -c '
     set -euo pipefail

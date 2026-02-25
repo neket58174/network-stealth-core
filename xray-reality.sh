@@ -146,7 +146,7 @@ verify_pinned_commit() {
     echo "Pinned source commit verified: $head"
 }
 
-BOOTSTRAP_REQUIRE_PIN=$(parse_bootstrap_bool "$BOOTSTRAP_REQUIRE_PIN" false)
+BOOTSTRAP_REQUIRE_PIN=$(parse_bootstrap_bool "$BOOTSTRAP_REQUIRE_PIN" true)
 BOOTSTRAP_AUTO_PIN=$(parse_bootstrap_bool "$BOOTSTRAP_AUTO_PIN" true)
 trap cleanup_install_dir EXIT
 
