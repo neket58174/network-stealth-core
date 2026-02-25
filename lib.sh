@@ -775,6 +775,38 @@ systemctl_available() {
     command -v systemctl > /dev/null 2>&1
 }
 
+systemctl_run_bounded() {
+    local op_timeout="${XRAY_SYSTEMCTL_OP_TIMEOUT:-60}"
+    if [[ ! "$op_timeout" =~ ^[0-9]+$ ]] || ((op_timeout < 5 || op_timeout > 600)); then
+        op_timeout=60
+    fi
+
+    local cmd_desc="systemctl"
+    local arg
+    for arg in "$@"; do
+        cmd_desc+=" ${arg}"
+    done
+
+    local op_rc=0
+    local op_err=""
+    if command -v timeout > /dev/null 2>&1; then
+        op_err=$(timeout --signal=TERM --kill-after=10s "${op_timeout}s" systemctl "$@" 2>&1) || op_rc=$?
+        if ((op_rc == 124 || op_rc == 137)); then
+            debug_file "${cmd_desc} timeout (${op_timeout}s): ${op_err}"
+            return "$op_rc"
+        fi
+    else
+        op_err=$(systemctl "$@" 2>&1) || op_rc=$?
+    fi
+
+    if ((op_rc != 0)); then
+        debug_file "${cmd_desc} failed: ${op_err}"
+        return "$op_rc"
+    fi
+
+    return 0
+}
+
 # shellcheck disable=SC2120 # Optional out-var is passed by callers from sourced modules.
 systemctl_restart_xray_bounded() {
     local out_err_var="${1:-}"

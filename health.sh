@@ -549,11 +549,11 @@ setup_health_monitoring() {
         rm -f /etc/cron.d/xray-health
     fi
 
-    if ! systemctl daemon-reload > /dev/null 2>&1; then
+    if ! systemctl_run_bounded daemon-reload; then
         log WARN "systemd недоступен; мониторинг пропущен"
         return 0
     fi
-    if systemctl enable --now xray-health.timer > /dev/null 2>&1; then
+    if systemctl_run_bounded enable --now xray-health.timer; then
         log OK "Мониторинг настроен (systemd timer каждые ${safe_health_interval}s)"
     else
         log WARN "Не удалось включить systemd-таймер мониторинга"

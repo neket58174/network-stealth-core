@@ -1243,6 +1243,23 @@ EOF
     [ "$output" = "ok" ]
 }
 
+@test "common bounded systemctl helper is used for daemon-reload and timers" {
+    run bash -eo pipefail -c '
+    grep -q '\''systemctl_run_bounded()'\'' ./lib.sh
+    grep -q '\''XRAY_SYSTEMCTL_OP_TIMEOUT'\'' ./lib.sh
+    grep -q '\''timeout --signal=TERM --kill-after=10s'\'' ./lib.sh
+    grep -q '\''if ! systemctl_run_bounded daemon-reload; then'\'' ./modules/lib/lifecycle.sh
+    grep -q '\''if ! systemctl_run_bounded daemon-reload; then'\'' ./health.sh
+    grep -q '\''if systemctl_run_bounded enable --now xray-health.timer; then'\'' ./health.sh
+    grep -q '\''if ! systemctl_run_bounded daemon-reload; then'\'' ./modules/install/bootstrap.sh
+    grep -q '\''if systemctl_run_bounded enable --now xray-auto-update.timer; then'\'' ./modules/install/bootstrap.sh
+    grep -q '\''if ! systemctl_run_bounded disable --now xray-auto-update.timer; then'\'' ./modules/install/bootstrap.sh
+    echo "ok"
+  '
+    [ "$status" -eq 0 ]
+    [ "$output" = "ok" ]
+}
+
 @test "interactive prompts use explicit tty fd pattern" {
     run bash -eo pipefail -c '
     grep -Fq "exec {tty_fd}<> /dev/tty" ./install.sh

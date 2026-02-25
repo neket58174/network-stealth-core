@@ -104,7 +104,7 @@ reconcile_runtime_after_restore() {
     fi
 
     log WARN "Синхронизируем runtime после отката файлов..."
-    if ! systemctl daemon-reload > /dev/null 2>&1; then
+    if ! systemctl_run_bounded daemon-reload; then
         log WARN "Не удалось выполнить systemctl daemon-reload после rollback"
     fi
 

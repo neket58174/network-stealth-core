@@ -399,18 +399,20 @@ EOF
         log WARN "systemd не запущен; авто-обновления пропущены"
         return 0
     fi
-    if ! systemctl daemon-reload > /dev/null 2>&1; then
+    if ! systemctl_run_bounded daemon-reload; then
         log WARN "systemd недоступен; авто-обновления пропущены"
         return 0
     fi
     if [[ "$AUTO_UPDATE" == true ]]; then
-        if systemctl enable --now xray-auto-update.timer > /dev/null 2>&1; then
+        if systemctl_run_bounded enable --now xray-auto-update.timer; then
             log OK "Авто-обновления включены (${AUTO_UPDATE_ONCALENDAR})"
         else
             log WARN "Не удалось включить авто-обновления"
         fi
     else
-        systemctl disable --now xray-auto-update.timer > /dev/null 2>&1 || true
+        if ! systemctl_run_bounded disable --now xray-auto-update.timer; then
+            log WARN "Не удалось отключить авто-обновления через systemd"
+        fi
         log INFO "Авто-обновления отключены"
     fi
 }
