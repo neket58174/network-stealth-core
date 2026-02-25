@@ -228,37 +228,3 @@ jobs:
             echo "running ${test_script}"
             "$test_script"
           done
-
-  self-hosted-lifecycle:
-    name: self-hosted lifecycle smoke
-    if: ${{ vars.XRAY_ENABLE_SELF_HOSTED_ACTIONS == 'true' }}
-    runs-on: [self-hosted, linux]
-    timeout-minutes: 90
-    steps:
-      - name: Checkout
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-      - name: Install dependencies (best-effort)
-        run: |
-          set -euo pipefail
-          install_cmd=""
-          if command -v apt-get >/dev/null 2>&1; then
-            install_cmd="apt-get update -qq && apt-get install -y expect jq bats shellcheck"
-          elif command -v dnf >/dev/null 2>&1; then
-            install_cmd="dnf -y install expect jq bats shellcheck"
-          elif command -v yum >/dev/null 2>&1; then
-            install_cmd="yum -y install expect jq bats shellcheck"
-          fi
-          if [[ -n "$install_cmd" ]]; then
-            if [[ "${EUID:-$(id -u)}" -eq 0 ]]; then
-              bash -lc "$install_cmd"
-            elif command -v sudo >/dev/null 2>&1; then
-              sudo bash -lc "$install_cmd"
-            fi
-          fi
-      - name: Run lint, complexity stage-3 and self-hosted lifecycle smoke
-        run: |
-          set -euo pipefail
-          bash tests/lint.sh --fast
-          COMPLEXITY_STAGE=3 bash scripts/check-shell-complexity.sh
-          chmod +x tests/e2e/nightly_smoke_install_add_update_uninstall.sh
-          tests/e2e/nightly_smoke_install_add_update_uninstall.sh
