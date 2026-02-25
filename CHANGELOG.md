@@ -26,6 +26,7 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 - `install` / `update` / `repair` now fail fast when `systemd` is unavailable (unless explicit compatibility mode is enabled).
 - Strict minisign mode now fails closed when minisign/signature is unavailable, with explicit unsafe bypass only via `ALLOW_INSECURE_SHA256=true`.
 - Domain planning now avoids adjacent duplicate domains across shuffled cycles when pool size is greater than one.
+- Corrected emergency diagnostics command to use `journalctl --no-pager` (fixed invalid `--no-page` flag path).
 
 ## [4.1.8] - 2026-02-24
 

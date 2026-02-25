@@ -381,7 +381,7 @@ start_services() {
         log ERROR "Xray не запустился!"
         hint "Проверьте порты: lsof -i :443 | другой сервис может занимать порт"
         hint "Проверьте конфиг: xray-reality.sh diagnose"
-        journalctl -u xray -n 30 --no-page
+        journalctl -u xray -n 30 --no-pager
         if [[ "$AUTO_ROLLBACK" == true ]]; then
             local latest_backup=""
             assign_latest_backup_dir latest_backup || true
