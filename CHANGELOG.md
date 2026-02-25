@@ -7,6 +7,10 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
+No entries yet.
+
+## [4.2.0] - 2026-02-26
+
 ### Changed
 
 - Normalized operations commands to use installed `xray-reality.sh` invocation form.

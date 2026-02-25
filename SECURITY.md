@@ -6,8 +6,8 @@ This document defines the security posture and disclosure process for `Xray Real
 
 | Version Line | Status |
 |---|---|
-| `4.1.x` | supported |
-| `<4.1` | unsupported in this repository |
+| `4.2.x` | supported |
+| `<4.2` | unsupported in this repository |
 
 ## Reporting vulnerabilities
 
