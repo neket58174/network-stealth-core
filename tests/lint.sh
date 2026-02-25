@@ -134,8 +134,24 @@ if ((${#MD_FILES[@]} > 0)); then
         NODE_OPTIONS=--no-deprecation markdownlint --config "$SCRIPT_DIR/.markdownlint.json" \
             "${MD_FILES[@]}"
     else
-        NODE_OPTIONS=--no-deprecation npx --yes markdownlint-cli@0.41.0 --config "$SCRIPT_DIR/.markdownlint.json" \
-            "${MD_FILES[@]}"
+        export NPM_CONFIG_REGISTRY="${NPM_CONFIG_REGISTRY:-https://registry.npmjs.org}"
+        md_ok=false
+        for attempt in 1 2 3; do
+            if NODE_OPTIONS=--no-deprecation npx --yes markdownlint-cli@0.41.0 --config "$SCRIPT_DIR/.markdownlint.json" \
+                "${MD_FILES[@]}"; then
+                md_ok=true
+                break
+            fi
+            echo "markdownlint npx attempt ${attempt}/3 failed" >&2
+            if command -v npm > /dev/null 2>&1; then
+                npm cache clean --force > /dev/null 2>&1 || true
+            fi
+            sleep $((attempt * 2))
+        done
+        if [[ "$md_ok" != "true" ]]; then
+            echo "markdownlint npx fallback failed after retries" >&2
+            exit 1
+        fi
     fi
 fi
 

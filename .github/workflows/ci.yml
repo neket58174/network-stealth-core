@@ -51,13 +51,33 @@ jobs:
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: "20"
-      - name: Install markdownlint-cli
-        run: npm install -g markdownlint-cli@0.41.0
       - name: Actionlint
         run: actionlint -oneline .github/workflows/*.yml
       - name: Markdown lint
         run: |
-          markdownlint --config .markdownlint.json \
+          set -euo pipefail
+          md_runner=()
+          if command -v markdownlint >/dev/null 2>&1; then
+            md_runner=(markdownlint)
+          else
+            export NPM_CONFIG_REGISTRY="https://registry.npmjs.org"
+            for attempt in 1 2 3; do
+              if npm install -g markdownlint-cli@0.41.0 --no-audit --no-fund; then
+                break
+              fi
+              echo "markdownlint-cli install attempt ${attempt}/3 failed" >&2
+              npm cache clean --force >/dev/null 2>&1 || true
+              sleep $((attempt * 2))
+            done
+            if command -v markdownlint >/dev/null 2>&1; then
+              md_runner=(markdownlint)
+            else
+              echo "Global markdownlint-cli install unavailable, using npx fallback" >&2
+              md_runner=(npx --yes markdownlint-cli@0.41.0)
+            fi
+          fi
+
+          NODE_OPTIONS=--no-deprecation "${md_runner[@]}" --config .markdownlint.json \
             README.md \
             README.ru.md \
             CONTRIBUTING.md \

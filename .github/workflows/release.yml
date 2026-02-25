@@ -77,7 +77,18 @@ jobs:
             GOBIN="$HOME/.local/bin" go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.11
           fi
           python3 -m pip install --user bashate
-          npm install -g markdownlint-cli@0.41.0
+          export NPM_CONFIG_REGISTRY="https://registry.npmjs.org"
+          for attempt in 1 2 3; do
+            if npm install -g markdownlint-cli@0.41.0 --no-audit --no-fund; then
+              break
+            fi
+            echo "markdownlint-cli install attempt ${attempt}/3 failed" >&2
+            npm cache clean --force >/dev/null 2>&1 || true
+            sleep $((attempt * 2))
+          done
+          if ! command -v markdownlint >/dev/null 2>&1; then
+            echo "WARN: markdownlint-cli is unavailable; tests/lint.sh will use npx fallback" >&2
+          fi
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
       - name: Run lint gate
         run: bash tests/lint.sh
