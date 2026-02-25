@@ -174,7 +174,7 @@ magnit.ru
 x5.ru
 
 [tier_global_ms10]
-# Stable global profile with Microsoft ecosystem focus (max 10 configs)
+# Expanded global domain pool (50 domains), config limit remains max 10
 microsoft.com
 office.com
 live.com
@@ -185,6 +185,46 @@ azure.com
 windows.com
 xbox.com
 microsoftonline.com
+github.com
+githubusercontent.com
+google.com
+youtube.com
+gmail.com
+gstatic.com
+googleapis.com
+cloud.google.com
+apple.com
+icloud.com
+amazon.com
+aws.amazon.com
+cloudflare.com
+wikipedia.org
+mozilla.org
+firefox.com
+reddit.com
+x.com
+linkedin.com
+netflix.com
+spotify.com
+twitch.tv
+discord.com
+slack.com
+dropbox.com
+zoom.us
+notion.so
+figma.com
+yahoo.com
+duckduckgo.com
+paypal.com
+stripe.com
+adobe.com
+canva.com
+salesforce.com
+digitalocean.com
+ubuntu.com
+canonical.com
+oracle.com
+stackoverflow.com
 
 [priority]
 # Optional preferred domains for PRIMARY_DOMAIN_MODE=adaptive.

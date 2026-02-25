@@ -112,8 +112,8 @@ sudo xray-reality.sh logs
 |---|---|---:|---|
 | `ru` | `tier_ru` | 100 | Main RU domain pool |
 | `ru-auto` | `tier_ru` | auto 5 | Fast default install |
-| `global-ms10` | `tier_global_ms10` | 10 | Low-count global profile |
-| `global-ms10-auto` | `tier_global_ms10` | auto 10 | Fast global-ms10 install |
+| `global-ms10` | `tier_global_ms10` | 10 | Global pool (50 domains), limit 10 configs |
+| `global-ms10-auto` | `tier_global_ms10` | auto 10 | Fast global install from 50-domain pool |
 | `custom` | `custom` | 100 | User-managed domain set |
 
 ## Key CLI flags

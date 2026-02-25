@@ -113,8 +113,8 @@ sudo xray-reality.sh logs
 |---|---|---:|---|
 | `ru` | `tier_ru` | 100 | Основной RU-пул |
 | `ru-auto` | `tier_ru` | auto 5 | Быстрый старт |
-| `global-ms10` | `tier_global_ms10` | 10 | Компактный глобальный профиль |
-| `global-ms10-auto` | `tier_global_ms10` | auto 10 | Быстрый global-ms10 |
+| `global-ms10` | `tier_global_ms10` | 10 | Глобальный пул (50 доменов), лимит 10 конфигов |
+| `global-ms10-auto` | `tier_global_ms10` | auto 10 | Быстрый global из пула 50 доменов |
 | `custom` | `custom` | 100 | Пользовательский список доменов |
 
 ## Ключевые флаги

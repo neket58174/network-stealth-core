@@ -40,7 +40,7 @@
     [ "${lines[1]}" = "after" ]
 }
 
-@test "tier_global_ms10 has 10 unique domains and full map coverage" {
+@test "tier_global_ms10 has 50 unique domains and full map coverage" {
     run bash -eo pipefail -c '
     source ./lib.sh
     mapfile -t domains < <(load_tier_domains_from_file "domains.tiers" "tier_global_ms10")
@@ -61,8 +61,8 @@
     echo "missing=${missing}"
   '
     [ "$status" -eq 0 ]
-    [ "${lines[0]}" = "domains=10" ]
-    [ "${lines[1]}" = "unique=10" ]
+    [ "${lines[0]}" = "domains=50" ]
+    [ "${lines[1]}" = "unique=50" ]
     [ "${lines[2]}" = "missing=0" ]
 }
 

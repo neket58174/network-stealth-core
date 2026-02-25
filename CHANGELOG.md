@@ -7,7 +7,9 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
-No entries yet.
+### Changed
+
+- Expanded `tier_global_ms10` domain pool from 10 to 50 domains with full SNI and gRPC map coverage.
 
 ## [4.2.0] - 2026-02-26
 
