@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Xray Reality Ultimate 4.2.0 - Максимальный обход DPI в РФ
+# Xray Reality Ultimate 4.2.0 - Автоматизация установки и сопровождения Xray Reality (gRPC/HTTP2 + Reality + MUX)
 
 set -euo pipefail
 
@@ -472,7 +472,7 @@ setup_logging() {
 
     local inner_width=60
     local title="${SCRIPT_NAME} v${SCRIPT_VERSION}"
-    local subtitle="Максимальный обход DPI в РФ (gRPC/HTTP2 + Reality + MUX)"
+    local subtitle="Автоматизация установки и сопровождения Xray Reality (gRPC/HTTP2 + Reality + MUX)"
     local box_top box_bottom
     box_top=$(ui_box_border_string top "$inner_width")
     box_bottom=$(ui_box_border_string bottom "$inner_width")
