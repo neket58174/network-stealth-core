@@ -113,31 +113,37 @@ confirm_minisign_fallback() {
         return 1
     fi
 
-    if [[ ! -r /dev/tty ]]; then
+    local tty_fd=""
+    if ! exec {tty_fd}<> /dev/tty 2> /dev/null; then
         log ERROR "$reason"
-        log ERROR "Нет /dev/tty для подтверждения fallback-режима"
+        log ERROR "Нет доступного TTY для подтверждения fallback-режима minisign"
         hint "Для осознанного продолжения используйте --allow-insecure-sha256"
         return 1
     fi
 
     echo ""
+    echo -e "${YELLOW}${reason}${NC}"
     echo -e "${YELLOW}⚠️  Внимание: minisign недоступен или не пройден.${NC}"
     echo -e "${YELLOW}Продолжить установку только по SHA256? [yes/no]${NC}"
 
     local answer=""
     while true; do
-        read -r -p "Подтвердите (yes/no): " answer < /dev/tty
+        if ! read -r -u "$tty_fd" -p "Подтвердите (yes/no): " answer; then
+            answer=""
+        fi
         case "${answer,,}" in
             yes | y | да | д)
                 log WARN "Подтверждено продолжение без minisign (только SHA256)"
+                exec {tty_fd}>&-
                 return 0
                 ;;
             no | n | нет | н | "")
                 log ERROR "Операция остановлена пользователем: minisign fallback отклонён"
+                exec {tty_fd}>&-
                 return 1
                 ;;
             *)
-                echo "Введите yes или no"
+                printf '%s\n' "Введите yes или no" >&"$tty_fd"
                 ;;
         esac
     done
