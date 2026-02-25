@@ -7,14 +7,14 @@ This runbook is the operations reference for `Xray Reality Ultimate`.
 ### Universal install (recommended)
 
 ```bash
-curl -fL https://raw.githubusercontent.com/neket58174/network-stealth-core/main/xray-reality.sh -o /tmp/xray-reality.sh
+curl -fL https://raw.githubusercontent.com/neket371/network-stealth-core/main/xray-reality.sh -o /tmp/xray-reality.sh
 sudo bash /tmp/xray-reality.sh install
 ```
 
 ### One-line install
 
 ```bash
-sudo bash <(curl -fsSL https://raw.githubusercontent.com/neket58174/network-stealth-core/main/xray-reality.sh) install
+sudo bash <(curl -fsSL https://raw.githubusercontent.com/neket371/network-stealth-core/main/xray-reality.sh) install
 ```
 
 If `/dev/fd` is unavailable, switch to universal install.
@@ -32,7 +32,7 @@ Use this list before creating a public release. Supported and verified target fo
 ### Scope lock (must pass)
 
 - docs and README do not claim unverified OS support
-- install commands point to `https://github.com/neket58174/network-stealth-core`
+- install commands point to `https://github.com/neket371/network-stealth-core`
 - `LICENSE` exists in repository root
 
 ### Local quality gate (must pass)
@@ -46,7 +46,7 @@ make ci
 Run on a clean Ubuntu 24.04 VM:
 
 ```bash
-curl -fL https://raw.githubusercontent.com/neket58174/network-stealth-core/main/xray-reality.sh -o /tmp/xray-reality.sh
+curl -fL https://raw.githubusercontent.com/neket371/network-stealth-core/main/xray-reality.sh -o /tmp/xray-reality.sh
 sudo bash /tmp/xray-reality.sh install
 sudo xray-reality.sh status
 sudo xray -test -c /etc/xray/config.json

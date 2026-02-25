@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/neket58174/network-stealth-core/releases"><img alt="release" src="https://img.shields.io/badge/release-v4.1.8-0f766e"></a>
+  <a href="https://github.com/neket371/network-stealth-core/releases"><img alt="release" src="https://img.shields.io/badge/release-v4.1.8-0f766e"></a>
   <a href="LICENSE"><img alt="license" src="https://img.shields.io/badge/license-MIT-97ca00"></a>
   <a href="OPERATIONS.md"><img alt="platform" src="https://img.shields.io/badge/platform-linux%20server-1d4ed8"></a>
   <a href="Makefile"><img alt="qa" src="https://img.shields.io/badge/qa-make%20ci-334155"></a>
@@ -25,7 +25,7 @@ It is designed around three priorities:
 
 Use only the official repository for scripts, tags, and release artifacts:
 
-- `https://github.com/neket58174/network-stealth-core`
+- `https://github.com/neket371/network-stealth-core`
 
 If installation instructions are copied from forks or mirrors, verify them before running.
 
@@ -47,14 +47,14 @@ If installation instructions are copied from forks or mirrors, verify them befor
 Works in regular shells and constrained environments (limited `/dev/fd`).
 
 ```bash
-curl -fL https://raw.githubusercontent.com/neket58174/network-stealth-core/main/xray-reality.sh -o /tmp/xray-reality.sh
+curl -fL https://raw.githubusercontent.com/neket371/network-stealth-core/main/xray-reality.sh -o /tmp/xray-reality.sh
 sudo bash /tmp/xray-reality.sh install
 ```
 
 ### Alternative: one-line install
 
 ```bash
-sudo bash <(curl -fsSL https://raw.githubusercontent.com/neket58174/network-stealth-core/main/xray-reality.sh) install
+sudo bash <(curl -fsSL https://raw.githubusercontent.com/neket371/network-stealth-core/main/xray-reality.sh) install
 ```
 
 If you see `/dev/fd/...: no such file or directory`, use universal install.
@@ -62,7 +62,7 @@ If you see `/dev/fd/...: no such file or directory`, use universal install.
 ### Pinned bootstrap (commit pin)
 
 ```bash
-curl -fL https://raw.githubusercontent.com/neket58174/network-stealth-core/main/xray-reality.sh -o /tmp/xray-reality.sh
+curl -fL https://raw.githubusercontent.com/neket371/network-stealth-core/main/xray-reality.sh -o /tmp/xray-reality.sh
 sudo XRAY_REPO_COMMIT=<full_commit_sha> bash /tmp/xray-reality.sh install
 ```
 
@@ -71,14 +71,14 @@ sudo XRAY_REPO_COMMIT=<full_commit_sha> bash /tmp/xray-reality.sh install
 Default bootstrap source is `main` (latest fixes).
 
 ```bash
-curl -fL https://raw.githubusercontent.com/neket58174/network-stealth-core/main/xray-reality.sh -o /tmp/xray-reality.sh
+curl -fL https://raw.githubusercontent.com/neket371/network-stealth-core/main/xray-reality.sh -o /tmp/xray-reality.sh
 sudo bash /tmp/xray-reality.sh install
 ```
 
 To force latest release tag instead:
 
 ```bash
-curl -fL https://raw.githubusercontent.com/neket58174/network-stealth-core/main/xray-reality.sh -o /tmp/xray-reality.sh
+curl -fL https://raw.githubusercontent.com/neket371/network-stealth-core/main/xray-reality.sh -o /tmp/xray-reality.sh
 sudo XRAY_BOOTSTRAP_DEFAULT_REF=release bash /tmp/xray-reality.sh install
 ```
 
@@ -178,13 +178,13 @@ pwsh ./scripts/windows/run-validation.ps1
 ## Docker
 
 ```bash
-docker pull ghcr.io/neket58174/network-stealth-core:vX.Y.Z
-docker run --rm ghcr.io/neket58174/network-stealth-core:vX.Y.Z --help
+docker pull ghcr.io/neket371/network-stealth-core:vX.Y.Z
+docker run --rm ghcr.io/neket371/network-stealth-core:vX.Y.Z --help
 ```
 
 ## Contact
 
-- X (Twitter): https://x.com/neket371
+- X (Twitter): [x.com/neket371](https://x.com/neket371)
 
 ## License
 

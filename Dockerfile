@@ -2,7 +2,7 @@ FROM debian:bookworm-20260112-slim@sha256:56ff6d36d4eb3db13a741b342ec466f121480b
 
 LABEL org.opencontainers.image.title="network-stealth-core" \
     org.opencontainers.image.description="network stealth core runtime image" \
-    org.opencontainers.image.source="https://github.com/neket58174/network-stealth-core" \
+    org.opencontainers.image.source="https://github.com/neket371/network-stealth-core" \
     org.opencontainers.image.licenses="MIT"
 
 ENV DEBIAN_FRONTEND=noninteractive

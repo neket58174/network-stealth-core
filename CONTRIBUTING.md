@@ -26,7 +26,7 @@ This guide defines the expected workflow for safe, reviewable, and reliable chan
 ```bash
 git clone https://github.com/YOUR_USERNAME/network-stealth-core.git
 cd network-stealth-core
-git remote add upstream https://github.com/neket58174/network-stealth-core.git
+git remote add upstream https://github.com/neket371/network-stealth-core.git
 git fetch upstream
 ```
 
