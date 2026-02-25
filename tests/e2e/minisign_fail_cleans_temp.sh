@@ -84,6 +84,19 @@ minisign() {
     return 1
 }
 
+# install_xray writes MINISIGN_KEY via atomic_write. In this isolated e2e sandbox
+# we redirect that write to the temporary filesystem instead of protected system
+# prefixes, so the test keeps validating minisign failure/cleanup semantics.
+atomic_write() {
+    local target="$1"
+    local mode="${2:-}"
+    mkdir -p "$(dirname "$target")"
+    cat > "$target"
+    if [[ -n "$mode" ]]; then
+        chmod "$mode" "$target"
+    fi
+}
+
 set +e
 install_xray > "$WORK_ROOT/install.log" 2>&1
 rc=$?
