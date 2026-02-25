@@ -5,14 +5,20 @@ on:
   workflow_dispatch:
 
 jobs:
-  self-hosted-lifecycle:
-    name: self-hosted lifecycle smoke
-    if: ${{ vars.XRAY_ENABLE_SELF_HOSTED_ACTIONS == 'true' }}
-    runs-on: [self-hosted, linux]
+  lifecycle-smoke:
+    name: lifecycle smoke (${{ vars.XRAY_ENABLE_SELF_HOSTED_ACTIONS == 'true' && 'self-hosted' || 'ubuntu-24.04' }})
+    runs-on: ${{ fromJSON(vars.XRAY_ENABLE_SELF_HOSTED_ACTIONS == 'true' && '["self-hosted","linux"]' || '["ubuntu-24.04"]') }}
     timeout-minutes: 90
     steps:
       - name: Checkout
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - name: Runner mode
+        run: |
+          if [[ "${{ vars.XRAY_ENABLE_SELF_HOSTED_ACTIONS }}" == "true" ]]; then
+            echo "Self-hosted mode enabled"
+          else
+            echo "Self-hosted mode disabled, fallback to ubuntu-24.04"
+          fi
       - name: Install dependencies (best-effort)
         run: |
           set -euo pipefail
@@ -38,12 +44,3 @@ jobs:
           COMPLEXITY_STAGE=3 bash scripts/check-shell-complexity.sh
           chmod +x tests/e2e/nightly_smoke_install_add_update_uninstall.sh
           tests/e2e/nightly_smoke_install_add_update_uninstall.sh
-
-  self-hosted-disabled:
-    name: self-hosted smoke disabled
-    if: ${{ vars.XRAY_ENABLE_SELF_HOSTED_ACTIONS != 'true' }}
-    runs-on: ubuntu-24.04
-    steps:
-      - name: Info
-        run: |
-          echo "Set repository variable XRAY_ENABLE_SELF_HOSTED_ACTIONS=true to enable self-hosted smoke."
