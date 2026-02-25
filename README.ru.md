@@ -183,6 +183,10 @@ docker pull ghcr.io/neket58174/network-stealth-core:vX.Y.Z
 docker run --rm ghcr.io/neket58174/network-stealth-core:vX.Y.Z --help
 ```
 
+## Контакты
+
+- X (Twitter): https://x.com/neket371
+
 ## Лицензия
 
 MIT License. См. [LICENSE](LICENSE).
