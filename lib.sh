@@ -775,6 +775,7 @@ systemctl_available() {
     command -v systemctl > /dev/null 2>&1
 }
 
+# shellcheck disable=SC2120 # Optional out-var is passed by callers from sourced modules.
 systemctl_restart_xray_bounded() {
     local out_err_var="${1:-}"
     local restart_timeout="${XRAY_SYSTEMCTL_RESTART_TIMEOUT:-120}"
