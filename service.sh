@@ -59,6 +59,52 @@ is_nonfatal_systemctl_error() {
     esac
 }
 
+systemctl_uninstall_bounded() {
+    local action="$1"
+    local unit="${2:-}"
+    local timeout_s="${XRAY_SYSTEMCTL_UNINSTALL_TIMEOUT:-30}"
+    if [[ ! "$timeout_s" =~ ^[0-9]+$ ]] || ((timeout_s < 5 || timeout_s > 300)); then
+        timeout_s=30
+    fi
+
+    local cmd_desc="systemctl ${action}"
+    if [[ -n "$unit" ]]; then
+        cmd_desc+=" ${unit}"
+    fi
+
+    local rc=0
+    local err=""
+    if command -v timeout > /dev/null 2>&1; then
+        if [[ -n "$unit" ]]; then
+            err=$(timeout --signal=TERM --kill-after=10s "${timeout_s}s" systemctl "$action" "$unit" 2>&1) || rc=$?
+        else
+            err=$(timeout --signal=TERM --kill-after=10s "${timeout_s}s" systemctl "$action" 2>&1) || rc=$?
+        fi
+        if ((rc == 124 || rc == 137)); then
+            log WARN "${cmd_desc} превысил таймаут ${timeout_s}s; продолжаем удаление"
+            debug_file "${cmd_desc} timeout (${timeout_s}s): ${err}"
+            return "$rc"
+        fi
+    else
+        if [[ -n "$unit" ]]; then
+            err=$(systemctl "$action" "$unit" 2>&1) || rc=$?
+        else
+            err=$(systemctl "$action" 2>&1) || rc=$?
+        fi
+    fi
+
+    if ((rc != 0)); then
+        if is_nonfatal_systemctl_error "$err"; then
+            debug_file "${cmd_desc} non-fatal: ${err}"
+            return 0
+        fi
+        debug_file "${cmd_desc} failed: ${err}"
+        return "$rc"
+    fi
+
+    return 0
+}
+
 cleanup_conflicting_xray_service_dropins() {
     local dropin_dir="/etc/systemd/system/xray.service.d"
     [[ -d "$dropin_dir" ]] || return 0
@@ -693,10 +739,15 @@ uninstall_all() {
     if [[ "$manage_systemd_uninstall" == true ]]; then
         for svc in "${services[@]}"; do
             if systemctl is-active --quiet "$svc" 2> /dev/null; then
-                systemctl stop "$svc" 2> /dev/null
-                echo -e "  ${GREEN}✅ Остановлен ${svc}${NC}"
+                if systemctl_uninstall_bounded stop "$svc"; then
+                    echo -e "  ${GREEN}✅ Остановлен ${svc}${NC}"
+                else
+                    echo -e "  ${YELLOW}⚠️  Не удалось остановить ${svc}${NC}"
+                fi
             fi
-            systemctl disable "$svc" 2> /dev/null || true
+            if ! systemctl_uninstall_bounded disable "$svc"; then
+                echo -e "  ${YELLOW}⚠️  Не удалось отключить ${svc}${NC}"
+            fi
         done
     else
         echo -e "  ${DIM}Пропущено: systemd недоступен${NC}"
@@ -769,8 +820,11 @@ uninstall_all() {
     uninstall_remove_dir "$XRAY_HOME"
 
     if [[ "$manage_systemd_uninstall" == true ]]; then
-        systemctl daemon-reload 2> /dev/null || true
-        echo -e "  ${GREEN}✅ systemctl daemon-reload${NC}"
+        if systemctl_uninstall_bounded daemon-reload; then
+            echo -e "  ${GREEN}✅ systemctl daemon-reload${NC}"
+        else
+            echo -e "  ${YELLOW}⚠️  Не удалось выполнить systemctl daemon-reload${NC}"
+        fi
     fi
 
     set -e

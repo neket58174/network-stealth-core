@@ -198,6 +198,12 @@ install_minisign() {
     log STEP "Устанавливаем minisign для проверки подписей..."
     local minisign_bin="${MINISIGN_BIN:-/usr/local/bin/minisign}"
 
+    if [[ -x "$minisign_bin" ]]; then
+        log INFO "minisign уже установлен: ${minisign_bin}"
+        SKIP_MINISIGN=false
+        return 0
+    fi
+
     if command -v minisign > /dev/null 2>&1; then
         log INFO "minisign уже установлен"
         SKIP_MINISIGN=false
@@ -208,7 +214,7 @@ install_minisign() {
         if apt-cache show minisign > /dev/null 2>&1; then
             log INFO "Пробуем установить minisign из репозитория..."
             if $PKG_UPDATE > /dev/null 2>&1 && $PKG_INSTALL minisign > /dev/null 2>&1; then
-                if command -v minisign > /dev/null 2>&1; then
+                if [[ -x "$minisign_bin" ]] || command -v minisign > /dev/null 2>&1; then
                     log OK "minisign установлен из репозитория"
                     SKIP_MINISIGN=false
                     return 0
