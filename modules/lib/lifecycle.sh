@@ -119,10 +119,14 @@ reconcile_runtime_after_restore() {
         log WARN "Пропускаем restart xray после rollback: восстановленный конфиг не прошёл xray -test"
         return 0
     fi
-    if systemctl restart xray > /dev/null 2>&1; then
-        log INFO "Runtime синхронизирован: xray перезапущен после rollback"
+    if declare -F systemctl_restart_xray_bounded > /dev/null; then
+        if systemctl_restart_xray_bounded; then
+            log INFO "Runtime синхронизирован: xray перезапущен после rollback"
+        else
+            log WARN "Не удалось перезапустить xray после rollback"
+        fi
     else
-        log WARN "Не удалось перезапустить xray после rollback"
+        log WARN "Пропускаем restart xray после rollback: helper systemctl_restart_xray_bounded недоступен"
     fi
 }
 

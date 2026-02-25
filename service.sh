@@ -311,9 +311,7 @@ start_services() {
     fi
 
     local restart_err=""
-    local restart_rc=0
-    restart_err=$(systemctl restart xray 2>&1) || restart_rc=$?
-    if ((restart_rc != 0)); then
+    if ! systemctl_restart_xray_bounded restart_err; then
         if is_nonfatal_systemctl_error "$restart_err"; then
             log WARN "systemd недоступен для restart xray; запуск сервисов пропущен"
             debug_file "systemctl restart xray skipped: ${restart_err}"
@@ -321,7 +319,6 @@ start_services() {
             return 0
         fi
         log ERROR "Не удалось перезапустить Xray через systemd"
-        debug_file "systemctl restart xray failed: ${restart_err}"
         return 1
     fi
 
@@ -386,7 +383,8 @@ update_xray() {
     fi
 
     if systemd_running && systemctl list-unit-files --type=service 2> /dev/null | grep -q "^xray.service"; then
-        if ! systemctl restart xray > /dev/null 2>&1; then
+        local restart_err=""
+        if ! systemctl_restart_xray_bounded restart_err; then
             log ERROR "Не удалось перезапустить Xray после обновления"
             exit 1
         fi
@@ -502,7 +500,10 @@ rollback_from_session() {
 
     if systemd_running; then
         systemctl daemon-reload > /dev/null 2>&1 || true
-        systemctl restart xray > /dev/null 2>&1 || true
+        local restart_err=""
+        if ! systemctl_restart_xray_bounded restart_err; then
+            log WARN "Не удалось перезапустить xray после отката"
+        fi
     else
         log WARN "systemd не запущен; перезапуск сервисов пропущен"
     fi

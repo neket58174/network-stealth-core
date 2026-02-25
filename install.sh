@@ -128,7 +128,9 @@ confirm_minisign_fallback() {
 
     local answer=""
     while true; do
-        if ! read -r -u "$tty_fd" -p "Подтвердите (yes/no): " answer; then
+        if ! printf '%s' "Подтвердите (yes/no): " >&"$tty_fd"; then
+            answer=""
+        elif ! read -r -u "$tty_fd" answer; then
             answer=""
         fi
         case "${answer,,}" in

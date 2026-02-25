@@ -775,6 +775,40 @@ systemctl_available() {
     command -v systemctl > /dev/null 2>&1
 }
 
+systemctl_restart_xray_bounded() {
+    local out_err_var="${1:-}"
+    local restart_timeout="${XRAY_SYSTEMCTL_RESTART_TIMEOUT:-120}"
+    if [[ ! "$restart_timeout" =~ ^[0-9]+$ ]] || ((restart_timeout < 10 || restart_timeout > 600)); then
+        restart_timeout=120
+    fi
+
+    local restart_rc=0
+    local restart_err=""
+    if command -v timeout > /dev/null 2>&1; then
+        restart_err=$(timeout --signal=TERM --kill-after=15s "${restart_timeout}s" systemctl restart xray 2>&1) || restart_rc=$?
+        if ((restart_rc == 124 || restart_rc == 137)); then
+            if [[ -n "$out_err_var" ]]; then
+                printf -v "$out_err_var" '%s' "$restart_err"
+            fi
+            log ERROR "systemctl restart xray превысил таймаут ${restart_timeout}s"
+            debug_file "systemctl restart xray timeout (${restart_timeout}s): ${restart_err}"
+            return "$restart_rc"
+        fi
+    else
+        restart_err=$(systemctl restart xray 2>&1) || restart_rc=$?
+    fi
+
+    if [[ -n "$out_err_var" ]]; then
+        printf -v "$out_err_var" '%s' "$restart_err"
+    fi
+
+    if ((restart_rc != 0)); then
+        debug_file "systemctl restart xray failed: ${restart_err}"
+        return "$restart_rc"
+    fi
+    return 0
+}
+
 running_in_isolated_root_context() {
     local root_sig pid1_root_sig
     root_sig=$(stat -Lc '%d:%i' / 2> /dev/null || true)

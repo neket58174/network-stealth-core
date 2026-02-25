@@ -1227,11 +1227,16 @@ EOF
     [ "$output" = "ok" ]
 }
 
-@test "add_clients restart has bounded timeout guard" {
+@test "bounded restart helper is centralized and reused across flows" {
     run bash -eo pipefail -c '
-    grep -q '\''XRAY_SYSTEMCTL_RESTART_TIMEOUT'\'' ./modules/config/add_clients.sh
-    grep -q '\''timeout --signal=TERM --kill-after=15s'\'' ./modules/config/add_clients.sh
-    grep -q '\''systemctl restart xray превысил таймаут'\'' ./modules/config/add_clients.sh
+    grep -q '\''systemctl_restart_xray_bounded()'\'' ./lib.sh
+    grep -q '\''XRAY_SYSTEMCTL_RESTART_TIMEOUT'\'' ./lib.sh
+    grep -q '\''timeout --signal=TERM --kill-after=15s'\'' ./lib.sh
+    grep -q '\''if ! systemctl_restart_xray_bounded restart_err; then'\'' ./service.sh
+    grep -q '\''if ! systemctl_restart_xray_bounded; then'\'' ./modules/config/add_clients.sh
+    grep -q '\''if systemctl_restart_xray_bounded; then'\'' ./modules/lib/lifecycle.sh
+    ! grep -q '\''systemctl restart xray'\'' ./modules/config/add_clients.sh
+    ! grep -q '\''systemctl restart xray'\'' ./modules/lib/lifecycle.sh
     echo "ok"
   '
     [ "$status" -eq 0 ]
@@ -1240,14 +1245,17 @@ EOF
 
 @test "interactive prompts use explicit tty fd pattern" {
     run bash -eo pipefail -c '
-    grep -Fq '\''exec {tty_fd}<> /dev/tty'\'' ./install.sh
-    grep -Fq '\''printf "Профиль [1/2/3/4]: " > /dev/tty'\'' ./install.sh
-    grep -Fq '\''read -r -u "$tty_fd" input'\'' ./install.sh
-    grep -Fq '\''printf "Сколько VPN-ключей создать? (1-%s): " "$max_configs" > /dev/tty'\'' ./install.sh
-    grep -Fq '\''printf "Сколько VPN-ключей добавить? (1-%s): " "$max_add" > /dev/tty'\'' ./modules/config/add_clients.sh
-    ! grep -Fq '\''read -r -p "Профиль [1/2/3/4]: " input < /dev/tty'\'' ./install.sh
-    ! grep -Fq '\''read -r -p "Сколько VPN-ключей создать? (1-${max_configs}): " input < /dev/tty'\'' ./install.sh
-    ! grep -Fq '\''read -r -p "Сколько VPN-ключей добавить? (1-${max_add}): " input < /dev/tty'\'' ./modules/config/add_clients.sh
+    grep -Fq "exec {tty_fd}<> /dev/tty" ./install.sh
+    grep -Fq "printf \"Профиль [1/2/3/4]: \" > /dev/tty" ./install.sh
+    grep -Fq "read -r -u \"\$tty_fd\" input" ./install.sh
+    grep -Fq "printf '\''%s'\'' \"Подтвердите (yes/no): \" >&\"\$tty_fd\"" ./install.sh
+    grep -Fq "read -r -u \"\$tty_fd\" answer" ./install.sh
+    grep -Fq "printf \"Сколько VPN-ключей создать? (1-%s): \" \"\$max_configs\" > /dev/tty" ./install.sh
+    grep -Fq "printf \"Сколько VPN-ключей добавить? (1-%s): \" \"\$max_add\" > /dev/tty" ./modules/config/add_clients.sh
+    ! grep -Fq "read -r -p \"Профиль [1/2/3/4]: \" input < /dev/tty" ./install.sh
+    ! grep -Fq "read -r -u \"\$tty_fd\" -p \"Подтвердите (yes/no): \" answer" ./install.sh
+    ! grep -Fq "read -r -p \"Сколько VPN-ключей создать? (1-\${max_configs}): \" input < /dev/tty" ./install.sh
+    ! grep -Fq "read -r -p \"Сколько VPN-ключей добавить? (1-\${max_add}): \" input < /dev/tty" ./modules/config/add_clients.sh
     echo "ok"
   '
     [ "$status" -eq 0 ]
@@ -1771,10 +1779,9 @@ EOF
     grep -q '\''is_nonfatal_systemctl_error()'\'' ./service.sh
     grep -q '\''local daemon_reload_rc=0'\'' ./service.sh
     grep -q '\''local enable_rc=0'\'' ./service.sh
-    grep -q '\''local restart_rc=0'\'' ./service.sh
     grep -q '\''if ((daemon_reload_rc != 0)); then'\'' ./service.sh
     grep -q '\''if ((enable_rc != 0)); then'\'' ./service.sh
-    grep -q '\''if ((restart_rc != 0)); then'\'' ./service.sh
+    grep -q '\''if ! systemctl_restart_xray_bounded restart_err; then'\'' ./service.sh
     grep -q '\''SYSTEMD_MANAGEMENT_DISABLED=true'\'' ./service.sh
     grep -q '\''systemd недоступен для активации unit; продолжаем без enable'\'' ./service.sh
     grep -q '\''systemd недоступен для restart xray; запуск сервисов пропущен'\'' ./service.sh
