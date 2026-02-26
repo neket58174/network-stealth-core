@@ -423,9 +423,9 @@ ui_section_title_string() {
     local title="${1:-}"
     ui_init_glyphs
     if [[ "$UI_RULE_H" == "━" ]]; then
-        printf '━━━ %s ━━━' "$title"
+        printf -- '━━━ %s ━━━' "$title"
     else
-        printf '--- %s ---' "$title"
+        printf -- '--- %s ---' "$title"
     fi
 }
 
@@ -1846,11 +1846,23 @@ validate_destructive_path_scope() {
     local base
 
     case "$name" in
-        XRAY_KEYS | XRAY_BACKUP | XRAY_LOGS | XRAY_HOME | XRAY_DATA_DIR | XRAY_GEO_DIR)
+        XRAY_KEYS | XRAY_BACKUP | XRAY_LOGS | XRAY_HOME | XRAY_DATA_DIR)
             if ! path_has_project_scope_marker "$path"; then
                 log ERROR "${name} должен указывать на отдельный каталог проекта (ожидается сегмент с xray/reality): ${path}"
                 return 1
             fi
+            ;;
+        XRAY_GEO_DIR)
+            if path_has_project_scope_marker "$path"; then
+                return 0
+            fi
+            local xray_bin_dir
+            xray_bin_dir=$(dirname "${XRAY_BIN:-}")
+            if [[ -n "${XRAY_BIN:-}" && "$(basename "${XRAY_BIN}")" == "xray" && "$path" == "$xray_bin_dir" ]]; then
+                return 0
+            fi
+            log ERROR "XRAY_GEO_DIR должен указывать на каталог проекта (xray/reality) или на dirname(XRAY_BIN) (получено: ${path})"
+            return 1
             ;;
         XRAY_BIN)
             base=$(basename "$path")

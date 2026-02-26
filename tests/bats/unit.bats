@@ -316,6 +316,18 @@
     [[ "$output" == *"XRAY_DATA_DIR"* ]]
 }
 
+@test "strict_validate_runtime_inputs allows XRAY_GEO_DIR equal to dirname of XRAY_BIN" {
+    run bash -eo pipefail -c '
+    source ./lib.sh
+    XRAY_BIN="/usr/local/bin/xray"
+    XRAY_GEO_DIR="/usr/local/bin"
+    strict_validate_runtime_inputs update
+    echo "ok"
+  '
+    [ "$status" -eq 0 ]
+    [ "$output" = "ok" ]
+}
+
 @test "strict_validate_runtime_inputs accepts safe nested custom paths for uninstall" {
     run bash -eo pipefail -c '
     source ./lib.sh
