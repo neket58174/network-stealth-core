@@ -1840,74 +1840,97 @@ path_has_project_scope_marker() {
     [[ "$path_lc" =~ (^|/)[^/]*(xray|reality|network-stealth-core)[^/]*(/|$) ]]
 }
 
+is_sensitive_system_path_prefix() {
+    local path="${1:-}"
+    case "$path" in
+        /etc/* | /usr/* | /var/* | /opt/* | /root/* | /home/* | /boot/* | /lib/* | /lib64/* | /sbin/* | /bin/* | /run/* | /proc/* | /sys/* | /dev/*)
+            return 0
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+}
+
 validate_destructive_path_scope() {
     local name="$1"
     local path="$2"
+    local resolved
     local base
+
+    resolved=$(realpath -m "$path" 2> /dev/null || echo "$path")
 
     case "$name" in
         XRAY_KEYS | XRAY_BACKUP | XRAY_LOGS | XRAY_HOME | XRAY_DATA_DIR)
-            if ! path_has_project_scope_marker "$path"; then
-                log ERROR "${name} должен указывать на отдельный каталог проекта (ожидается сегмент с xray/reality): ${path}"
+            if is_sensitive_system_path_prefix "$resolved" && ! path_has_project_scope_marker "$resolved"; then
+                log ERROR "${name} в системном каталоге должен указывать на отдельный путь проекта (ожидается сегмент с xray/reality): ${resolved}"
                 return 1
             fi
             ;;
         XRAY_GEO_DIR)
-            if path_has_project_scope_marker "$path"; then
+            if path_has_project_scope_marker "$resolved"; then
                 return 0
             fi
             local xray_bin_dir
             xray_bin_dir=$(dirname "${XRAY_BIN:-}")
-            if [[ -n "${XRAY_BIN:-}" && "$(basename "${XRAY_BIN}")" == "xray" && "$path" == "$xray_bin_dir" ]]; then
+            xray_bin_dir=$(realpath -m "$xray_bin_dir" 2> /dev/null || echo "$xray_bin_dir")
+            if [[ -n "${XRAY_BIN:-}" && "$(basename "${XRAY_BIN}")" == "xray" && "$resolved" == "$xray_bin_dir" ]]; then
                 return 0
             fi
-            log ERROR "XRAY_GEO_DIR должен указывать на каталог проекта (xray/reality) или на dirname(XRAY_BIN) (получено: ${path})"
-            return 1
+            if is_sensitive_system_path_prefix "$resolved"; then
+                log ERROR "XRAY_GEO_DIR в системном каталоге должен указывать на путь проекта (xray/reality) или dirname(XRAY_BIN) (получено: ${resolved})"
+                return 1
+            fi
             ;;
         XRAY_BIN)
-            base=$(basename "$path")
+            base=$(basename "$resolved")
             if [[ "$base" != "xray" ]]; then
-                log ERROR "XRAY_BIN должен указывать на бинарник xray (получено: ${path})"
+                log ERROR "XRAY_BIN должен указывать на бинарник xray (получено: ${resolved})"
                 return 1
             fi
             ;;
         XRAY_SCRIPT_PATH)
-            base=$(basename "$path")
+            base=$(basename "$resolved")
             if [[ "$base" != "xray-reality.sh" ]]; then
-                log ERROR "XRAY_SCRIPT_PATH должен указывать на xray-reality.sh (получено: ${path})"
+                log ERROR "XRAY_SCRIPT_PATH должен указывать на xray-reality.sh (получено: ${resolved})"
                 return 1
             fi
             ;;
         XRAY_UPDATE_SCRIPT)
-            base=$(basename "$path")
+            base=$(basename "$resolved")
             if [[ "$base" != "xray-reality-update.sh" ]]; then
-                log ERROR "XRAY_UPDATE_SCRIPT должен указывать на xray-reality-update.sh (получено: ${path})"
+                log ERROR "XRAY_UPDATE_SCRIPT должен указывать на xray-reality-update.sh (получено: ${resolved})"
                 return 1
             fi
             ;;
         XRAY_CONFIG)
-            base=$(basename "$path")
-            if [[ "$base" != "config.json" ]] || ! path_has_project_scope_marker "$path"; then
-                log ERROR "XRAY_CONFIG должен указывать на config.json в каталоге проекта (получено: ${path})"
+            base=$(basename "$resolved")
+            if [[ "$base" != "config.json" ]]; then
+                log ERROR "XRAY_CONFIG должен указывать на config.json (получено: ${resolved})"
                 return 1
             fi
             ;;
         XRAY_ENV)
-            base=$(basename "$path")
-            if [[ "$base" != "config.env" ]] || ! path_has_project_scope_marker "$path"; then
-                log ERROR "XRAY_ENV должен указывать на config.env в каталоге проекта (получено: ${path})"
+            base=$(basename "$resolved")
+            if [[ "$base" != "config.env" ]]; then
+                log ERROR "XRAY_ENV должен указывать на config.env (получено: ${resolved})"
                 return 1
             fi
             ;;
         MINISIGN_KEY)
-            base=$(basename "$path")
-            if [[ "$base" != "minisign.pub" ]] || ! path_has_project_scope_marker "$path"; then
-                log ERROR "MINISIGN_KEY должен указывать на minisign.pub в каталоге проекта (получено: ${path})"
+            base=$(basename "$resolved")
+            if [[ "$base" != "minisign.pub" ]]; then
+                log ERROR "MINISIGN_KEY должен указывать на minisign.pub (получено: ${resolved})"
                 return 1
             fi
             ;;
         *) ;;
     esac
+
+    if is_sensitive_system_path_prefix "$resolved" && ! path_has_project_scope_marker "$resolved"; then
+        log ERROR "${name} в системном каталоге должен указывать на путь проекта (ожидается сегмент с xray/reality): ${resolved}"
+        return 1
+    fi
 
     return 0
 }

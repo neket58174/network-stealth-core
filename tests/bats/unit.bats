@@ -316,6 +316,37 @@
     [[ "$output" == *"XRAY_DATA_DIR"* ]]
 }
 
+@test "strict_validate_runtime_inputs rejects traversal XRAY_KEYS path escaping to system dir" {
+    run bash -eo pipefail -c '
+    source ./lib.sh
+    XRAY_KEYS="/tmp/xray/../../etc/ssh"
+    strict_validate_runtime_inputs uninstall
+  '
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"XRAY_KEYS"* ]]
+}
+
+@test "strict_validate_runtime_inputs rejects traversal XRAY_CONFIG path escaping to system dir" {
+    run bash -eo pipefail -c '
+    source ./lib.sh
+    XRAY_CONFIG="/tmp/reality/../../etc/ssh/config.json"
+    strict_validate_runtime_inputs update
+  '
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"XRAY_CONFIG"* ]]
+}
+
+@test "strict_validate_runtime_inputs allows custom non-system XRAY_HOME path" {
+    run bash -eo pipefail -c '
+    source ./lib.sh
+    XRAY_HOME="/srv/vpn"
+    strict_validate_runtime_inputs install
+    echo "ok"
+  '
+    [ "$status" -eq 0 ]
+    [ "$output" = "ok" ]
+}
+
 @test "strict_validate_runtime_inputs allows XRAY_GEO_DIR equal to dirname of XRAY_BIN" {
     run bash -eo pipefail -c '
     source ./lib.sh
