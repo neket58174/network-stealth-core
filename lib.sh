@@ -1835,6 +1835,71 @@ validate_destructive_path_guard() {
     return 0
 }
 
+path_has_project_scope_marker() {
+    local path_lc="${1,,}"
+    [[ "$path_lc" =~ (^|/)[^/]*(xray|reality|network-stealth-core)[^/]*(/|$) ]]
+}
+
+validate_destructive_path_scope() {
+    local name="$1"
+    local path="$2"
+    local base
+
+    case "$name" in
+        XRAY_KEYS | XRAY_BACKUP | XRAY_LOGS | XRAY_HOME | XRAY_DATA_DIR | XRAY_GEO_DIR)
+            if ! path_has_project_scope_marker "$path"; then
+                log ERROR "${name} должен указывать на отдельный каталог проекта (ожидается сегмент с xray/reality): ${path}"
+                return 1
+            fi
+            ;;
+        XRAY_BIN)
+            base=$(basename "$path")
+            if [[ "$base" != "xray" ]]; then
+                log ERROR "XRAY_BIN должен указывать на бинарник xray (получено: ${path})"
+                return 1
+            fi
+            ;;
+        XRAY_SCRIPT_PATH)
+            base=$(basename "$path")
+            if [[ "$base" != "xray-reality.sh" ]]; then
+                log ERROR "XRAY_SCRIPT_PATH должен указывать на xray-reality.sh (получено: ${path})"
+                return 1
+            fi
+            ;;
+        XRAY_UPDATE_SCRIPT)
+            base=$(basename "$path")
+            if [[ "$base" != "xray-reality-update.sh" ]]; then
+                log ERROR "XRAY_UPDATE_SCRIPT должен указывать на xray-reality-update.sh (получено: ${path})"
+                return 1
+            fi
+            ;;
+        XRAY_CONFIG)
+            base=$(basename "$path")
+            if [[ "$base" != "config.json" ]] || ! path_has_project_scope_marker "$path"; then
+                log ERROR "XRAY_CONFIG должен указывать на config.json в каталоге проекта (получено: ${path})"
+                return 1
+            fi
+            ;;
+        XRAY_ENV)
+            base=$(basename "$path")
+            if [[ "$base" != "config.env" ]] || ! path_has_project_scope_marker "$path"; then
+                log ERROR "XRAY_ENV должен указывать на config.env в каталоге проекта (получено: ${path})"
+                return 1
+            fi
+            ;;
+        MINISIGN_KEY)
+            base=$(basename "$path")
+            if [[ "$base" != "minisign.pub" ]] || ! path_has_project_scope_marker "$path"; then
+                log ERROR "MINISIGN_KEY должен указывать на minisign.pub в каталоге проекта (получено: ${path})"
+                return 1
+            fi
+            ;;
+        *) ;;
+    esac
+
+    return 0
+}
+
 validate_destructive_runtime_paths() {
     local var value dir
     local -a destructive_dirs=(
@@ -1848,6 +1913,7 @@ validate_destructive_runtime_paths() {
         value="${!var:-}"
         [[ -z "$value" ]] && continue
         validate_destructive_path_guard "$var" "$value" || return 1
+        validate_destructive_path_scope "$var" "$value" || return 1
     done
 
     for var in "${destructive_files[@]}"; do
@@ -1856,6 +1922,7 @@ validate_destructive_runtime_paths() {
         if ! validate_no_control_chars "$var" "$value"; then
             return 1
         fi
+        validate_destructive_path_scope "$var" "$value" || return 1
         dir=$(dirname "$value")
         validate_destructive_path_guard "${var} (dirname)" "$dir" || return 1
     done

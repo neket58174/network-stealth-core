@@ -296,6 +296,26 @@
     [ "$status" -ne 0 ]
 }
 
+@test "strict_validate_runtime_inputs rejects non-project XRAY_KEYS path for uninstall" {
+    run bash -eo pipefail -c '
+    source ./lib.sh
+    XRAY_KEYS="/etc/ssl"
+    strict_validate_runtime_inputs uninstall
+  '
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"XRAY_KEYS"* ]]
+}
+
+@test "strict_validate_runtime_inputs rejects non-project XRAY_DATA_DIR for uninstall" {
+    run bash -eo pipefail -c '
+    source ./lib.sh
+    XRAY_DATA_DIR="/usr/local/share"
+    strict_validate_runtime_inputs uninstall
+  '
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"XRAY_DATA_DIR"* ]]
+}
+
 @test "strict_validate_runtime_inputs accepts safe nested custom paths for uninstall" {
     run bash -eo pipefail -c '
     source ./lib.sh

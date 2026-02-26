@@ -252,6 +252,7 @@ cli_handle_long_option() {
 parse_args() {
     local args=("$@")
     local cmd=""
+    local explicit_cmd=""
     local opts=()
     local pos=()
     local i=0
@@ -270,6 +271,7 @@ parse_args() {
 
         if [[ -z "$cmd" ]] && cli_is_action "$a"; then
             cmd="$a"
+            explicit_cmd="$a"
             i=$((i + 1))
             continue
         fi
@@ -337,18 +339,40 @@ parse_args() {
         shift
     fi
 
-    if [[ "$ACTION" == "rollback" && -z "$ROLLBACK_DIR" && -n "${1:-}" && "${1:-}" != --* ]]; then
-        ROLLBACK_DIR="$1"
+    if [[ -z "$explicit_cmd" && "$ACTION" == "install" && $# -gt 0 ]]; then
+        log ERROR "Неизвестная команда: $1"
+        print_usage
+        exit 1
     fi
 
-    if [[ "$ACTION" == "logs" && -n "${1:-}" && "${1:-}" != --* ]]; then
-        # shellcheck disable=SC2034 # Used in health.sh
-        LOGS_TARGET="$1"
-    fi
+    case "$ACTION" in
+        rollback)
+            if [[ -z "$ROLLBACK_DIR" && -n "${1:-}" && "${1:-}" != --* ]]; then
+                ROLLBACK_DIR="$1"
+                shift
+            fi
+            ;;
+        logs)
+            if [[ -n "${1:-}" && "${1:-}" != --* ]]; then
+                # shellcheck disable=SC2034 # Used in health.sh
+                LOGS_TARGET="$1"
+                shift
+            fi
+            ;;
+        add-clients | add-keys)
+            if [[ -n "${1:-}" && "${1:-}" != --* ]]; then
+                # shellcheck disable=SC2034 # Used in config.sh add_clients_flow
+                ADD_CLIENTS_COUNT="$1"
+                shift
+            fi
+            ;;
+        *) ;;
+    esac
 
-    if [[ "$ACTION" == "add-clients" || "$ACTION" == "add-keys" ]] && [[ -n "${1:-}" && "${1:-}" != --* ]]; then
-        # shellcheck disable=SC2034 # Used in config.sh add_clients_flow
-        ADD_CLIENTS_COUNT="$1"
+    if [[ $# -gt 0 ]]; then
+        log ERROR "Неожиданные позиционные аргументы для '${ACTION}': $*"
+        print_usage
+        exit 1
     fi
 }
 

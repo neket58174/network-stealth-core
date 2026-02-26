@@ -10,6 +10,18 @@
     [ "$status" -eq 0 ]
 }
 
+@test "unknown command is rejected instead of falling back to install" {
+    run bash -eo pipefail -c 'bash ./xray-reality.sh foo --dry-run'
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"Неизвестная команда: foo"* ]]
+}
+
+@test "status rejects unexpected positional arguments" {
+    run bash -eo pipefail -c 'bash ./xray-reality.sh status foo --dry-run'
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"Неожиданные позиционные аргументы"* ]]
+}
+
 @test "help shows add-clients command" {
     run bash -eo pipefail -c 'bash ./xray-reality.sh --help'
     [ "$status" -eq 0 ]
@@ -25,6 +37,12 @@
 @test "dry-run add-clients exits successfully" {
     run bash -eo pipefail -c 'bash ./xray-reality.sh --dry-run add-clients'
     [ "$status" -eq 0 ]
+}
+
+@test "add-clients rejects more than one positional argument" {
+    run bash -eo pipefail -c 'bash ./xray-reality.sh add-clients 3 4 --dry-run'
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"Неожиданные позиционные аргументы"* ]]
 }
 
 @test "dry-run add-keys exits successfully" {
