@@ -82,6 +82,44 @@ require_pattern "$README_EN" "release-v${script_version}" "README.md release bad
 require_pattern "$README_RU" "release-v${script_version}" "README.ru.md release badge version"
 require_pattern "$CHANGELOG_FILE" "^## \\[${script_version}\\]" "CHANGELOG.md section"
 
+if awk '
+    BEGIN { in_released = 0; bad = 0 }
+    $0 ~ /^## \[[0-9]+\.[0-9]+\.[0-9]+\]/ { in_released = 1; next }
+    $0 ~ /^## \[/ {
+        in_released = 0
+        next
+    }
+    in_released && $0 == "- TODO: summarize release changes" {
+        bad = 1
+    }
+    END {
+        exit bad ? 0 : 1
+    }
+' "$CHANGELOG_FILE"; then
+    echo "CHANGELOG contains TODO placeholder inside a released section" >&2
+    exit 1
+fi
+
+if ! awk -v ver="$script_version" '
+    BEGIN { in_target = 0; has_bullet = 0 }
+    $0 ~ "^## \\[" ver "\\]" { in_target = 1; next }
+    $0 ~ /^## \[/ {
+        if (in_target) {
+            in_target = 0
+        }
+        next
+    }
+    in_target && $0 ~ /^- / {
+        has_bullet = 1
+    }
+    END {
+        exit has_bullet ? 0 : 1
+    }
+' "$CHANGELOG_FILE"; then
+    echo "CHANGELOG section [${script_version}] does not contain release bullet notes" >&2
+    exit 1
+fi
+
 if [[ -n "$TAG" && "v${script_version}" != "$TAG" ]]; then
     echo "Tag ${TAG} does not match SCRIPT_VERSION v${script_version}" >&2
     exit 1

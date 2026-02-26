@@ -2035,6 +2035,28 @@ EOF
     [ "$output" = "ok" ]
 }
 
+@test "release script enforces non-empty notes and no TODO in target release section" {
+    run bash -eo pipefail -c '
+    grep -q '\''validate_generated_release_notes()'\'' ./scripts/release.sh
+    grep -q '\''ensure_release_section_has_no_todo()'\'' ./scripts/release.sh
+    grep -q '\''Generated release notes are empty; refusing release.'\'' ./scripts/release.sh
+    grep -q '\''still contains TODO placeholder'\'' ./scripts/release.sh
+    echo "ok"
+  '
+    [ "$status" -eq 0 ]
+    [ "$output" = "ok" ]
+}
+
+@test "release consistency check enforces changelog bullets and blocks TODO in released sections" {
+    run bash -eo pipefail -c '
+    grep -q '\''CHANGELOG contains TODO placeholder inside a released section'\'' ./scripts/check-release-consistency.sh
+    grep -q '\''does not contain release bullet notes'\'' ./scripts/check-release-consistency.sh
+    echo "ok"
+  '
+    [ "$status" -eq 0 ]
+    [ "$output" = "ok" ]
+}
+
 @test "os matrix workflow tracks supported ubuntu image" {
     run bash -eo pipefail -c '
     grep -q '\''name: ubuntu-24.04'\'' ./.github/workflows/os-matrix-smoke.yml

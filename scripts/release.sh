@@ -98,6 +98,13 @@ generate_release_notes() {
     printf '%s\n' "$notes"
 }
 
+validate_generated_release_notes() {
+    if [[ ! -s "$NOTES_TMP" ]] || ! grep -q '[^[:space:]]' "$NOTES_TMP"; then
+        echo "Generated release notes are empty; refusing release." >&2
+        exit 1
+    fi
+}
+
 insert_changelog_section() {
     local tmp_file
     tmp_file="$(mktemp "${CHANGELOG}.tmp.XXXXXX")"
@@ -155,6 +162,27 @@ replace_release_todo() {
     mv "$tmp_file" "$CHANGELOG"
 }
 
+ensure_release_section_has_no_todo() {
+    if awk -v ver="$VERSION" '
+        BEGIN { in_target = 0; found = 0 }
+        $0 ~ "^## \\[" ver "\\]" { in_target = 1; next }
+        $0 ~ "^## \\[" {
+            if (in_target) {
+                in_target = 0
+            }
+        }
+        in_target && $0 == "- TODO: summarize release changes" {
+            found = 1
+        }
+        END {
+            exit found ? 0 : 1
+        }
+    ' "$CHANGELOG"; then
+        echo "CHANGELOG section [$VERSION] still contains TODO placeholder" >&2
+        exit 1
+    fi
+}
+
 replace_with_sed() {
     local expr="$1"
     local file="$2"
@@ -165,6 +193,7 @@ replace_with_sed() {
 }
 
 generate_release_notes > "$NOTES_TMP"
+validate_generated_release_notes
 
 replace_with_sed 's/^readonly SCRIPT_VERSION="[^"]+"/readonly SCRIPT_VERSION="'"$VERSION"'"/' "$LIB_FILE"
 replace_with_sed 's/^# Xray Reality Ultimate [0-9]+\.[0-9]+\.[0-9]+ - /# Xray Reality Ultimate '"$VERSION"' - /' "$LIB_FILE"
@@ -177,6 +206,7 @@ if ! grep -q "^## \[$VERSION\]" "$CHANGELOG"; then
 fi
 
 replace_release_todo
+ensure_release_section_has_no_todo
 
 bash "$ROOT_DIR/scripts/check-release-consistency.sh"
 
