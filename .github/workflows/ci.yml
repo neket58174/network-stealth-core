@@ -236,6 +236,36 @@ jobs:
       - name: Run lifecycle e2e scripts
         run: |
           set -euo pipefail
+          is_transient_network_failure() {
+            local log_file="$1"
+            grep -Eq \
+              "curl: \([0-9]+\) The requested URL returned error: 5[0-9]{2}|Could not resolve host|Connection timed out|Operation timed out|SSL connection timeout|Failed to connect|Не удалось скачать Xray" \
+              "$log_file"
+          }
+
+          run_e2e_with_retry() {
+            local test_script="$1"
+            local attempts=2
+            local attempt log_file
+            for ((attempt = 1; attempt <= attempts; attempt++)); do
+              log_file="$(mktemp)"
+              echo "running ${test_script} (attempt ${attempt}/${attempts})"
+              if "$test_script" 2>&1 | tee "$log_file"; then
+                rm -f "$log_file"
+                return 0
+              fi
+              if ((attempt < attempts)) && is_transient_network_failure "$log_file"; then
+                echo "transient network error detected for ${test_script}; retrying..."
+                rm -f "$log_file"
+                sleep 5
+                continue
+              fi
+              echo "e2e script failed: ${test_script}" >&2
+              rm -f "$log_file"
+              return 1
+            done
+          }
+
           mapfile -t tests < <(find tests/e2e -maxdepth 1 -type f -name '*.sh' \
             ! -name 'lib.sh' \
             ! -name 'nightly_smoke_install_add_update_uninstall.sh' | sort)
@@ -245,6 +275,5 @@ jobs:
           fi
           chmod +x "${tests[@]}"
           for test_script in "${tests[@]}"; do
-            echo "running ${test_script}"
-            "$test_script"
+            run_e2e_with_retry "$test_script"
           done
