@@ -1347,12 +1347,12 @@ EOF
     grep -Fq "tty_print_line() {" ./lib.sh
     grep -Fq "tty_print_box() {" ./lib.sh
     grep -Fq "open_interactive_tty_fd tty_fd" ./install.sh
-    grep -Fq "tty_printf \"\$tty_fd\" \"Профиль [1/2/3/4]: \"" ./install.sh
+    grep -Fq "printf \"Профиль [1/2/3/4]: \" >&\"\$tty_fd\"" ./install.sh
     grep -Fq "read -r -u \"\$tty_fd\" input" ./install.sh
-    grep -Fq "tty_printf \"\$tty_fd\" '\''%s'\'' \"Подтвердите (yes/no): \"" ./install.sh
+    grep -Fq "printf '\''%s'\'' \"Подтвердите (yes/no): \" >&\"\$tty_fd\"" ./install.sh
     grep -Fq "read -r -u \"\$tty_fd\" answer" ./install.sh
-    grep -Fq "tty_printf \"\$tty_fd\" \"Количество VPN-ключей (1-%s): \" \"\$max_configs\"" ./install.sh
-    grep -Fq "tty_printf \"\$tty_fd\" \"Количество VPN-ключей добавить (1-%s): \" \"\$max_add\"" ./modules/config/add_clients.sh
+    grep -Fq "printf \"Количество VPN-ключей (1-%s): \" \"\$max_configs\" >&\"\$tty_fd\"" ./install.sh
+    grep -Fq "printf \"Количество VPN-ключей добавить (1-%s): \" \"\$max_add\" >&\"\$tty_fd\"" ./modules/config/add_clients.sh
     grep -Fq "tty_print_box \"\$tty_fd\" \"\$RED\" \"\$uninstall_title\" 60 90" ./service.sh
     grep -Fq "Вы уверены? Введите yes для подтверждения или no для отмены:" ./service.sh
     grep -Fq "read -r -u \"\$tty_fd\" confirm" ./service.sh

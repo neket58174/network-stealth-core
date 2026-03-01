@@ -121,13 +121,13 @@ confirm_minisign_fallback() {
         return 1
     fi
 
-    tty_printf "$tty_fd" '\n%b%s%b\n' "$YELLOW" "$reason" "$NC"
-    tty_printf "$tty_fd" '%b⚠️  Внимание: minisign недоступен или не пройден.%b\n' "$YELLOW" "$NC"
-    tty_printf "$tty_fd" '%bПродолжить установку только по SHA256? [yes/no]%b\n' "$YELLOW" "$NC"
+    printf '\n%b%s%b\n' "$YELLOW" "$reason" "$NC" >&"$tty_fd"
+    printf '%b⚠️  Внимание: minisign недоступен или не пройден.%b\n' "$YELLOW" "$NC" >&"$tty_fd"
+    printf '%bПродолжить установку только по SHA256? [yes/no]%b\n' "$YELLOW" "$NC" >&"$tty_fd"
 
     local answer=""
     while true; do
-        if ! tty_printf "$tty_fd" '%s' "Подтвердите (yes/no): "; then
+        if ! printf '%s' "Подтвердите (yes/no): " >&"$tty_fd"; then
             answer=""
         elif ! read -r -u "$tty_fd" answer; then
             answer=""
@@ -143,7 +143,7 @@ confirm_minisign_fallback() {
             exec {tty_fd}>&-
             return 1
         fi
-        tty_printf "$tty_fd" '%s\n' "Введите yes или no"
+        printf '%s\n' "Введите yes или no" >&"$tty_fd"
     done
 }
 
@@ -717,15 +717,15 @@ ask_domain_profile() {
         exit 1
     fi
 
-    tty_printf "$tty_fd" '\n'
+    printf '\n' >&"$tty_fd"
     local input
     while true; do
-        tty_printf "$tty_fd" '%s\n' "Выберите профиль доменов:"
-        tty_printf "$tty_fd" '%s\n' "  1) ru (ручной ввод числа ключей, до 100)"
-        tty_printf "$tty_fd" '%s\n' "  2) global-ms10 (ручной ввод числа ключей, до 10)"
-        tty_printf "$tty_fd" '%s\n' "  3) ru-auto (автоматически: 5 ключей)"
-        tty_printf "$tty_fd" '%s\n' "  4) global-ms10-auto (автоматически: 10 ключей)"
-        if ! tty_printf "$tty_fd" "Профиль [1/2/3/4]: "; then
+        printf '%s\n' "Выберите профиль доменов:" >&"$tty_fd"
+        printf '%s\n' "  1) ru (ручной ввод числа ключей, до 100)" >&"$tty_fd"
+        printf '%s\n' "  2) global-ms10 (ручной ввод числа ключей, до 10)" >&"$tty_fd"
+        printf '%s\n' "  3) ru-auto (автоматически: 5 ключей)" >&"$tty_fd"
+        printf '%s\n' "  4) global-ms10-auto (автоматически: 10 ключей)" >&"$tty_fd"
+        if ! printf "Профиль [1/2/3/4]: " >&"$tty_fd"; then
             exec {tty_fd}>&-
             log ERROR "Не удалось вывести запрос выбора профиля в /dev/tty"
             exit 1
@@ -758,7 +758,7 @@ ask_domain_profile() {
                 break
                 ;;
             *)
-                tty_printf "$tty_fd" '%bВведите 1, 2, 3 или 4 (пустой ввод = ru)%b\n' "$RED" "$NC"
+                printf '%bВведите 1, 2, 3 или 4 (пустой ввод = ru)%b\n' "$RED" "$NC" >&"$tty_fd"
                 ;;
         esac
     done
@@ -828,10 +828,10 @@ ask_num_configs() {
         exit 1
     fi
 
-    tty_printf "$tty_fd" '\n'
+    printf '\n' >&"$tty_fd"
     local input
     while true; do
-        if ! tty_printf "$tty_fd" "Количество VPN-ключей (1-%s): " "$max_configs"; then
+        if ! printf "Количество VPN-ключей (1-%s): " "$max_configs" >&"$tty_fd"; then
             exec {tty_fd}>&-
             log ERROR "Не удалось вывести запрос NUM_CONFIGS в /dev/tty"
             exit 1
@@ -849,7 +849,7 @@ ask_num_configs() {
             echo ""
             return 0
         fi
-        tty_printf "$tty_fd" '%bВведите число от 1 до %s (пустой ввод не допускается)%b\n' "$RED" "$max_configs" "$NC"
+        printf '%bВведите число от 1 до %s (пустой ввод не допускается)%b\n' "$RED" "$max_configs" "$NC" >&"$tty_fd"
     done
 }
 
