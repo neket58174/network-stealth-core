@@ -498,28 +498,19 @@ save_environment() {
 BOX60_TOP=""
 BOX60_SEP=""
 BOX60_BOT=""
+BOX60_WIDTH=60
 
 box60_init() {
     ui_init_glyphs
-    BOX60_TOP="$(ui_box_border_string top 60)"
-    BOX60_SEP="$(ui_box_line_string "$(ui_repeat_char "$UI_BOX_H" 58)" 60)"
-    BOX60_BOT="$(ui_box_border_string bottom 60)"
+    BOX60_TOP="$(ui_box_border_string top "$BOX60_WIDTH")"
+    BOX60_SEP="$(ui_box_line_string "$(ui_repeat_char "$UI_BOX_H" "$BOX60_WIDTH")" "$BOX60_WIDTH")"
+    BOX60_BOT="$(ui_box_border_string bottom "$BOX60_WIDTH")"
 }
 
 box60_line() {
     local text="$1"
-    local width=58
-
     box60_init
-
-    text="${text//$'\n'/ }"
-    text="${text//$'\r'/ }"
-
-    if ((${#text} > width)); then
-        text="${text:0:$((width - 3))}..."
-    fi
-
-    printf '%s %-*s %s\n' "$UI_BOX_V" "$width" "$text" "$UI_BOX_V"
+    printf '%s\n' "$(ui_box_line_string "$text" "$BOX60_WIDTH")"
 }
 
 render_clients_txt_from_json() {
@@ -561,15 +552,13 @@ render_clients_txt_from_json() {
     tmp_client=$(mktemp "${client_file}.tmp.XXXXXX")
 
     local header_title="Xray Reality Ultimate ${SCRIPT_VERSION} - CLIENT CONFIGS"
-    local header_width=58
-    if ((${#header_title} > header_width)); then
-        header_title="${header_title:0:$((header_width - 3))}..."
-    fi
+    local header_width
+    header_width=$(ui_box_width_for_lines 60 90 "$header_title")
 
     {
-        ui_box_border_string top 60
-        ui_box_line_string "$header_title" 60
-        ui_box_border_string bottom 60
+        ui_box_border_string top "$header_width"
+        ui_box_line_string "$header_title" "$header_width"
+        ui_box_border_string bottom "$header_width"
         echo ""
     } > "$tmp_client"
 

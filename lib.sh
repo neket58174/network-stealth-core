@@ -253,6 +253,7 @@ _resolve_path() {
             log ERROR "Не удалось прочитать путь из /dev/tty"
             return 1
         fi
+        custom_path=$(normalize_tty_input "$custom_path")
         if [[ -z "$custom_path" ]]; then
             printf '  %bПуть не может быть пустым%b\n' "$RED" "$NC" >&"$tty_fd"
             continue
@@ -408,6 +409,31 @@ ui_box_sanitize_text() {
     printf '%s' "$text"
 }
 
+normalize_tty_input() {
+    local value="${1:-}"
+    value="${value//$'\r'/}"
+    value=$(trim_ws "$value")
+    printf '%s' "$value"
+}
+
+is_yes_input() {
+    local value
+    value=$(normalize_tty_input "${1:-}")
+    case "${value,,}" in
+        yes | y | да | д) return 0 ;;
+        *) return 1 ;;
+    esac
+}
+
+is_no_input() {
+    local value
+    value=$(normalize_tty_input "${1:-}")
+    case "${value,,}" in
+        no | n | нет | н) return 0 ;;
+        *) return 1 ;;
+    esac
+}
+
 ui_box_fit_text() {
     local text="${1:-}"
     local width="${2:-60}"
@@ -476,7 +502,7 @@ ui_box_line_string() {
     local fitted
     ui_init_glyphs
     fitted=$(ui_box_fit_text "$text" "$width")
-    printf '%s %-*s %s' "$UI_BOX_V" "$width" "$fitted" "$UI_BOX_V"
+    printf '%s%-*s%s' "$UI_BOX_V" "$width" "$fitted" "$UI_BOX_V"
 }
 
 ui_rule_string() {

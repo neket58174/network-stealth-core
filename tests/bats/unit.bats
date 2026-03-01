@@ -1343,13 +1343,13 @@ EOF
 @test "interactive prompts use explicit tty fd pattern" {
     run bash -eo pipefail -c '
     grep -Fq "exec {tty_fd}<> /dev/tty" ./install.sh
-    grep -Fq "printf \"Профиль [1/2/3/4]: \" > /dev/tty" ./install.sh
+    grep -Fq "printf \"Профиль [1/2/3/4]: \" >&\"\$tty_fd\"" ./install.sh
     grep -Fq "read -r -u \"\$tty_fd\" input" ./install.sh
     grep -Fq "printf '\''%s'\'' \"Подтвердите (yes/no): \" >&\"\$tty_fd\"" ./install.sh
     grep -Fq "read -r -u \"\$tty_fd\" answer" ./install.sh
-    grep -Fq "printf \"Сколько VPN-ключей создать? (1-%s): \" \"\$max_configs\" > /dev/tty" ./install.sh
-    grep -Fq "printf \"Сколько VPN-ключей добавить? (1-%s): \" \"\$max_add\" > /dev/tty" ./modules/config/add_clients.sh
-    grep -Fq "printf '\''Вы уверены? Введите yes для подтверждения: '\'' >&\"\$tty_fd\"" ./service.sh
+    grep -Fq "printf \"Сколько VPN-ключей создать? (1-%s): \" \"\$max_configs\" >&\"\$tty_fd\"" ./install.sh
+    grep -Fq "printf \"Сколько VPN-ключей добавить? (1-%s): \" \"\$max_add\" >&\"\$tty_fd\"" ./modules/config/add_clients.sh
+    grep -Fq "printf '\''Вы уверены? Введите yes для подтверждения или no для отмены: '\'' >&\"\$tty_fd\"" ./service.sh
     grep -Fq "read -r -u \"\$tty_fd\" confirm" ./service.sh
     grep -Fq "printf '\''  Укажите путь вручную для %s: '\'' \"\$description\" >&\"\$tty_fd\"" ./lib.sh
     grep -Fq "read -r -u \"\$tty_fd\" custom_path" ./lib.sh
@@ -1357,7 +1357,7 @@ EOF
     ! grep -Fq "read -r -u \"\$tty_fd\" -p \"Подтвердите (yes/no): \" answer" ./install.sh
     ! grep -Fq "read -r -p \"Сколько VPN-ключей создать? (1-\${max_configs}): \" input < /dev/tty" ./install.sh
     ! grep -Fq "read -r -p \"Сколько VPN-ключей добавить? (1-\${max_add}): \" input < /dev/tty" ./modules/config/add_clients.sh
-    ! grep -Fq "read -r -u \"\$tty_fd\" -p \"Вы уверены? Введите yes для подтверждения: \" confirm" ./service.sh
+    ! grep -Fq "read -r -u \"\$tty_fd\" -p \"Вы уверены? Введите yes для подтверждения или no для отмены: \" confirm" ./service.sh
     ! grep -Fq "read -r -u \"\$tty_fd\" -p \"  Укажите путь вручную для \${description}: \" custom_path" ./lib.sh
     echo "ok"
   '
@@ -1368,11 +1368,28 @@ EOF
 @test "ui_box_line_string clips long text and keeps box width stable" {
     run bash -eo pipefail -c '
     source ./lib.sh
+    top=$(ui_box_border_string top 10)
     line=$(ui_box_line_string "abcdefghijklmnopqrstuvwxyz" 10)
-    [ "${#line}" -eq 14 ]
+    [ "${#line}" -eq 12 ]
+    [ "${#top}" -eq "${#line}" ]
     [[ "$line" == *"..."* ]]
     [[ "${line:0:1}" == "|" ]]
     [[ "${line: -1}" == "|" ]]
+    echo "ok"
+  '
+    [ "$status" -eq 0 ]
+    [ "$output" = "ok" ]
+}
+
+@test "yes/no parser normalizes trim and carriage return" {
+    run bash -eo pipefail -c '
+    source ./lib.sh
+    is_yes_input "yes"$'\''\r'\''
+    is_yes_input "  YES  "
+    is_no_input " no "$'\''\r'\''
+    is_no_input "НЕТ"
+    ! is_yes_input "maybe"
+    ! is_no_input "1"
     echo "ok"
   '
     [ "$status" -eq 0 ]
@@ -1384,6 +1401,21 @@ EOF
     source ./lib.sh
     [ "$(ui_box_width_for_lines 60 80 "short")" = "60" ]
     [ "$(ui_box_width_for_lines 10 20 "1234567890123456789012345")" = "20" ]
+    echo "ok"
+  '
+    [ "$status" -eq 0 ]
+    [ "$output" = "ok" ]
+}
+
+@test "config box60 helpers keep border and content width identical" {
+    run bash -eo pipefail -c '
+    source ./lib.sh
+    source ./config.sh
+    box60_init
+    line=$(box60_line "Config 12: yandex.cloud -> yandex.cloud:443 (chrome, grpc, SNIs: 3)")
+    [ "${#BOX60_TOP}" -eq "${#line}" ]
+    [ "${#BOX60_BOT}" -eq "${#line}" ]
+    [ "${#BOX60_SEP}" -eq "${#line}" ]
     echo "ok"
   '
     [ "$status" -eq 0 ]

@@ -121,10 +121,9 @@ confirm_minisign_fallback() {
         return 1
     fi
 
-    echo ""
-    echo -e "${YELLOW}${reason}${NC}"
-    echo -e "${YELLOW}⚠️  Внимание: minisign недоступен или не пройден.${NC}"
-    echo -e "${YELLOW}Продолжить установку только по SHA256? [yes/no]${NC}"
+    printf '\n%b%s%b\n' "$YELLOW" "$reason" "$NC" >&"$tty_fd"
+    printf '%b⚠️  Внимание: minisign недоступен или не пройден.%b\n' "$YELLOW" "$NC" >&"$tty_fd"
+    printf '%bПродолжить установку только по SHA256? [yes/no]%b\n' "$YELLOW" "$NC" >&"$tty_fd"
 
     local answer=""
     while true; do
@@ -133,21 +132,18 @@ confirm_minisign_fallback() {
         elif ! read -r -u "$tty_fd" answer; then
             answer=""
         fi
-        case "${answer,,}" in
-            yes | y | да | д)
-                log WARN "Подтверждено продолжение без minisign (только SHA256)"
-                exec {tty_fd}>&-
-                return 0
-                ;;
-            no | n | нет | н | "")
-                log ERROR "Операция остановлена пользователем: minisign fallback отклонён"
-                exec {tty_fd}>&-
-                return 1
-                ;;
-            *)
-                printf '%s\n' "Введите yes или no" >&"$tty_fd"
-                ;;
-        esac
+        answer=$(normalize_tty_input "$answer")
+        if is_yes_input "$answer"; then
+            log WARN "Подтверждено продолжение без minisign (только SHA256)"
+            exec {tty_fd}>&-
+            return 0
+        fi
+        if [[ -z "$answer" ]] || is_no_input "$answer"; then
+            log ERROR "Операция остановлена пользователем: minisign fallback отклонён"
+            exec {tty_fd}>&-
+            return 1
+        fi
+        printf '%s\n' "Введите yes или no" >&"$tty_fd"
     done
 }
 
@@ -724,12 +720,12 @@ ask_domain_profile() {
     echo ""
     local input
     while true; do
-        echo "Выберите профиль доменов:"
-        echo "  1) ru (ручной ввод числа ключей, до 100)"
-        echo "  2) global-ms10 (ручной ввод числа ключей, до 10)"
-        echo "  3) ru-auto (автоматически: 5 ключей)"
-        echo "  4) global-ms10-auto (автоматически: 10 ключей)"
-        if ! printf "Профиль [1/2/3/4]: " > /dev/tty; then
+        printf '%s\n' "Выберите профиль доменов:" >&"$tty_fd"
+        printf '%s\n' "  1) ru (ручной ввод числа ключей, до 100)" >&"$tty_fd"
+        printf '%s\n' "  2) global-ms10 (ручной ввод числа ключей, до 10)" >&"$tty_fd"
+        printf '%s\n' "  3) ru-auto (автоматически: 5 ключей)" >&"$tty_fd"
+        printf '%s\n' "  4) global-ms10-auto (автоматически: 10 ключей)" >&"$tty_fd"
+        if ! printf "Профиль [1/2/3/4]: " >&"$tty_fd"; then
             exec {tty_fd}>&-
             log ERROR "Не удалось вывести запрос выбора профиля в /dev/tty"
             exit 1
@@ -739,6 +735,7 @@ ask_domain_profile() {
             log ERROR "Не удалось прочитать выбор профиля из /dev/tty"
             exit 1
         fi
+        input=$(normalize_tty_input "$input")
         case "${input,,}" in
             "" | 1 | ru | russia | rf | tier_ru)
                 DOMAIN_TIER="tier_ru"
@@ -761,7 +758,7 @@ ask_domain_profile() {
                 break
                 ;;
             *)
-                echo -e "${RED}Введите 1, 2, 3 или 4 (пустой ввод = ru)${NC}"
+                printf '%bВведите 1, 2, 3 или 4 (пустой ввод = ru)%b\n' "$RED" "$NC" >&"$tty_fd"
                 ;;
         esac
     done
@@ -834,7 +831,7 @@ ask_num_configs() {
     echo ""
     local input
     while true; do
-        if ! printf "Сколько VPN-ключей создать? (1-%s): " "$max_configs" > /dev/tty; then
+        if ! printf "Сколько VPN-ключей создать? (1-%s): " "$max_configs" >&"$tty_fd"; then
             exec {tty_fd}>&-
             log ERROR "Не удалось вывести запрос NUM_CONFIGS в /dev/tty"
             exit 1
@@ -844,6 +841,7 @@ ask_num_configs() {
             log ERROR "Не удалось прочитать значение NUM_CONFIGS из /dev/tty"
             exit 1
         fi
+        input=$(normalize_tty_input "$input")
         if [[ "$input" =~ ^[0-9]+$ ]] && ((input >= 1 && input <= max_configs)); then
             exec {tty_fd}>&-
             NUM_CONFIGS="$input"
@@ -851,7 +849,7 @@ ask_num_configs() {
             echo ""
             return 0
         fi
-        echo -e "${RED}Введите число от 1 до ${max_configs} (пустой ввод не допускается)${NC}"
+        printf '%bВведите число от 1 до %s (пустой ввод не допускается)%b\n' "$RED" "$max_configs" "$NC" >&"$tty_fd"
     done
 }
 
@@ -920,10 +918,11 @@ show_install_result() {
 
     echo ""
     local title="УСТАНОВКА УСПЕШНО ЗАВЕРШЕНА${duration}"
-    local box_top box_line box_bottom
-    box_top=$(ui_box_border_string top 60)
-    box_line=$(ui_box_line_string "$title" 60)
-    box_bottom=$(ui_box_border_string bottom 60)
+    local box_width box_top box_line box_bottom
+    box_width=$(ui_box_width_for_lines 60 90 "$title")
+    box_top=$(ui_box_border_string top "$box_width")
+    box_line=$(ui_box_line_string "$title" "$box_width")
+    box_bottom=$(ui_box_border_string bottom "$box_width")
     echo -e "${BOLD}${GREEN}${box_top}${NC}"
     echo -e "${BOLD}${GREEN}${box_line}${NC}"
     echo -e "${BOLD}${GREEN}${box_bottom}${NC}"

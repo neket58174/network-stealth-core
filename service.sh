@@ -703,7 +703,7 @@ uninstall_all() {
             exit 1
         fi
         while true; do
-            if ! printf 'Вы уверены? Введите yes для подтверждения: ' >&"$tty_fd"; then
+            if ! printf 'Вы уверены? Введите yes для подтверждения или no для отмены: ' >&"$tty_fd"; then
                 exec {tty_fd}>&-
                 log ERROR "Не удалось вывести запрос подтверждения в /dev/tty"
                 exit 1
@@ -713,9 +713,10 @@ uninstall_all() {
                 log ERROR "Не удалось прочитать подтверждение из /dev/tty"
                 exit 1
             fi
-            if [[ "$confirm" == "yes" ]]; then
+            confirm=$(normalize_tty_input "$confirm")
+            if is_yes_input "$confirm"; then
                 break
-            elif [[ "$confirm" == "no" || "$confirm" == "n" ]]; then
+            elif is_no_input "$confirm"; then
                 exec {tty_fd}>&-
                 log INFO "Удаление отменено"
                 exit 0

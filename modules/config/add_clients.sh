@@ -104,7 +104,7 @@ resolve_add_clients_count() {
         echo ""
         local input
         while true; do
-            if ! printf "Сколько VPN-ключей добавить? (1-%s): " "$max_add" > /dev/tty; then
+            if ! printf "Сколько VPN-ключей добавить? (1-%s): " "$max_add" >&"$tty_fd"; then
                 exec {tty_fd}>&-
                 log ERROR "Не удалось вывести запрос количества новых конфигураций в /dev/tty"
                 exit 1
@@ -114,11 +114,12 @@ resolve_add_clients_count() {
                 log ERROR "Не удалось прочитать количество новых конфигураций из /dev/tty"
                 exit 1
             fi
+            input=$(normalize_tty_input "$input")
             if [[ "$input" =~ ^[0-9]+$ ]] && ((input >= 1 && input <= max_add)); then
                 requested_count="$input"
                 break
             fi
-            echo -e "${RED}Введите число от 1 до ${max_add}${NC}"
+            printf '%bВведите число от 1 до %s%b\n' "$RED" "$max_add" "$NC" >&"$tty_fd"
         done
         exec {tty_fd}>&-
     fi
@@ -586,10 +587,11 @@ print_add_clients_result() {
 
     echo ""
     local title="ДОБАВЛЕНО ${add_count} НОВЫХ КОНФИГУРАЦИЙ"
-    local box_top box_line box_bottom
-    box_top=$(ui_box_border_string top 60)
-    box_line=$(ui_box_line_string "$title" 60)
-    box_bottom=$(ui_box_border_string bottom 60)
+    local box_width box_top box_line box_bottom
+    box_width=$(ui_box_width_for_lines 60 90 "$title")
+    box_top=$(ui_box_border_string top "$box_width")
+    box_line=$(ui_box_line_string "$title" "$box_width")
+    box_bottom=$(ui_box_border_string bottom "$box_width")
     echo -e "${BOLD}${GREEN}${box_top}${NC}"
     echo -e "${BOLD}${GREEN}${box_line}${NC}"
     echo -e "${BOLD}${GREEN}${box_bottom}${NC}"
