@@ -1349,10 +1349,41 @@ EOF
     grep -Fq "read -r -u \"\$tty_fd\" answer" ./install.sh
     grep -Fq "printf \"Сколько VPN-ключей создать? (1-%s): \" \"\$max_configs\" > /dev/tty" ./install.sh
     grep -Fq "printf \"Сколько VPN-ключей добавить? (1-%s): \" \"\$max_add\" > /dev/tty" ./modules/config/add_clients.sh
+    grep -Fq "printf '\''Вы уверены? Введите yes для подтверждения: '\'' >&\"\$tty_fd\"" ./service.sh
+    grep -Fq "read -r -u \"\$tty_fd\" confirm" ./service.sh
+    grep -Fq "printf '\''  Укажите путь вручную для %s: '\'' \"\$description\" >&\"\$tty_fd\"" ./lib.sh
+    grep -Fq "read -r -u \"\$tty_fd\" custom_path" ./lib.sh
     ! grep -Fq "read -r -p \"Профиль [1/2/3/4]: \" input < /dev/tty" ./install.sh
     ! grep -Fq "read -r -u \"\$tty_fd\" -p \"Подтвердите (yes/no): \" answer" ./install.sh
     ! grep -Fq "read -r -p \"Сколько VPN-ключей создать? (1-\${max_configs}): \" input < /dev/tty" ./install.sh
     ! grep -Fq "read -r -p \"Сколько VPN-ключей добавить? (1-\${max_add}): \" input < /dev/tty" ./modules/config/add_clients.sh
+    ! grep -Fq "read -r -u \"\$tty_fd\" -p \"Вы уверены? Введите yes для подтверждения: \" confirm" ./service.sh
+    ! grep -Fq "read -r -u \"\$tty_fd\" -p \"  Укажите путь вручную для \${description}: \" custom_path" ./lib.sh
+    echo "ok"
+  '
+    [ "$status" -eq 0 ]
+    [ "$output" = "ok" ]
+}
+
+@test "ui_box_line_string clips long text and keeps box width stable" {
+    run bash -eo pipefail -c '
+    source ./lib.sh
+    line=$(ui_box_line_string "abcdefghijklmnopqrstuvwxyz" 10)
+    [ "${#line}" -eq 14 ]
+    [[ "$line" == *"..."* ]]
+    [[ "${line:0:1}" == "|" ]]
+    [[ "${line: -1}" == "|" ]]
+    echo "ok"
+  '
+    [ "$status" -eq 0 ]
+    [ "$output" = "ok" ]
+}
+
+@test "ui_box_width_for_lines respects min and max bounds" {
+    run bash -eo pipefail -c '
+    source ./lib.sh
+    [ "$(ui_box_width_for_lines 60 80 "short")" = "60" ]
+    [ "$(ui_box_width_for_lines 10 20 "1234567890123456789012345")" = "20" ]
     echo "ok"
   '
     [ "$status" -eq 0 ]

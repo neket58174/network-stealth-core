@@ -243,13 +243,18 @@ _resolve_path() {
         return 1
     fi
     while true; do
-        if ! read -r -u "$tty_fd" -p "  Укажите путь вручную для ${description}: " custom_path; then
+        if ! printf '  Укажите путь вручную для %s: ' "$description" >&"$tty_fd"; then
+            exec {tty_fd}>&-
+            log ERROR "Не удалось вывести приглашение ввода пути в /dev/tty"
+            return 1
+        fi
+        if ! read -r -u "$tty_fd" custom_path; then
             exec {tty_fd}>&-
             log ERROR "Не удалось прочитать путь из /dev/tty"
             return 1
         fi
         if [[ -z "$custom_path" ]]; then
-            echo -e "  ${RED}Путь не может быть пустым${NC}"
+            printf '  %bПуть не может быть пустым%b\n' "$RED" "$NC" >&"$tty_fd"
             continue
         fi
         if _try_file_path "$custom_path" || _try_dir "$custom_path"; then
@@ -258,7 +263,7 @@ _resolve_path() {
             log OK "${description}: используем ${custom_path}"
             return 0
         fi
-        echo -e "  ${RED}Путь ${custom_path} недоступен для записи${NC}"
+        printf '  %bПуть %s недоступен для записи%b\n' "$RED" "$custom_path" "$NC" >&"$tty_fd"
     done
 }
 
@@ -395,6 +400,65 @@ ui_repeat_char() {
     printf '%s' "$out"
 }
 
+ui_box_sanitize_text() {
+    local text="${1:-}"
+    text="${text//$'\r'/ }"
+    text="${text//$'\n'/ }"
+    text="${text//$'\t'/ }"
+    printf '%s' "$text"
+}
+
+ui_box_fit_text() {
+    local text="${1:-}"
+    local width="${2:-60}"
+    if ! [[ "$width" =~ ^[0-9]+$ ]] || ((width < 1)); then
+        width=1
+    fi
+
+    local sanitized
+    sanitized=$(ui_box_sanitize_text "$text")
+
+    if ((${#sanitized} <= width)); then
+        printf '%s' "$sanitized"
+        return 0
+    fi
+
+    if ((width <= 3)); then
+        printf '%s' "${sanitized:0:width}"
+        return 0
+    fi
+
+    printf '%s...' "${sanitized:0:$((width - 3))}"
+}
+
+ui_box_width_for_lines() {
+    local min_width="${1:-60}"
+    local max_width="${2:-80}"
+    shift 2 || true
+
+    if ! [[ "$min_width" =~ ^[0-9]+$ ]] || ((min_width < 1)); then
+        min_width=1
+    fi
+    if ! [[ "$max_width" =~ ^[0-9]+$ ]] || ((max_width < min_width)); then
+        max_width="$min_width"
+    fi
+
+    local desired="$min_width"
+    local line sanitized line_len
+    for line in "$@"; do
+        sanitized=$(ui_box_sanitize_text "$line")
+        line_len=${#sanitized}
+        if ((line_len > desired)); then
+            desired="$line_len"
+        fi
+    done
+
+    if ((desired > max_width)); then
+        desired="$max_width"
+    fi
+    printf '%s' "$desired"
+}
+
 ui_box_border_string() {
     local kind="${1:-top}"
     local width="${2:-60}"
@@ -409,8 +473,10 @@ ui_box_border_string() {
 ui_box_line_string() {
     local text="${1:-}"
     local width="${2:-60}"
+    local fitted
     ui_init_glyphs
-    printf '%s %-*s %s' "$UI_BOX_V" "$width" "$text" "$UI_BOX_V"
+    fitted=$(ui_box_fit_text "$text" "$width")
+    printf '%s %-*s %s' "$UI_BOX_V" "$width" "$fitted" "$UI_BOX_V"
 }
 
 ui_rule_string() {
@@ -470,16 +536,20 @@ setup_logging() {
         fi
     fi
 
-    local inner_width=60
+    local inner_width
     local title="${SCRIPT_NAME} v${SCRIPT_VERSION}"
     local subtitle="Автоматизация установки и сопровождения Xray Reality (gRPC/HTTP2 + Reality + MUX)"
+    inner_width=$(ui_box_width_for_lines 60 92 "$title" "$subtitle")
     local box_top box_bottom
     box_top=$(ui_box_border_string top "$inner_width")
     box_bottom=$(ui_box_border_string bottom "$inner_width")
+    local box_title box_subtitle
+    box_title=$(ui_box_line_string "$title" "$inner_width")
+    box_subtitle=$(ui_box_line_string "$subtitle" "$inner_width")
 
     echo "$box_top"
-    printf '%s  %b%-*s%b%s\n' "$UI_BOX_V" "${BOLD}${MAGENTA}" $((inner_width - 2)) "$title" "${NC}" "$UI_BOX_V"
-    printf '%s  %-*s%s\n' "$UI_BOX_V" $((inner_width - 2)) "$subtitle" "$UI_BOX_V"
+    echo -e "${BOLD}${MAGENTA}${box_title}${NC}"
+    echo "$box_subtitle"
     echo "$box_bottom"
     echo ""
     printf '📝 Начало %s: %s\n\n' "$LOG_CONTEXT" "$(date '+%Y-%m-%d %H:%M:%S')"
@@ -1446,10 +1516,11 @@ USAGE
 }
 
 dry_run_summary() {
-    local box_top box_bottom box_line
-    box_top=$(ui_box_border_string top 60)
-    box_bottom=$(ui_box_border_string bottom 60)
-    box_line=$(ui_box_line_string "DRY-RUN: изменения НЕ применяются" 60)
+    local box_width box_top box_bottom box_line
+    box_width=$(ui_box_width_for_lines 60 90 "DRY-RUN: изменения НЕ применяются")
+    box_top=$(ui_box_border_string top "$box_width")
+    box_bottom=$(ui_box_border_string bottom "$box_width")
+    box_line=$(ui_box_line_string "DRY-RUN: изменения НЕ применяются" "$box_width")
 
     echo ""
     echo -e "${BOLD}${CYAN}${box_top}${NC}"

@@ -672,10 +672,13 @@ uninstall_close_ports() {
 }
 
 uninstall_all() {
+    local uninstall_box_width uninstall_title
+    uninstall_title="УДАЛЕНИЕ XRAY REALITY ULTIMATE"
+    uninstall_box_width=$(ui_box_width_for_lines 60 90 "$uninstall_title")
     echo ""
-    echo -e "${BOLD}${RED}$(ui_box_border_string top 60)${NC}"
-    echo -e "${BOLD}${RED}$(ui_box_line_string "УДАЛЕНИЕ XRAY REALITY ULTIMATE" 60)${NC}"
-    echo -e "${BOLD}${RED}$(ui_box_border_string bottom 60)${NC}"
+    echo -e "${BOLD}${RED}$(ui_box_border_string top "$uninstall_box_width")${NC}"
+    echo -e "${BOLD}${RED}$(ui_box_line_string "$uninstall_title" "$uninstall_box_width")${NC}"
+    echo -e "${BOLD}${RED}$(ui_box_border_string bottom "$uninstall_box_width")${NC}"
     echo ""
     echo -e "${YELLOW}⚠️  Будет удалено ВСЁ, связанное с Xray Reality:${NC}"
     echo "  • Сервисы и таймеры systemd"
@@ -700,7 +703,12 @@ uninstall_all() {
             exit 1
         fi
         while true; do
-            if ! read -r -u "$tty_fd" -p "Вы уверены? Введите yes для подтверждения: " confirm; then
+            if ! printf 'Вы уверены? Введите yes для подтверждения: ' >&"$tty_fd"; then
+                exec {tty_fd}>&-
+                log ERROR "Не удалось вывести запрос подтверждения в /dev/tty"
+                exit 1
+            fi
+            if ! read -r -u "$tty_fd" confirm; then
                 exec {tty_fd}>&-
                 log ERROR "Не удалось прочитать подтверждение из /dev/tty"
                 exit 1
@@ -712,7 +720,7 @@ uninstall_all() {
                 log INFO "Удаление отменено"
                 exit 0
             fi
-            echo -e "${RED}Введите 'yes' для подтверждения или 'no' для отмены${NC}"
+            printf '%bВведите '\''yes'\'' для подтверждения или '\''no'\'' для отмены%b\n' "$RED" "$NC" >&"$tty_fd"
         done
         exec {tty_fd}>&-
     else
@@ -831,10 +839,13 @@ uninstall_all() {
 
     set -e
 
+    local uninstall_done_title uninstall_done_width
+    uninstall_done_title="УДАЛЕНИЕ ЗАВЕРШЕНО"
+    uninstall_done_width=$(ui_box_width_for_lines 60 90 "$uninstall_done_title")
     echo ""
-    echo -e "${BOLD}${GREEN}$(ui_box_border_string top 60)${NC}"
-    echo -e "${BOLD}${GREEN}$(ui_box_line_string "УДАЛЕНИЕ ЗАВЕРШЕНО" 60)${NC}"
-    echo -e "${BOLD}${GREEN}$(ui_box_border_string bottom 60)${NC}"
+    echo -e "${BOLD}${GREEN}$(ui_box_border_string top "$uninstall_done_width")${NC}"
+    echo -e "${BOLD}${GREEN}$(ui_box_line_string "$uninstall_done_title" "$uninstall_done_width")${NC}"
+    echo -e "${BOLD}${GREEN}$(ui_box_border_string bottom "$uninstall_done_width")${NC}"
     echo ""
 }
 
@@ -876,10 +887,13 @@ uninstall_has_managed_artifacts() {
 }
 
 status_flow() {
+    local status_title status_box_width
+    status_title="XRAY REALITY ULTIMATE - STATUS"
+    status_box_width=$(ui_box_width_for_lines 60 90 "$status_title")
     echo ""
-    echo -e "${BOLD}${CYAN}$(ui_box_border_string top 60)${NC}"
-    echo -e "${BOLD}${CYAN}$(ui_box_line_string "XRAY REALITY ULTIMATE - STATUS" 60)${NC}"
-    echo -e "${BOLD}${CYAN}$(ui_box_border_string bottom 60)${NC}"
+    echo -e "${BOLD}${CYAN}$(ui_box_border_string top "$status_box_width")${NC}"
+    echo -e "${BOLD}${CYAN}$(ui_box_line_string "$status_title" "$status_box_width")${NC}"
+    echo -e "${BOLD}${CYAN}$(ui_box_border_string bottom "$status_box_width")${NC}"
     echo ""
 
     echo -e "${BOLD}Xray:${NC}"
