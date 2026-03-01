@@ -675,35 +675,56 @@ uninstall_all() {
     local uninstall_box_width uninstall_title
     uninstall_title="УДАЛЕНИЕ XRAY REALITY ULTIMATE"
     uninstall_box_width=$(ui_box_width_for_lines 60 90 "$uninstall_title")
-    echo ""
-    echo -e "${BOLD}${RED}$(ui_box_border_string top "$uninstall_box_width")${NC}"
-    echo -e "${BOLD}${RED}$(ui_box_line_string "$uninstall_title" "$uninstall_box_width")${NC}"
-    echo -e "${BOLD}${RED}$(ui_box_border_string bottom "$uninstall_box_width")${NC}"
-    echo ""
-    echo -e "${YELLOW}⚠️  Будет удалено ВСЁ, связанное с Xray Reality:${NC}"
-    echo "  • Сервисы и таймеры systemd"
-    echo "  • Бинарники и скрипты"
-    echo "  • Конфигурации и ключи"
-    echo "  • Логи и бэкапы"
-    echo "  • Правила файрвола"
-    echo "  • Системные оптимизации"
-    echo "  • Пользователь и группа xray"
-    echo ""
-
+    local tty_fd=""
+    local require_confirmation=false
     if [[ "$ASSUME_YES" != "true" && "$NON_INTERACTIVE" != "true" ]]; then
+        require_confirmation=true
         if [[ ! -t 0 && ! -t 1 && ! -t 2 ]]; then
             log ERROR "Требуется интерактивное подтверждение удаления, но /dev/tty недоступен"
             hint "Повторите команду с --yes --non-interactive для явного подтверждения"
             exit 1
         fi
-        local confirm tty_fd
-        if ! exec {tty_fd}<> /dev/tty 2> /dev/null; then
+        if ! open_interactive_tty_fd tty_fd; then
             log ERROR "Требуется интерактивное подтверждение удаления, но /dev/tty недоступен"
             hint "Повторите команду с --yes --non-interactive для явного подтверждения"
             exit 1
         fi
+    fi
+
+    if [[ "$require_confirmation" == "true" ]]; then
+        tty_print_line "$tty_fd" ""
+        tty_print_box "$tty_fd" "$RED" "$uninstall_title" 60 90
+        tty_print_line "$tty_fd" ""
+        tty_printf "$tty_fd" '%b⚠️  Будет удалено ВСЁ, связанное с Xray Reality:%b\n' "$YELLOW" "$NC"
+        tty_print_line "$tty_fd" "  • Сервисы и таймеры systemd"
+        tty_print_line "$tty_fd" "  • Бинарники и скрипты"
+        tty_print_line "$tty_fd" "  • Конфигурации и ключи"
+        tty_print_line "$tty_fd" "  • Логи и бэкапы"
+        tty_print_line "$tty_fd" "  • Правила файрвола"
+        tty_print_line "$tty_fd" "  • Системные оптимизации"
+        tty_print_line "$tty_fd" "  • Пользователь и группа xray"
+        tty_print_line "$tty_fd" ""
+    else
+        echo ""
+        echo -e "${BOLD}${RED}$(ui_box_border_string top "$uninstall_box_width")${NC}"
+        echo -e "${BOLD}${RED}$(ui_box_line_string "$uninstall_title" "$uninstall_box_width")${NC}"
+        echo -e "${BOLD}${RED}$(ui_box_border_string bottom "$uninstall_box_width")${NC}"
+        echo ""
+        echo -e "${YELLOW}⚠️  Будет удалено ВСЁ, связанное с Xray Reality:${NC}"
+        echo "  • Сервисы и таймеры systemd"
+        echo "  • Бинарники и скрипты"
+        echo "  • Конфигурации и ключи"
+        echo "  • Логи и бэкапы"
+        echo "  • Правила файрвола"
+        echo "  • Системные оптимизации"
+        echo "  • Пользователь и группа xray"
+        echo ""
+    fi
+
+    if [[ "$require_confirmation" == "true" ]]; then
+        local confirm
         while true; do
-            if ! printf 'Вы уверены? Введите yes для подтверждения или no для отмены: ' >&"$tty_fd"; then
+            if ! tty_printf "$tty_fd" 'Вы уверены? Введите yes для подтверждения или no для отмены: '; then
                 exec {tty_fd}>&-
                 log ERROR "Не удалось вывести запрос подтверждения в /dev/tty"
                 exit 1
@@ -721,7 +742,7 @@ uninstall_all() {
                 log INFO "Удаление отменено"
                 exit 0
             fi
-            printf '%bВведите '\''yes'\'' для подтверждения или '\''no'\'' для отмены%b\n' "$RED" "$NC" >&"$tty_fd"
+            tty_printf "$tty_fd" '%bВведите '\''yes'\'' для подтверждения или '\''no'\'' для отмены%b\n' "$RED" "$NC"
         done
         exec {tty_fd}>&-
     else

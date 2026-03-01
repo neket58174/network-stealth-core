@@ -238,12 +238,12 @@ _resolve_path() {
     fi
 
     local custom_path tty_fd
-    if ! exec {tty_fd}<> /dev/tty 2> /dev/null; then
+    if ! open_interactive_tty_fd tty_fd; then
         log ERROR "Терминал /dev/tty недоступен: невозможно запросить путь вручную"
         return 1
     fi
     while true; do
-        if ! printf '  Укажите путь вручную для %s: ' "$description" >&"$tty_fd"; then
+        if ! tty_printf "$tty_fd" '  Укажите путь вручную для %s: ' "$description"; then
             exec {tty_fd}>&-
             log ERROR "Не удалось вывести приглашение ввода пути в /dev/tty"
             return 1
@@ -255,7 +255,7 @@ _resolve_path() {
         fi
         custom_path=$(normalize_tty_input "$custom_path")
         if [[ -z "$custom_path" ]]; then
-            printf '  %bПуть не может быть пустым%b\n' "$RED" "$NC" >&"$tty_fd"
+            tty_printf "$tty_fd" '  %bПуть не может быть пустым%b\n' "$RED" "$NC"
             continue
         fi
         if _try_file_path "$custom_path" || _try_dir "$custom_path"; then
@@ -264,7 +264,7 @@ _resolve_path() {
             log OK "${description}: используем ${custom_path}"
             return 0
         fi
-        printf '  %bПуть %s недоступен для записи%b\n' "$RED" "$custom_path" "$NC" >&"$tty_fd"
+        tty_printf "$tty_fd" '  %bПуть %s недоступен для записи%b\n' "$RED" "$custom_path" "$NC"
     done
 }
 
@@ -413,6 +413,53 @@ normalize_tty_input() {
     value="${value//$'\r'/}"
     value=$(trim_ws "$value")
     printf '%s' "$value"
+}
+
+open_interactive_tty_fd() {
+    local out_var="${1:-}"
+    [[ -n "$out_var" ]] || return 1
+
+    local tty_fd=""
+    if ! exec {tty_fd}<> /dev/tty 2> /dev/null; then
+        return 1
+    fi
+    printf -v "$out_var" '%s' "$tty_fd"
+    return 0
+}
+
+tty_printf() {
+    local tty_fd="${1:-}"
+    shift || true
+    [[ "$tty_fd" =~ ^[0-9]+$ ]] || return 1
+    # shellcheck disable=SC2059 # Controlled internal helper: callers pass static format strings.
+    printf "$@" >&"$tty_fd"
+}
+
+tty_print_line() {
+    local tty_fd="${1:-}"
+    shift || true
+    [[ "$tty_fd" =~ ^[0-9]+$ ]] || return 1
+    printf '%s\n' "$*" >&"$tty_fd"
+}
+
+tty_print_box() {
+    local tty_fd="${1:-}"
+    local color="${2:-$NC}"
+    local title="${3:-}"
+    local min_width="${4:-60}"
+    local max_width="${5:-90}"
+
+    [[ "$tty_fd" =~ ^[0-9]+$ ]] || return 1
+
+    local width top line bottom
+    width=$(ui_box_width_for_lines "$min_width" "$max_width" "$title")
+    top=$(ui_box_border_string top "$width")
+    line=$(ui_box_line_string "$title" "$width")
+    bottom=$(ui_box_border_string bottom "$width")
+
+    tty_printf "$tty_fd" '%b%s%b\n' "${BOLD}${color}" "$top" "$NC"
+    tty_printf "$tty_fd" '%b%s%b\n' "${BOLD}${color}" "$line" "$NC"
+    tty_printf "$tty_fd" '%b%s%b\n' "${BOLD}${color}" "$bottom" "$NC"
 }
 
 normalize_yes_no_token() {

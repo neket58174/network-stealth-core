@@ -97,14 +97,14 @@ resolve_add_clients_count() {
             exit 1
         fi
         local tty_fd=""
-        if ! exec {tty_fd}<> /dev/tty 2> /dev/null; then
+        if ! open_interactive_tty_fd tty_fd; then
             log ERROR "Не удалось открыть /dev/tty для ввода количества новых конфигураций"
             exit 1
         fi
-        printf '\n' >&"$tty_fd"
+        tty_printf "$tty_fd" '\n'
         local input
         while true; do
-            if ! printf "Количество VPN-ключей добавить (1-%s): " "$max_add" >&"$tty_fd"; then
+            if ! tty_printf "$tty_fd" "Количество VPN-ключей добавить (1-%s): " "$max_add"; then
                 exec {tty_fd}>&-
                 log ERROR "Не удалось вывести запрос количества новых конфигураций в /dev/tty"
                 exit 1
@@ -119,7 +119,7 @@ resolve_add_clients_count() {
                 requested_count="$input"
                 break
             fi
-            printf '%bВведите число от 1 до %s%b\n' "$RED" "$max_add" "$NC" >&"$tty_fd"
+            tty_printf "$tty_fd" '%bВведите число от 1 до %s%b\n' "$RED" "$max_add" "$NC"
         done
         exec {tty_fd}>&-
     fi
