@@ -419,11 +419,11 @@ open_interactive_tty_fd() {
     local out_var="${1:-}"
     [[ -n "$out_var" ]] || return 1
 
-    local tty_fd=""
-    if ! exec {tty_fd}<> /dev/tty 2> /dev/null; then
+    local opened_fd=""
+    if ! exec {opened_fd}<> /dev/tty 2> /dev/null; then
         return 1
     fi
-    printf -v "$out_var" '%s' "$tty_fd"
+    printf -v "$out_var" '%s' "$opened_fd"
     return 0
 }
 
