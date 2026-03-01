@@ -1347,8 +1347,8 @@ EOF
     grep -Fq "read -r -u \"\$tty_fd\" input" ./install.sh
     grep -Fq "printf '\''%s'\'' \"Подтвердите (yes/no): \" >&\"\$tty_fd\"" ./install.sh
     grep -Fq "read -r -u \"\$tty_fd\" answer" ./install.sh
-    grep -Fq "printf \"Сколько VPN-ключей создать? (1-%s): \" \"\$max_configs\" >&\"\$tty_fd\"" ./install.sh
-    grep -Fq "printf \"Сколько VPN-ключей добавить? (1-%s): \" \"\$max_add\" >&\"\$tty_fd\"" ./modules/config/add_clients.sh
+    grep -Fq "printf \"Количество VPN-ключей (1-%s): \" \"\$max_configs\" >&\"\$tty_fd\"" ./install.sh
+    grep -Fq "printf \"Количество VPN-ключей добавить (1-%s): \" \"\$max_add\" >&\"\$tty_fd\"" ./modules/config/add_clients.sh
     grep -Fq "printf '\''Вы уверены? Введите yes для подтверждения или no для отмены: '\'' >&\"\$tty_fd\"" ./service.sh
     grep -Fq "read -r -u \"\$tty_fd\" confirm" ./service.sh
     grep -Fq "printf '\''  Укажите путь вручную для %s: '\'' \"\$description\" >&\"\$tty_fd\"" ./lib.sh
@@ -1375,6 +1375,9 @@ EOF
     [[ "$line" == *"..."* ]]
     [[ "${line:0:1}" == "|" ]]
     [[ "${line: -1}" == "|" ]]
+    top_ru=$(ui_box_border_string top 32)
+    line_ru=$(ui_box_line_string "Config 2: megafon.ru ~ РЕЗЕРВНЫЙ" 32)
+    [ "${#top_ru}" -eq "${#line_ru}" ]
     echo "ok"
   '
     [ "$status" -eq 0 ]
@@ -1387,6 +1390,7 @@ EOF
     is_yes_input "yes"$'\''\r'\''
     is_yes_input "  YES  "
     is_no_input " no "$'\''\r'\''
+    is_no_input "nо"
     is_no_input "НЕТ"
     ! is_yes_input "maybe"
     ! is_no_input "1"

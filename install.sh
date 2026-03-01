@@ -717,7 +717,7 @@ ask_domain_profile() {
         exit 1
     fi
 
-    echo ""
+    printf '\n' >&"$tty_fd"
     local input
     while true; do
         printf '%s\n' "Выберите профиль доменов:" >&"$tty_fd"
@@ -828,10 +828,10 @@ ask_num_configs() {
         exit 1
     fi
 
-    echo ""
+    printf '\n' >&"$tty_fd"
     local input
     while true; do
-        if ! printf "Сколько VPN-ключей создать? (1-%s): " "$max_configs" >&"$tty_fd"; then
+        if ! printf "Количество VPN-ключей (1-%s): " "$max_configs" >&"$tty_fd"; then
             exec {tty_fd}>&-
             log ERROR "Не удалось вывести запрос NUM_CONFIGS в /dev/tty"
             exit 1

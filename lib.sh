@@ -416,10 +416,20 @@ normalize_tty_input() {
     printf '%s' "$value"
 }
 
-is_yes_input() {
+normalize_yes_no_token() {
     local value
     value=$(normalize_tty_input "${1:-}")
-    case "${value,,}" in
+    value="${value,,}"
+    # Common mixed-layout lookalike in short yes/no answers.
+    value="${value//ё/е}"
+    value="${value//о/o}"
+    printf '%s' "$value"
+}
+
+is_yes_input() {
+    local value
+    value=$(normalize_yes_no_token "${1:-}")
+    case "$value" in
         yes | y | да | д) return 0 ;;
         *) return 1 ;;
     esac
@@ -427,8 +437,8 @@ is_yes_input() {
 
 is_no_input() {
     local value
-    value=$(normalize_tty_input "${1:-}")
-    case "${value,,}" in
+    value=$(normalize_yes_no_token "${1:-}")
+    case "$value" in
         no | n | нет | н) return 0 ;;
         *) return 1 ;;
     esac
@@ -500,9 +510,16 @@ ui_box_line_string() {
     local text="${1:-}"
     local width="${2:-60}"
     local fitted
+    local pad_len
+    local pad
     ui_init_glyphs
     fitted=$(ui_box_fit_text "$text" "$width")
-    printf '%s%-*s%s' "$UI_BOX_V" "$width" "$fitted" "$UI_BOX_V"
+    pad_len=$((width - ${#fitted}))
+    if ((pad_len < 0)); then
+        pad_len=0
+    fi
+    pad=$(ui_repeat_char " " "$pad_len")
+    printf '%s%s%s%s' "$UI_BOX_V" "$fitted" "$pad" "$UI_BOX_V"
 }
 
 ui_rule_string() {
@@ -574,7 +591,7 @@ setup_logging() {
     box_subtitle=$(ui_box_line_string "$subtitle" "$inner_width")
 
     echo "$box_top"
-    echo -e "${BOLD}${MAGENTA}${box_title}${NC}"
+    echo -e "${BOLD}${box_title}${NC}"
     echo "$box_subtitle"
     echo "$box_bottom"
     echo ""
