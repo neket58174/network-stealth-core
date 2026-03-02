@@ -434,10 +434,23 @@ normalize_tty_input() {
     # Remove CSI/SS3 and remaining one-byte ESC controls.
     value=$(printf '%s' "$value" | sed -E $'s/\x1B\\[[0-9;?]*[ -\\/]*[@-~]//g; s/\x1BO[ -~]//g; s/\x1B[@-_]//g')
 
-    # Remove common zero-width artifacts and non-printable control bytes.
+    # Remove common zero-width/BiDi artifacts and non-printable control bytes.
+    value="${value//$'\u00A0'/ }"
     value="${value//$'\u200B'/}"
     value="${value//$'\u200C'/}"
     value="${value//$'\u200D'/}"
+    value="${value//$'\u200E'/}"
+    value="${value//$'\u200F'/}"
+    value="${value//$'\u202A'/}"
+    value="${value//$'\u202B'/}"
+    value="${value//$'\u202C'/}"
+    value="${value//$'\u202D'/}"
+    value="${value//$'\u202E'/}"
+    value="${value//$'\u2060'/}"
+    value="${value//$'\u2066'/}"
+    value="${value//$'\u2067'/}"
+    value="${value//$'\u2068'/}"
+    value="${value//$'\u2069'/}"
     value="${value//$'\uFEFF'/}"
     value=$(printf '%s' "$value" | tr -d '\000-\010\013\014\016-\037\177')
     value=$(trim_ws "$value")
@@ -491,47 +504,51 @@ tty_print_box() {
     tty_printf "$tty_fd" '%b%s%b\n' "${BOLD}${color}" "$bottom" "$NC"
 }
 
-normalize_yes_no_token() {
+canonicalize_confirmation_token() {
     local value
     value=$(normalize_tty_input "${1:-}")
     value="${value,,}"
-    value="${value//[[:space:]]/}"
-    # Common mixed-layout lookalike in short yes/no answers.
-    value="${value//ё/е}"
+    # Keep only letters and digits, then normalize common mixed-layout lookalikes.
+    value=$(printf '%s' "$value" | sed -E 's/[^[:alnum:]]+//g')
+    value="${value//ё/e}"
+    value="${value//е/e}"
     value="${value//о/o}"
+    value="${value//у/y}"
+    value="${value//с/s}"
+    value="${value//ѕ/s}"
+    value="${value//н/n}"
+    value="${value//д/d}"
+    value="${value//а/a}"
+    value="${value//т/t}"
+    printf '%s' "$value"
+}
+
+normalize_yes_no_token() {
+    local value
+    value=$(canonicalize_confirmation_token "${1:-}")
     printf '%s' "$value"
 }
 
 normalize_yes_token_hint() {
     local value
-    value=$(normalize_yes_no_token "${1:-}")
-    # Handle common visual lookalikes in latin "yes".
-    value="${value//у/y}"
-    value="${value//е/e}"
-    value="${value//ѕ/s}"
+    value=$(canonicalize_confirmation_token "${1:-}")
     printf '%s' "$value"
 }
 
 is_yes_input() {
-    local value hinted
-    value=$(normalize_yes_no_token "${1:-}")
+    local value
+    value=$(canonicalize_confirmation_token "${1:-}")
     case "$value" in
-        yes | y | да | д) return 0 ;;
-        *)
-            hinted=$(normalize_yes_token_hint "$value")
-            case "$hinted" in
-                yes | y) return 0 ;;
-                *) return 1 ;;
-            esac
-            ;;
+        yes | y | da | d) return 0 ;;
+        *) return 1 ;;
     esac
 }
 
 is_no_input() {
     local value
-    value=$(normalize_yes_no_token "${1:-}")
+    value=$(canonicalize_confirmation_token "${1:-}")
     case "$value" in
-        no | n | нет | н) return 0 ;;
+        no | n | net) return 0 ;;
         *) return 1 ;;
     esac
 }

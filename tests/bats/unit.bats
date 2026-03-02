@@ -1399,13 +1399,17 @@ EOF
     is_yes_input $'\''\e[200~yes\e[201~'\''
     is_yes_input $'\''\e]0;title\a yes'\''
     is_yes_input "yеs"
+    is_yes_input "уес"
     is_no_input " no "$'\''\r'\''
     is_no_input " n o "
     is_no_input "nо"
     is_no_input "НЕТ"
+    is_no_input "н е т"
+    is_no_input "но"
     ! is_yes_input "maybe"
-    ! is_no_input "1"
     ! is_yes_input "yesplease"
+    ! is_no_input "1"
+    ! is_no_input "north"
     echo "ok"
   '
     [ "$status" -eq 0 ]
@@ -1419,10 +1423,25 @@ EOF
     b=$(normalize_tty_input $'\''\e]0;title\a yes'\'')
     c=$(normalize_tty_input $'\''\e]0;title\e\\yes'\'')
     d=$(normalize_tty_input $'\''\b\byes\t'\'')
+    e=$(normalize_tty_input $'\''\u200Fyes\u00A0'\'')
     [[ "$a" == "yes" ]]
     [[ "$b" == "yes" ]]
     [[ "$c" == "yes" ]]
     [[ "$d" == "yes" ]]
+    [[ "$e" == "yes" ]]
+    echo "ok"
+  '
+    [ "$status" -eq 0 ]
+    [ "$output" = "ok" ]
+}
+
+@test "canonicalize_confirmation_token handles mixed alphabet answers" {
+    run bash -eo pipefail -c '
+    source ./lib.sh
+    [[ "$(canonicalize_confirmation_token "уес")" == "yes" ]]
+    [[ "$(canonicalize_confirmation_token "nо")" == "no" ]]
+    [[ "$(canonicalize_confirmation_token "НЕТ")" == "net" ]]
+    [[ "$(canonicalize_confirmation_token "d-a")" == "da" ]]
     echo "ok"
   '
     [ "$status" -eq 0 ]
