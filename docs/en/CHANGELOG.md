@@ -34,7 +34,6 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 - fix geo dir validation and status printf (a52858c)
 - harden cli and destructive path checks (0e47bd0)
 
-
 ### Changed
 
 - Documentation moved to bilingual structure: `docs/en` and `docs/ru`.
