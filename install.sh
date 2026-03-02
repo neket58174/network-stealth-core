@@ -134,7 +134,6 @@ confirm_minisign_fallback() {
         fi
         answer=$(normalize_tty_input "$answer")
         if is_yes_input "$answer"; then
-            log WARN "Подтверждено продолжение без minisign (только SHA256)"
             exec {tty_fd}>&-
             return 0
         fi
