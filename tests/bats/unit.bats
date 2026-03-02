@@ -1395,13 +1395,34 @@ EOF
     source ./lib.sh
     is_yes_input "yes"$'\''\r'\''
     is_yes_input "  YES  "
+    is_yes_input "y e s"
     is_yes_input $'\''\e[200~yes\e[201~'\''
+    is_yes_input $'\''\e]0;title\a yes'\''
     is_yes_input "yеs"
     is_no_input " no "$'\''\r'\''
+    is_no_input " n o "
     is_no_input "nо"
     is_no_input "НЕТ"
     ! is_yes_input "maybe"
     ! is_no_input "1"
+    ! is_yes_input "yesplease"
+    echo "ok"
+  '
+    [ "$status" -eq 0 ]
+    [ "$output" = "ok" ]
+}
+
+@test "normalize_tty_input strips CSI OSC and control artifacts" {
+    run bash -eo pipefail -c '
+    source ./lib.sh
+    a=$(normalize_tty_input $'\''\e[31myes\e[0m'\'')
+    b=$(normalize_tty_input $'\''\e]0;title\a yes'\'')
+    c=$(normalize_tty_input $'\''\e]0;title\e\\yes'\'')
+    d=$(normalize_tty_input $'\''\b\byes\t'\'')
+    [[ "$a" == "yes" ]]
+    [[ "$b" == "yes" ]]
+    [[ "$c" == "yes" ]]
+    [[ "$d" == "yes" ]]
     echo "ok"
   '
     [ "$status" -eq 0 ]

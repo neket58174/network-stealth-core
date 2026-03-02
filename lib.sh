@@ -413,9 +413,32 @@ normalize_tty_input() {
     # Drop common terminal control artifacts (for example bracketed paste markers).
     value="${value//$'\e[200~'/}"
     value="${value//$'\e[201~'/}"
+    value="${value//$'\r\n'/$'\n'}"
     value="${value//$'\r'/}"
-    value="${value//$'\e'/}"
-    # Keep printable text only; interactive yes/no tokens must be plain words.
+
+    # Remove OSC sequences (ESC ] ... BEL or ESC ] ... ESC \).
+    while [[ "$value" == *$'\e]'* ]]; do
+        local osc_prefix osc_tail
+        osc_prefix="${value%%$'\e]'*}"
+        osc_tail="${value#*$'\e]'}"
+        if [[ "$osc_tail" == *$'\a'* ]]; then
+            osc_tail="${osc_tail#*$'\a'}"
+        elif [[ "$osc_tail" == *$'\e\\'* ]]; then
+            osc_tail="${osc_tail#*$'\e\\'}"
+        else
+            osc_tail=""
+        fi
+        value="${osc_prefix}${osc_tail}"
+    done
+
+    # Remove CSI/SS3 and remaining one-byte ESC controls.
+    value=$(printf '%s' "$value" | sed -E $'s/\x1B\\[[0-9;?]*[ -\\/]*[@-~]//g; s/\x1BO[ -~]//g; s/\x1B[@-_]//g')
+
+    # Remove common zero-width artifacts and non-printable control bytes.
+    value="${value//$'\u200B'/}"
+    value="${value//$'\u200C'/}"
+    value="${value//$'\u200D'/}"
+    value="${value//$'\uFEFF'/}"
     value=$(printf '%s' "$value" | tr -d '\000-\010\013\014\016-\037\177')
     value=$(trim_ws "$value")
     printf '%s' "$value"
@@ -472,6 +495,7 @@ normalize_yes_no_token() {
     local value
     value=$(normalize_tty_input "${1:-}")
     value="${value,,}"
+    value="${value//[[:space:]]/}"
     # Common mixed-layout lookalike in short yes/no answers.
     value="${value//ё/е}"
     value="${value//о/o}"
