@@ -2224,6 +2224,9 @@ EOF
 
 @test "release consistency check enforces changelog bullets and blocks TODO in released sections" {
     run bash -eo pipefail -c '
+    grep -q '\''CHANGELOG_FILE_RU=.*docs/ru/CHANGELOG.md'\'' ./scripts/check-release-consistency.sh
+    grep -q '\''docs/ru/CHANGELOG.md section'\'' ./scripts/check-release-consistency.sh
+    grep -q '\''RU CHANGELOG section \[\${script_version}\] does not contain release bullet notes'\'' ./scripts/check-release-consistency.sh
     grep -q '\''CHANGELOG contains TODO placeholder inside a released section'\'' ./scripts/check-release-consistency.sh
     grep -q '\''does not contain release bullet notes'\'' ./scripts/check-release-consistency.sh
     echo "ok"

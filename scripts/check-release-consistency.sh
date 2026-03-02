@@ -11,6 +11,7 @@ Checks release metadata consistency across:
   - xray-reality.sh wrapper header version
   - README.md / README.ru.md release badges
   - docs/en/CHANGELOG.md version section
+  - docs/ru/CHANGELOG.md version section
 
 Optional:
   --tag TAG   additionally requires TAG == vSCRIPT_VERSION
@@ -48,8 +49,9 @@ WRAPPER_FILE="$ROOT_DIR/xray-reality.sh"
 README_EN="$ROOT_DIR/README.md"
 README_RU="$ROOT_DIR/README.ru.md"
 CHANGELOG_FILE="$ROOT_DIR/docs/en/CHANGELOG.md"
+CHANGELOG_FILE_RU="$ROOT_DIR/docs/ru/CHANGELOG.md"
 
-for file in "$LIB_FILE" "$WRAPPER_FILE" "$README_EN" "$README_RU" "$CHANGELOG_FILE"; do
+for file in "$LIB_FILE" "$WRAPPER_FILE" "$README_EN" "$README_RU" "$CHANGELOG_FILE" "$CHANGELOG_FILE_RU"; do
     [[ -f "$file" ]] || {
         echo "Missing required file: $file" >&2
         exit 1
@@ -81,6 +83,7 @@ require_pattern "$WRAPPER_FILE" "^# Network Stealth Core ${script_version} - Wra
 require_pattern "$README_EN" "release-v${script_version}" "README.md release badge version"
 require_pattern "$README_RU" "release-v${script_version}" "README.ru.md release badge version"
 require_pattern "$CHANGELOG_FILE" "^## \\[${script_version}\\]" "docs/en/CHANGELOG.md section"
+require_pattern "$CHANGELOG_FILE_RU" "^## \\[${script_version}\\]" "docs/ru/CHANGELOG.md section"
 
 if awk '
     BEGIN { in_released = 0; bad = 0 }
@@ -117,6 +120,26 @@ if ! awk -v ver="$script_version" '
     }
 ' "$CHANGELOG_FILE"; then
     echo "CHANGELOG section [${script_version}] does not contain release bullet notes" >&2
+    exit 1
+fi
+
+if ! awk -v ver="$script_version" '
+    BEGIN { in_target = 0; has_bullet = 0 }
+    $0 ~ "^## \\[" ver "\\]" { in_target = 1; next }
+    $0 ~ /^## \[/ {
+        if (in_target) {
+            in_target = 0
+        }
+        next
+    }
+    in_target && $0 ~ /^- / {
+        has_bullet = 1
+    }
+    END {
+        exit has_bullet ? 0 : 1
+    }
+' "$CHANGELOG_FILE_RU"; then
+    echo "RU CHANGELOG section [${script_version}] does not contain release bullet notes" >&2
     exit 1
 fi
 
