@@ -10,7 +10,7 @@ Checks release metadata consistency across:
   - lib.sh header version
   - xray-reality.sh wrapper header version
   - README.md / README.ru.md release badges
-  - CHANGELOG.md version section
+  - docs/en/CHANGELOG.md version section
 
 Optional:
   --tag TAG   additionally requires TAG == vSCRIPT_VERSION
@@ -47,7 +47,7 @@ LIB_FILE="$ROOT_DIR/lib.sh"
 WRAPPER_FILE="$ROOT_DIR/xray-reality.sh"
 README_EN="$ROOT_DIR/README.md"
 README_RU="$ROOT_DIR/README.ru.md"
-CHANGELOG_FILE="$ROOT_DIR/CHANGELOG.md"
+CHANGELOG_FILE="$ROOT_DIR/docs/en/CHANGELOG.md"
 
 for file in "$LIB_FILE" "$WRAPPER_FILE" "$README_EN" "$README_RU" "$CHANGELOG_FILE"; do
     [[ -f "$file" ]] || {
@@ -76,11 +76,11 @@ if [[ ! "$script_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
     exit 1
 fi
 
-require_pattern "$LIB_FILE" "^# Xray Reality Ultimate ${script_version} - " "lib.sh header version"
-require_pattern "$WRAPPER_FILE" "^# Xray Reality Ultimate ${script_version} - Wrapper" "wrapper header version"
+require_pattern "$LIB_FILE" "^# Network Stealth Core ${script_version} - " "lib.sh header version"
+require_pattern "$WRAPPER_FILE" "^# Network Stealth Core ${script_version} - Wrapper" "wrapper header version"
 require_pattern "$README_EN" "release-v${script_version}" "README.md release badge version"
 require_pattern "$README_RU" "release-v${script_version}" "README.ru.md release badge version"
-require_pattern "$CHANGELOG_FILE" "^## \\[${script_version}\\]" "CHANGELOG.md section"
+require_pattern "$CHANGELOG_FILE" "^## \\[${script_version}\\]" "docs/en/CHANGELOG.md section"
 
 if awk '
     BEGIN { in_released = 0; bad = 0 }

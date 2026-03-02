@@ -7,10 +7,12 @@ cd "$ROOT_DIR"
 DOC_FILES=(
     README.md
     README.ru.md
-    OPERATIONS.md
-    CONTRIBUTING.md
-    ARCHITECTURE.md
-    SECURITY.md
+    docs/en/OPERATIONS.md
+    docs/ru/OPERATIONS.md
+    docs/en/TROUBLESHOOTING.md
+    docs/ru/TROUBLESHOOTING.md
+    .github/CONTRIBUTING.md
+    .github/CONTRIBUTING.ru.md
 )
 
 VALID_ACTIONS='install|add-clients|add-keys|update|repair|diagnose|rollback|uninstall|status|logs|check-update'

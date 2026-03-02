@@ -1,13 +1,13 @@
 # Contributing
 
-Thanks for contributing to `Xray Reality Ultimate`.
+Thanks for contributing to **Network Stealth Core**.
 
-This guide defines the expected workflow for safe, reviewable, and reliable changes.
+This guide defines the expected workflow for safe and reviewable changes.
 
 ## Core rules
 
-- keep commits focused and easy to review
-- preserve security controls and rollback behavior
+- keep commits focused and small
+- preserve rollback and security behavior
 - include tests and docs updates with behavior changes
 - avoid silent compatibility breaks
 
@@ -35,19 +35,20 @@ git fetch upstream
 | Path | Purpose |
 |---|---|
 | `xray-reality.sh` | bootstrap wrapper |
-| `lib.sh` | runtime core, validation, action dispatch |
+| `lib.sh` | runtime core and dispatcher |
 | `install.sh` | dependency setup and Xray install/update |
 | `config.sh` | config generation and key/client artifacts |
-| `service.sh` | systemd + firewall + lifecycle operations |
-| `health.sh` | health monitor and diagnose support |
-| `export.sh` | export templates for supported clients |
+| `service.sh` | systemd, firewall, lifecycle operations |
+| `health.sh` | health monitor and diagnostics |
+| `export.sh` | client export templates |
 | `modules/` | extracted reusable modules |
-| `tests/bats/` | unit/integration shell tests |
+| `tests/bats/` | shell unit and integration tests |
 | `tests/e2e/` | lifecycle and scenario tests |
+| `docs/` | bilingual documentation |
 
 ## Mandatory local checks
 
-Run before every push:
+Run before push:
 
 ```bash
 make lint
@@ -66,30 +67,28 @@ bash scripts/check-release-consistency.sh
 
 ## Coding standards
 
-### Shell conventions
-
-1. keep scripts `set -euo pipefail`-safe
+1. keep scripts safe under `set -euo pipefail`
 2. quote variables consistently
-3. avoid `eval` for runtime/user input
-4. reuse validators instead of ad-hoc checks
+3. avoid `eval` for user-controlled input
+4. reuse shared validators
 5. use atomic writes for critical files
-6. preserve rollback guarantees on mutating flows
+6. keep mutating flows rollback-safe
 
-### High-risk areas
+## High-risk areas
 
-Changes in these areas require extra attention and test coverage:
+Changes in these areas require extra coverage:
 
 - bootstrap and download verification
-- path/permission handling
+- permission and path handling
 - systemd unit generation
-- firewall apply/rollback
-- rollback stack and cleanup traps
+- firewall apply and rollback
+- backup stack and cleanup traps
 
 ## Testing expectations
 
-- every behavior change should add or adjust BATS coverage
-- lifecycle-sensitive changes should include e2e checks when relevant
-- documentation updates must pass markdown lint and docs command contracts
+- every behavior change should include or update BATS coverage
+- lifecycle-sensitive changes should include e2e checks
+- docs updates must pass markdown lint and command-contract checks
 
 Example targeted runs:
 
@@ -99,7 +98,7 @@ bats tests/bats/integration.bats
 bats tests/bats/health.bats
 ```
 
-## Branches and commits
+## Branch and commit style
 
 ### Branch naming
 
@@ -110,8 +109,6 @@ bats tests/bats/health.bats
 
 ### Commit format
 
-Use short, direct messages:
-
 ```text
 type(scope): summary
 ```
@@ -119,31 +116,32 @@ type(scope): summary
 Examples:
 
 - `fix(config): harden temporary config validation`
-- `docs(readme): refresh quick-start section`
-- `security(wrapper): tighten bootstrap pin handling`
+- `docs(readme): refresh quick-start and docs map`
+- `security(wrapper): tighten bootstrap pin checks`
 
 ## Pull request checklist
 
 - [ ] local checks are green (`make ci`)
 - [ ] tests cover changed behavior
 - [ ] docs updated for user-visible changes
-- [ ] `CHANGELOG.md` updated when needed
-- [ ] no secrets included in commits
-- [ ] rollback/security behavior preserved
+- [ ] `docs/en/CHANGELOG.md` updated when needed
+- [ ] no secrets in commits
+- [ ] rollback and security behavior preserved
 
 ## Documentation update scope
 
-Behavior changes usually affect one or more of:
+Behavior changes usually affect:
 
 - `README.md`
 - `README.ru.md`
-- `ARCHITECTURE.md`
-- `OPERATIONS.md`
-- `SECURITY.md`
-- `CHANGELOG.md`
+- `docs/en/*.md`
+- `docs/ru/*.md`
+- `.github/CONTRIBUTING.md`
+- `.github/SECURITY.md`
 
 ## Security reporting
 
 Do not open public issues for vulnerabilities.
 
-Use responsible disclosure via GitHub private vulnerability reporting. See `SECURITY.md`.
+Use GitHub private vulnerability reporting.  
+See [.github/SECURITY.md](SECURITY.md).

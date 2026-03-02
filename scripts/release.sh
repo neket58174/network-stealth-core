@@ -14,7 +14,7 @@ What it does:
   1. Updates SCRIPT_VERSION and header version in lib.sh
   2. Updates wrapper header version in xray-reality.sh
   3. Updates release badge versions in README.md and README.ru.md
-  4. Ensures CHANGELOG.md has a section for the target version and auto-generates notes from git log
+  4. Ensures docs/en/CHANGELOG.md has a section for the target version and auto-generates notes from git log
   5. Runs shared release consistency checks
   6. Optionally commits, tags and pushes
      (push target: current branch, or RELEASE_PUSH_BRANCH override)
@@ -67,7 +67,7 @@ LIB_FILE="$ROOT_DIR/lib.sh"
 WRAPPER_FILE="$ROOT_DIR/xray-reality.sh"
 README_EN="$ROOT_DIR/README.md"
 README_RU="$ROOT_DIR/README.ru.md"
-CHANGELOG="$ROOT_DIR/CHANGELOG.md"
+CHANGELOG="$ROOT_DIR/docs/en/CHANGELOG.md"
 TAG="v$VERSION"
 TODAY="$(date +%Y-%m-%d)"
 NOTES_TMP="$(mktemp)"
@@ -132,7 +132,7 @@ insert_changelog_section() {
         }
     ' "$CHANGELOG" > "$tmp_file" || {
         rm -f "$tmp_file"
-        echo "Failed to update CHANGELOG.md (missing ## [Unreleased]?)" >&2
+        echo "Failed to update docs/en/CHANGELOG.md (missing ## [Unreleased]?)" >&2
         exit 1
     }
     mv "$tmp_file" "$CHANGELOG"
@@ -196,8 +196,8 @@ generate_release_notes > "$NOTES_TMP"
 validate_generated_release_notes
 
 replace_with_sed 's/^readonly SCRIPT_VERSION="[^"]+"/readonly SCRIPT_VERSION="'"$VERSION"'"/' "$LIB_FILE"
-replace_with_sed 's/^# Xray Reality Ultimate [0-9]+\.[0-9]+\.[0-9]+ - /# Xray Reality Ultimate '"$VERSION"' - /' "$LIB_FILE"
-replace_with_sed 's/^# Xray Reality Ultimate [0-9]+\.[0-9]+\.[0-9]+ - Wrapper/# Xray Reality Ultimate '"$VERSION"' - Wrapper/' "$WRAPPER_FILE"
+replace_with_sed 's/^# Network Stealth Core [0-9]+\.[0-9]+\.[0-9]+ - /# Network Stealth Core '"$VERSION"' - /' "$LIB_FILE"
+replace_with_sed 's/^# Network Stealth Core [0-9]+\.[0-9]+\.[0-9]+ - Wrapper/# Network Stealth Core '"$VERSION"' - Wrapper/' "$WRAPPER_FILE"
 replace_with_sed 's/release-v[0-9]+\.[0-9]+\.[0-9]+/release-v'"$VERSION"'/g' "$README_EN"
 replace_with_sed 's/release-v[0-9]+\.[0-9]+\.[0-9]+/release-v'"$VERSION"'/g' "$README_RU"
 
@@ -215,10 +215,10 @@ echo "  - lib.sh"
 echo "  - xray-reality.sh"
 echo "  - README.md"
 echo "  - README.ru.md"
-echo "  - CHANGELOG.md"
+echo "  - docs/en/CHANGELOG.md"
 
 if [[ "$DO_COMMIT" == true ]]; then
-    git add lib.sh xray-reality.sh README.md README.ru.md CHANGELOG.md
+    git add lib.sh xray-reality.sh README.md README.ru.md docs/en/CHANGELOG.md
     if git diff --cached --quiet; then
         echo "No staged changes to commit."
     else

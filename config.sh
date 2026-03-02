@@ -428,7 +428,7 @@ save_environment() {
 
     backup_file "$XRAY_ENV"
     {
-        printf '# Xray Reality Ultimate %s Configuration\n' "$SCRIPT_VERSION"
+        printf '# Network Stealth Core %s Configuration\n' "$SCRIPT_VERSION"
         write_env_kv DOMAIN_TIER "$DOMAIN_TIER"
         write_env_kv XRAY_DOMAIN_TIER "$DOMAIN_TIER"
         write_env_kv MUX_MODE "$MUX_MODE"
@@ -551,7 +551,7 @@ render_clients_txt_from_json() {
     local tmp_client
     tmp_client=$(mktemp "${client_file}.tmp.XXXXXX")
 
-    local header_title="Xray Reality Ultimate ${SCRIPT_VERSION} - CLIENT CONFIGS"
+    local header_title="Network Stealth Core ${SCRIPT_VERSION} - CLIENT CONFIGS"
     local header_width
     header_width=$(ui_box_width_for_lines 60 90 "$header_title")
 
@@ -764,7 +764,7 @@ save_client_configs() {
     tmp_keys=$(mktemp "${keys_file}.tmp.XXXXXX")
     cat > "$tmp_keys" << EOF
 $(ui_box_border_string top 60)
-$(ui_box_line_string "Xray Reality Ultimate ${SCRIPT_VERSION} - SERVER KEYS (KEEP SECRET!)" 60)
+$(ui_box_line_string "Network Stealth Core ${SCRIPT_VERSION} - SERVER KEYS (KEEP SECRET!)" 60)
 $(ui_box_border_string bottom 60)
 
 Server IPv4: ${SERVER_IP}

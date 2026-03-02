@@ -1,50 +1,42 @@
-<h1 align="center">Xray Reality Ultimate</h1>
+<h1 align="center">Network Stealth Core</h1>
 
 <p align="center">
-  Installation and management script for Xray Reality on Linux servers.
+  Installation and operations toolkit for Xray Reality on Linux servers.
 </p>
 
 <p align="center">
   <a href="https://github.com/neket371/network-stealth-core/releases"><img alt="release" src="https://img.shields.io/badge/release-v4.2.0-0f766e"></a>
   <a href="LICENSE"><img alt="license" src="https://img.shields.io/badge/license-MIT-97ca00"></a>
-  <a href="OPERATIONS.md"><img alt="platform" src="https://img.shields.io/badge/platform-linux%20server-1d4ed8"></a>
+  <a href="docs/en/OPERATIONS.md"><img alt="platform" src="https://img.shields.io/badge/platform-ubuntu%2024.04-1d4ed8"></a>
   <a href="Makefile"><img alt="qa" src="https://img.shields.io/badge/qa-make%20ci-334155"></a>
 </p>
 
-## What this project is
+<p align="center">
+  <a href="README.ru.md">Русская версия</a> • <a href="docs/en/INDEX.md">Docs (EN)</a> • <a href="docs/ru/INDEX.md">Документация (RU)</a>
+</p>
 
-`Xray Reality Ultimate` is a Bash-first automation project for deploying and operating Xray Reality on Linux servers.
+## Project scope
 
-It is designed around three priorities:
+`Network Stealth Core` is a Bash-first automation project that standardizes:
 
-- predictable installation and update flows
-- defensive defaults (validation, integrity checks, privilege separation)
-- operational clarity (rollback, diagnostics, export artifacts)
+- server bootstrap and install flow
+- Xray runtime configuration generation
+- lifecycle operations (`install`, `update`, `repair`, `rollback`, `uninstall`)
+- client artifact exports for common desktop and mobile clients
+
+The project is public and maintained as a reusable tool, not as host-specific automation.
 
 ## Canonical source
 
-Use only the official repository for scripts, tags, and release artifacts:
+Use only the official repository:
 
 - `https://github.com/neket371/network-stealth-core`
 
-If installation instructions are copied from forks or mirrors, verify them before running.
-
-## Documentation
-
-| File | Purpose |
-|---|---|
-| `README.ru.md` | Full Russian guide |
-| `ARCHITECTURE.md` | Runtime architecture and module contracts |
-| `OPERATIONS.md` | Day-2 runbook, incident handling, rollback |
-| `SECURITY.md` | Security model, controls, and disclosure policy |
-| `CONTRIBUTING.md` | Development workflow and contribution standards |
-| `CHANGELOG.md` | Release history and compatibility notes |
+If commands are copied from a mirror or fork, verify the source before execution.
 
 ## Quick start
 
 ### Recommended: universal install
-
-Works in regular shells and constrained environments (limited `/dev/fd`).
 
 ```bash
 curl -fL https://raw.githubusercontent.com/neket371/network-stealth-core/main/xray-reality.sh -o /tmp/xray-reality.sh
@@ -57,66 +49,58 @@ sudo bash /tmp/xray-reality.sh install
 sudo bash <(curl -fsSL https://raw.githubusercontent.com/neket371/network-stealth-core/main/xray-reality.sh) install
 ```
 
-If you see `/dev/fd/...: no such file or directory`, use universal install.
+If `/dev/fd` is unavailable, use the universal install form.
 
-### Pinned bootstrap (commit pin)
+### Pinned bootstrap by commit
 
 ```bash
 curl -fL https://raw.githubusercontent.com/neket371/network-stealth-core/main/xray-reality.sh -o /tmp/xray-reality.sh
 sudo XRAY_REPO_COMMIT=<full_commit_sha> bash /tmp/xray-reality.sh install
 ```
 
-### Bootstrap source selection
+### Bootstrap source mode
 
-Default bootstrap source is `main` (latest fixes).
+Default source is `main`:
 
 ```bash
 curl -fL https://raw.githubusercontent.com/neket371/network-stealth-core/main/xray-reality.sh -o /tmp/xray-reality.sh
 sudo bash /tmp/xray-reality.sh install
 ```
 
-To force latest release tag instead:
+Use latest release tag instead:
 
 ```bash
 curl -fL https://raw.githubusercontent.com/neket371/network-stealth-core/main/xray-reality.sh -o /tmp/xray-reality.sh
 sudo XRAY_BOOTSTRAP_DEFAULT_REF=release bash /tmp/xray-reality.sh install
 ```
 
-## Core commands
+## Command map
 
 | Command | Description |
 |---|---|
-| `install` | Install full stack |
-| `add-clients [N]` | Add `N` client configs |
-| `add-keys [N]` | Alias of `add-clients` |
+| `install` | Full stack install |
+| `add-clients [N]` | Add `N` client configurations |
+| `add-keys [N]` | Alias to `add-clients` |
 | `update` | Update Xray core |
-| `repair` | Reapply units, firewall, monitoring, and artifact consistency checks |
-| `status` | Show runtime state and config summary |
-| `logs [xray\|health\|all]` | Stream logs |
-| `diagnose` | Collect diagnostics snapshot |
-| `rollback [dir]` | Restore previous backup session |
-| `uninstall` | Full removal |
-| `check-update` | Check upstream updates |
+| `repair` | Reconcile service/firewall/artifacts |
+| `status` | Runtime status summary |
+| `logs [xray\|health\|all]` | Log streaming |
+| `diagnose` | Diagnostic snapshot |
+| `rollback [dir]` | Restore backup session |
+| `uninstall` | Full uninstall |
+| `check-update` | Check upstream version |
 
-Example:
+## Profiles and limits
 
-```bash
-sudo xray-reality.sh status
-sudo xray-reality.sh diagnose
-sudo xray-reality.sh logs
-```
-
-## Runtime profiles
-
-| Profile | Internal Tier | Config Limit | Intended Usage |
+| Profile | Internal tier | Config limit | Notes |
 |---|---|---:|---|
-| `ru` | `tier_ru` | 100 | Main RU domain pool |
-| `ru-auto` | `tier_ru` | auto 5 | Fast default install |
-| `global-ms10` | `tier_global_ms10` | 10 | Global pool (50 domains), limit 10 configs |
-| `global-ms10-auto` | `tier_global_ms10` | auto 10 | Fast global install from 50-domain pool |
-| `custom` | `custom` | 100 | User-managed domain set |
+| `ru` | `tier_ru` | 100 | Main RU pool |
+| `ru-auto` | `tier_ru` | auto 5 | Fast RU install |
+| `global-ms10` | `tier_global_ms10` | 10 | Global pool (50 domains) |
+| `global-ms10-auto` | `tier_global_ms10` | auto 10 | Fast global install |
+| `custom` | `custom` | 100 | User-provided domain set |
 
-## Key CLI flags
+## Key flags
 
 ```bash
 --domain-profile ru|ru-auto|global-ms10|global-ms10-auto|custom
@@ -131,35 +115,44 @@ sudo xray-reality.sh logs
 --verbose
 ```
 
-## Security highlights
+## Documentation map
 
-- strict runtime input and path validation
-- controlled download surface via allowlisted hosts
-- Xray integrity verification (`sha256`, plus optional strict `minisign` mode)
-- transactional file writes with rollback support
-- `systemd` unit with restrictive options and unprivileged runtime user
+| Path | Purpose |
+|---|---|
+| `docs/en/INDEX.md` | Documentation entrypoint (EN) |
+| `docs/ru/INDEX.md` | Документация (RU) |
+| `docs/en/ARCHITECTURE.md` | Runtime architecture and module contracts |
+| `docs/en/OPERATIONS.md` | Runbook for install/update/incidents |
+| `docs/en/FAQ.md` | Practical FAQ |
+| `docs/en/TROUBLESHOOTING.md` | Symptom-driven troubleshooting |
+| `docs/en/COMMUNITY.md` | Public collaboration model |
+| `docs/en/ROADMAP.md` | Current development direction |
+| `docs/en/GLOSSARY.md` | Terms and definitions |
+| `docs/en/CHANGELOG.md` | Release history |
+| `.github/CONTRIBUTING.md` | Contribution rules |
+| `.github/SECURITY.md` | Security policy |
 
-See [SECURITY.md](SECURITY.md) for full details.
+## Security model
 
-## Export artifacts
+Core controls include:
 
-Generated after `install`, `add-clients`, and `repair`:
+- strict runtime validation for paths, ports, addresses, and domains
+- controlled download surface with allowlisted hosts
+- artifact integrity checks (`sha256` and optional strict `minisign`)
+- transactional writes and rollback on failure
+- restricted `systemd` service profile and unprivileged runtime user
 
-- `/etc/xray/private/keys/export/clashmeta.yaml`
-- `/etc/xray/private/keys/export/singbox.json`
-- `/etc/xray/private/keys/export/nekoray-fragment.json`
-- `/etc/xray/private/keys/export/v2rayn-fragment.json`
+See [.github/SECURITY.md](.github/SECURITY.md) for full policy details.
 
 ## Supported platform
 
-Primary and CI-verified platform:
+Primary and CI-validated platform:
 
 - `ubuntu-24.04` (LTS)
 
 Other Linux distributions may work, but are currently outside the active CI contract.
-No compatibility guarantees are provided for platforms outside this scope.
 
-## Local QA
+## Quality checks
 
 ```bash
 make lint
@@ -175,16 +168,11 @@ pwsh ./scripts/markdownlint.ps1
 pwsh ./scripts/windows/run-validation.ps1
 ```
 
-## Docker
+## Community
 
-```bash
-docker pull ghcr.io/neket371/network-stealth-core:vX.Y.Z
-docker run --rm ghcr.io/neket371/network-stealth-core:vX.Y.Z --help
-```
-
-## Contact
-
-- X (Twitter): [x.com/neket371](https://x.com/neket371)
+- Discussions: `GitHub Discussions` tab
+- Issues: bug reports and feature requests
+- Contact: X (Twitter) [x.com/neket371](https://x.com/neket371)
 
 ## License
 

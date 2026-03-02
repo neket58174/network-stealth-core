@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Xray Reality Ultimate 4.2.0 - Wrapper
+# Network Stealth Core 4.2.0 - Wrapper
 
 set -euo pipefail
 
@@ -241,7 +241,7 @@ for dir in "$SCRIPT_DIR" "$XRAY_DATA_DIR"; do
 done
 
 if [[ -z "$LIB_PATH" ]] || { [[ -z "$SCRIPT_DIR" || ! -f "$SCRIPT_DIR/config.sh" ]] && has_forwarded_arg "install"; }; then
-    echo "Downloading Xray Reality Ultimate..."
+    echo "Downloading Network Stealth Core..."
     require_safe_repo_url "$REPO_URL"
     if ! command -v git > /dev/null 2>&1; then
         if command -v apt-get > /dev/null 2>&1; then

@@ -1,64 +1,55 @@
-<h1 align="center">Xray Reality Ultimate</h1>
+<h1 align="center">Network Stealth Core</h1>
 
 <p align="center">
-  Скрипт установки и сопровождения Xray Reality для Linux-серверов.
+  Набор скриптов для установки и эксплуатации Xray Reality на Linux-серверах.
 </p>
 
 <p align="center">
   <a href="https://github.com/neket371/network-stealth-core/releases"><img alt="release" src="https://img.shields.io/badge/release-v4.2.0-0f766e"></a>
   <a href="LICENSE"><img alt="license" src="https://img.shields.io/badge/license-MIT-97ca00"></a>
-  <a href="OPERATIONS.md"><img alt="platform" src="https://img.shields.io/badge/platform-linux%20server-1d4ed8"></a>
+  <a href="docs/ru/OPERATIONS.md"><img alt="platform" src="https://img.shields.io/badge/platform-ubuntu%2024.04-1d4ed8"></a>
   <a href="Makefile"><img alt="qa" src="https://img.shields.io/badge/qa-make%20ci-334155"></a>
+</p>
+
+<p align="center">
+  <a href="README.md">English version</a> • <a href="docs/ru/INDEX.md">Документация (RU)</a> • <a href="docs/en/INDEX.md">Docs (EN)</a>
 </p>
 
 ## Что это за проект
 
-`Xray Reality Ultimate` — набор Bash-скриптов для установки, сопровождения и обновления Xray Reality.
+`Network Stealth Core` автоматизирует:
 
-Базовые принципы:
+- развёртывание Xray Reality
+- генерацию и сопровождение конфигурации
+- операционные сценарии (`install`, `update`, `repair`, `rollback`, `uninstall`)
+- экспорт клиентских артефактов
 
-- воспроизводимый install/update процесс
-- строгие проверки входных параметров и путей
-- безопасный откат при сбоях
-- готовые клиентские экспорты и понятная эксплуатация
+Проект публичный и предназначен для общего использования, без привязки к конкретному серверу.
 
 ## Официальный источник
 
-Используйте официальный репозиторий:
+Используйте только официальный репозиторий:
 
 - `https://github.com/neket371/network-stealth-core`
 
-Если команды взяты из зеркала/форка, проверяйте их вручную до запуска.
-
-## Документация
-
-| Файл | Назначение |
-|---|---|
-| `README.md` | Английская версия |
-| `ARCHITECTURE.md` | Архитектура, контракты модулей, потоки выполнения |
-| `OPERATIONS.md` | Runbook эксплуатации, инциденты, rollback |
-| `SECURITY.md` | Модель угроз и меры защиты |
-| `CONTRIBUTING.md` | Правила контрибьюта и локальная разработка |
-| `CHANGELOG.md` | История релизов |
+Если команда взята из форка или зеркала, проверьте источник перед запуском.
 
 ## Быстрый старт
 
 ### Рекомендуемый способ: universal install
-
-Работает стабильно даже в ограниченных окружениях (проблемы с `/dev/fd`).
 
 ```bash
 curl -fL https://raw.githubusercontent.com/neket371/network-stealth-core/main/xray-reality.sh -o /tmp/xray-reality.sh
 sudo bash /tmp/xray-reality.sh install
 ```
 
-### One-line install
+### Альтернатива: one-line install
 
 ```bash
 sudo bash <(curl -fsSL https://raw.githubusercontent.com/neket371/network-stealth-core/main/xray-reality.sh) install
 ```
 
-Если видите `/dev/fd/...: no such file or directory`, переходите на universal install.
+Если появляется `/dev/fd/...: no such file or directory`, используйте universal install.
 
 ### Bootstrap с pin по commit
 
@@ -69,53 +60,45 @@ sudo XRAY_REPO_COMMIT=<full_commit_sha> bash /tmp/xray-reality.sh install
 
 ### Выбор источника bootstrap
 
-По умолчанию bootstrap использует ветку `main` (самые свежие фиксы).
+По умолчанию используется `main`:
 
 ```bash
 curl -fL https://raw.githubusercontent.com/neket371/network-stealth-core/main/xray-reality.sh -o /tmp/xray-reality.sh
 sudo bash /tmp/xray-reality.sh install
 ```
 
-Если нужен именно последний релизный тег:
+Чтобы брать последний релизный тег:
 
 ```bash
 curl -fL https://raw.githubusercontent.com/neket371/network-stealth-core/main/xray-reality.sh -o /tmp/xray-reality.sh
 sudo XRAY_BOOTSTRAP_DEFAULT_REF=release bash /tmp/xray-reality.sh install
 ```
 
-## Основные команды
+## Карта команд
 
-| Команда | Что делает |
+| Команда | Назначение |
 |---|---|
 | `install` | Полная установка |
 | `add-clients [N]` | Добавляет `N` клиентских конфигов |
 | `add-keys [N]` | Алиас `add-clients` |
-| `update` | Обновляет Xray core |
-| `repair` | Восстанавливает unit/firewall/monitoring и артефакты |
-| `status` | Показывает состояние сервиса и конфигурации |
-| `logs [xray\|health\|all]` | Выводит логи |
-| `diagnose` | Собирает диагностику |
-| `rollback [dir]` | Откат к резервной сессии |
+| `update` | Обновление Xray core |
+| `repair` | Сверка и восстановление service/firewall/artifacts |
+| `status` | Сводка состояния |
+| `logs [xray\|health\|all]` | Просмотр логов |
+| `diagnose` | Диагностический снимок |
+| `rollback [dir]` | Откат из бэкапа |
 | `uninstall` | Полное удаление |
-| `check-update` | Проверка доступности обновления |
-
-Пример:
-
-```bash
-sudo xray-reality.sh status
-sudo xray-reality.sh diagnose
-sudo xray-reality.sh logs
-```
+| `check-update` | Проверка обновлений |
 
 ## Профили и лимиты
 
-| Профиль | Внутренний tier | Лимит конфигов | Сценарий |
+| Профиль | Внутренний tier | Лимит конфигов | Примечание |
 |---|---|---:|---|
 | `ru` | `tier_ru` | 100 | Основной RU-пул |
-| `ru-auto` | `tier_ru` | auto 5 | Быстрый старт |
-| `global-ms10` | `tier_global_ms10` | 10 | Глобальный пул (50 доменов), лимит 10 конфигов |
-| `global-ms10-auto` | `tier_global_ms10` | auto 10 | Быстрый global из пула 50 доменов |
-| `custom` | `custom` | 100 | Пользовательский список доменов |
+| `ru-auto` | `tier_ru` | auto 5 | Быстрый RU-старт |
+| `global-ms10` | `tier_global_ms10` | 10 | Глобальный пул (50 доменов) |
+| `global-ms10-auto` | `tier_global_ms10` | auto 10 | Быстрый global-старт |
+| `custom` | `custom` | 100 | Пользовательский набор |
 
 ## Ключевые флаги
 
@@ -132,35 +115,44 @@ sudo xray-reality.sh logs
 --verbose
 ```
 
+## Карта документации
+
+| Путь | Назначение |
+|---|---|
+| `docs/ru/INDEX.md` | Точка входа в документацию (RU) |
+| `docs/en/INDEX.md` | Documentation entrypoint (EN) |
+| `docs/ru/ARCHITECTURE.md` | Архитектура и контракты модулей |
+| `docs/ru/OPERATIONS.md` | Эксплуатационный runbook |
+| `docs/ru/FAQ.md` | Частые вопросы |
+| `docs/ru/TROUBLESHOOTING.md` | Диагностика по симптомам |
+| `docs/ru/COMMUNITY.md` | Комьюнити и правила общения |
+| `docs/ru/ROADMAP.md` | Текущий вектор развития |
+| `docs/ru/GLOSSARY.md` | Термины проекта |
+| `docs/ru/CHANGELOG.md` | История релизов |
+| `.github/CONTRIBUTING.ru.md` | Гайд для контрибьюторов (RU) |
+| `.github/SECURITY.ru.md` | Политика безопасности (RU) |
+
 ## Безопасность
+
+Основные меры:
 
 - строгая валидация runtime-параметров
 - allowlist для критичных загрузок
-- проверка целостности Xray (`sha256` + optional strict-режим `minisign`)
-- атомарные записи + rollback при ошибках
-- запуск сервиса от непривилегированного пользователя и ограничивающие параметры `systemd`
+- проверка целостности артефактов (`sha256` и optional strict `minisign`)
+- транзакционные записи и rollback
+- ограниченный профиль `systemd` и непривилегированный runtime-пользователь
 
-Подробно: [SECURITY.md](SECURITY.md).
-
-## Экспорт клиентских шаблонов
-
-Формируются после `install`, `add-clients`, `repair`:
-
-- `/etc/xray/private/keys/export/clashmeta.yaml`
-- `/etc/xray/private/keys/export/singbox.json`
-- `/etc/xray/private/keys/export/nekoray-fragment.json`
-- `/etc/xray/private/keys/export/v2rayn-fragment.json`
+Подробности: [.github/SECURITY.ru.md](.github/SECURITY.ru.md).
 
 ## Поддерживаемая платформа
 
-Основная и проверяемая в CI платформа:
+Основная и CI-валидируемая платформа:
 
 - `ubuntu-24.04` (LTS)
 
-Другие Linux-дистрибутивы могут работать, но сейчас не входят в активный CI-контракт.
-Для платформ вне этого контура совместимость не гарантируется.
+Другие Linux-дистрибутивы могут работать, но не входят в текущий CI-контур.
 
-## Локальная проверка
+## Проверки качества
 
 ```bash
 make lint
@@ -176,16 +168,11 @@ pwsh ./scripts/markdownlint.ps1
 pwsh ./scripts/windows/run-validation.ps1
 ```
 
-## Docker
+## Комьюнити
 
-```bash
-docker pull ghcr.io/neket371/network-stealth-core:vX.Y.Z
-docker run --rm ghcr.io/neket371/network-stealth-core:vX.Y.Z --help
-```
-
-## Контакты
-
-- X (Twitter): [x.com/neket371](https://x.com/neket371)
+- Обсуждения: вкладка `GitHub Discussions`
+- Баг-репорты и фичи: `GitHub Issues`
+- Контакт: X (Twitter) [x.com/neket371](https://x.com/neket371)
 
 ## Лицензия
 

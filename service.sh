@@ -194,7 +194,7 @@ create_systemd_service() {
     backup_file /etc/systemd/system/xray.service
     atomic_write /etc/systemd/system/xray.service 0644 << EOF
 [Unit]
-Description=Xray Service (Reality Ultimate ${SCRIPT_VERSION})
+Description=Xray Service (Network Stealth Core ${SCRIPT_VERSION})
 Documentation=https://github.com/xtls
 After=network.target nss-lookup.target
 OnFailure=xray-diagnose@%n.service
@@ -673,7 +673,7 @@ uninstall_close_ports() {
 
 uninstall_all() {
     local uninstall_box_width uninstall_title
-    uninstall_title="УДАЛЕНИЕ XRAY REALITY ULTIMATE"
+    uninstall_title="УДАЛЕНИЕ NETWORK STEALTH CORE"
     uninstall_box_width=$(ui_box_width_for_lines 60 90 "$uninstall_title")
     local tty_fd=""
     local require_confirmation=false
@@ -695,7 +695,7 @@ uninstall_all() {
         tty_print_line "$tty_fd" ""
         tty_print_box "$tty_fd" "$RED" "$uninstall_title" 60 90
         tty_print_line "$tty_fd" ""
-        tty_printf "$tty_fd" '%b⚠️  Будет удалено ВСЁ, связанное с Xray Reality:%b\n' "$YELLOW" "$NC"
+        tty_printf "$tty_fd" '%b⚠️  Будет удалено ВСЁ, связанное с Network Stealth Core:%b\n' "$YELLOW" "$NC"
         tty_print_line "$tty_fd" "  • Сервисы и таймеры systemd"
         tty_print_line "$tty_fd" "  • Бинарники и скрипты"
         tty_print_line "$tty_fd" "  • Конфигурации и ключи"
@@ -710,7 +710,7 @@ uninstall_all() {
         echo -e "${BOLD}${RED}$(ui_box_line_string "$uninstall_title" "$uninstall_box_width")${NC}"
         echo -e "${BOLD}${RED}$(ui_box_border_string bottom "$uninstall_box_width")${NC}"
         echo ""
-        echo -e "${YELLOW}⚠️  Будет удалено ВСЁ, связанное с Xray Reality:${NC}"
+        echo -e "${YELLOW}⚠️  Будет удалено ВСЁ, связанное с Network Stealth Core:${NC}"
         echo "  • Сервисы и таймеры systemd"
         echo "  • Бинарники и скрипты"
         echo "  • Конфигурации и ключи"
@@ -902,7 +902,7 @@ uninstall_has_managed_artifacts() {
 
 status_flow() {
     local status_title status_box_width
-    status_title="XRAY REALITY ULTIMATE - STATUS"
+    status_title="NETWORK STEALTH CORE - STATUS"
     status_box_width=$(ui_box_width_for_lines 60 90 "$status_title")
     echo ""
     echo -e "${BOLD}${CYAN}$(ui_box_border_string top "$status_box_width")${NC}"

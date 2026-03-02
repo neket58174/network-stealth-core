@@ -1085,7 +1085,7 @@ uninstall_flow() {
     : "${LOG_CONTEXT}"
     if ! uninstall_has_managed_artifacts; then
         echo ""
-        log INFO "Xray Reality уже удалён: управляемые артефакты не обнаружены"
+        log INFO "Network Stealth Core уже удалён: управляемые артефакты не обнаружены"
         return 0
     fi
     setup_logging

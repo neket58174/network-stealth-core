@@ -34,7 +34,7 @@ open_firewall_ports() {
             if ufw status 2> /dev/null | grep -Eq "^${port}/tcp([[:space:]]|$).*ALLOW"; then
                 continue
             fi
-            if ufw allow "${port}/tcp" comment "Xray Reality" > /dev/null 2>&1; then
+            if ufw allow "${port}/tcp" comment "Network Stealth Core" > /dev/null 2>&1; then
                 record_firewall_rule_add "ufw" "$port" "v4" || true
             else
                 fw_status="partial"
@@ -45,7 +45,7 @@ open_firewall_ports() {
             if ufw status 2> /dev/null | grep -Eq "^${port}/tcp([[:space:]]|$).*ALLOW"; then
                 continue
             fi
-            if ufw allow "${port}/tcp" comment "Xray Reality" > /dev/null 2>&1; then
+            if ufw allow "${port}/tcp" comment "Network Stealth Core" > /dev/null 2>&1; then
                 record_firewall_rule_add "ufw" "$port" "v6" || true
             else
                 fw_status="partial"

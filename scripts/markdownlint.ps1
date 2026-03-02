@@ -15,10 +15,12 @@ if (-not $Paths -or $Paths.Count -eq 0) {
     $Paths = @(
         "README.md",
         "README.ru.md",
-        "CONTRIBUTING.md",
-        "ARCHITECTURE.md",
-        "CHANGELOG.md",
-        "SECURITY.md"
+        ".github/CONTRIBUTING.md",
+        ".github/CONTRIBUTING.ru.md",
+        ".github/SECURITY.md",
+        ".github/SECURITY.ru.md",
+        "docs/en/*.md",
+        "docs/ru/*.md"
     )
 }
 

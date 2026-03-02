@@ -1,10 +1,10 @@
 # Security policy
 
-This document defines the security posture and disclosure process for `Xray Reality Ultimate`.
+This document defines the security posture and disclosure process for **Network Stealth Core**.
 
 ## Supported versions
 
-| Version Line | Status |
+| Version line | Status |
 |---|---|
 | `4.2.x` | supported |
 | `<4.2` | unsupported in this repository |
@@ -15,22 +15,22 @@ Use responsible disclosure:
 
 1. do not open public issues for security bugs
 2. use GitHub private vulnerability reporting
-3. include impact, reproduction steps, affected version/commit, and optional fix suggestion
+3. include impact, reproduction steps, affected version or commit, and optional patch proposal
 
 Target response windows:
 
 - initial triage: up to 48 hours
 - critical patch target: up to 7 days
 
-## Practical threat model
+## Threat model (practical)
 
 | Threat | Mitigation |
 |---|---|
-| bootstrap/download tampering | pinned bootstrap support, SHA256 checks, optional strict minisign mode |
-| command/path injection | strict validators, safe path guards, sanitized runtime values |
-| partial write corruption | atomic writes + staged validation |
-| failed updates/install | rollback stack + runtime reconciliation |
-| service over-privilege | unprivileged `xray` user + restrictive `systemd` settings |
+| bootstrap and download tampering | pinned bootstrap support, SHA256 checks, optional strict minisign mode |
+| command or path injection | strict validators and safe path guards |
+| partial write corruption | atomic writes and staged validation |
+| failed update or install | rollback stack and runtime reconciliation |
+| service over-privilege | dedicated `xray` user and restrictive `systemd` settings |
 
 ## Security controls
 
@@ -39,21 +39,21 @@ Target response windows:
 - HTTPS-only download flows with strict validation
 - allowlisted critical hosts (`DOWNLOAD_HOST_ALLOWLIST`)
 - artifact integrity checks (`sha256`, optional strict `REQUIRE_MINISIGN=true`)
-- pinned minisign trust anchor with fingerprint check (`MINISIGN_KEY` content hash)
+- pinned minisign trust anchor with fingerprint check (`MINISIGN_KEY`)
 - bootstrap pin control via `XRAY_REPO_COMMIT`
 
-Current pinned minisign key fingerprint (`sha256` of `MINISIGN_KEY` file content):
+Current pinned minisign key fingerprint (`sha256` of `MINISIGN_KEY` content):
 
 - `294701ab7f6e18646e45b5093033d9e64f3ca181f74c0cf232627628f3d8293e`
 
 ### Privilege separation
 
 - service runs under dedicated non-root account (`xray`)
-- minimal required capabilities (including bind capability for low ports)
+- minimal capability set for low-port binding
 
 ### Systemd hardening
 
-Project-generated unit applies hardening controls such as:
+Project unit applies controls such as:
 
 - `NoNewPrivileges=true`
 - `ProtectSystem=strict`
@@ -66,20 +66,20 @@ Project-generated unit applies hardening controls such as:
 
 ### Input and runtime validation
 
-Validation layer covers:
+Validation coverage includes:
 
-- domains, ports, IPv4/IPv6
+- domain, port, IPv4, IPv6 formats
 - gRPC service names
-- file paths for destructive operations
+- destructive operation path safety
 - URL and schedule format checks
 - runtime range constraints
 
 ### Rollback safety
 
-- backup snapshot before mutating operations
-- automatic rollback on error paths
-- firewall rollback records for network changes
-- runtime state reconciliation after restore
+- pre-change backup snapshot
+- automatic rollback on failure paths
+- firewall rollback records
+- runtime reconciliation after restore
 
 ## Sensitive paths and intended permissions
 
@@ -87,7 +87,7 @@ Validation layer covers:
 |---|---|---:|---|
 | `/usr/local/bin/xray` | `root:root` | `0755` | Xray binary |
 | `/etc/xray/config.json` | `root:xray` | `0640` | server config |
-| `/etc/xray-reality/config.env` | `root:root` | `0600` | runtime environment snapshot |
+| `/etc/xray-reality/config.env` | `root:root` | `0600` | runtime snapshot |
 | `/etc/xray/private` | `root:xray` | `0750` | sensitive root directory |
 | `/etc/xray/private/keys/keys.txt` | `root:root` | `0400` | private key material |
 | `/etc/xray/private/keys/clients.txt` | `root:xray` | `0640` | client links |
@@ -96,29 +96,29 @@ Validation layer covers:
 
 ## Risky overrides
 
-These flags reduce default security guarantees and should be temporary:
+These flags weaken default guarantees and should be temporary:
 
 - `ALLOW_INSECURE_SHA256=true`
 - `ALLOW_UNVERIFIED_MINISIGN_BOOTSTRAP=true`
 - `ALLOW_NO_SYSTEMD=true`
 - `GEO_VERIFY_HASH=false`
 
-## Operational security recommendations
+## Operational recommendations
 
-1. prefer tagged releases for stable installs
-2. update regularly via controlled maintenance windows
+1. prefer tagged releases for production-like deployments
+2. update regularly within maintenance windows
 3. monitor `journalctl -u xray` and health logs
-4. restrict shell/admin access on the host
-5. rotate/redeploy on compromise suspicion
+4. restrict shell and admin access to the host
+5. rotate or redeploy when compromise is suspected
 
 ## Security testing signals
 
-Security-sensitive behavior is covered by automated checks including:
+Security-sensitive behavior is covered by:
 
-- validator correctness tests
-- path safety guard tests
-- rollback and lifecycle integrity tests
+- validator tests
+- path safety tests
+- rollback and lifecycle tests
 - export schema validation
-- CI audit gates and command contract checks
+- CI audit gates and docs command contract checks
 
-For operations-side response, use [OPERATIONS.md](OPERATIONS.md).
+For operations-side incident response, see [docs/en/OPERATIONS.md](../docs/en/OPERATIONS.md).

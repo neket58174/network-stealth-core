@@ -278,7 +278,7 @@ jobs:
             $0 ~ "^## \\[" ver "\\]" {capture=1; next}
             capture && $0 ~ "^## \\[" {exit}
             capture {print}
-          ' CHANGELOG.md > RELEASE_NOTES.md
+          ' docs/en/CHANGELOG.md > RELEASE_NOTES.md
           if ! grep -q "[^[:space:]]" RELEASE_NOTES.md; then
             echo "Release ${version}" > RELEASE_NOTES.md
           fi

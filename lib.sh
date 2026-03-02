@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Xray Reality Ultimate 4.2.0 - Автоматизация установки и сопровождения Xray Reality (gRPC/HTTP2 + Reality + MUX)
+# Network Stealth Core 4.2.0 - Автоматизация установки и сопровождения Xray Reality (gRPC/HTTP2 + Reality + MUX)
 
 set -euo pipefail
 
 SCRIPT_DIR="${SCRIPT_DIR:-$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)}"
 
 readonly SCRIPT_VERSION="4.2.0"
-readonly SCRIPT_NAME="Xray Reality Ultimate"
+readonly SCRIPT_NAME="Network Stealth Core"
 
 XRAY_USER="xray"
 XRAY_GROUP="xray"
@@ -1637,7 +1637,7 @@ print_usage() {
 Usage: xray-reality.sh <command> [options]
 
 Commands:
-  install                        Install Xray Reality (auto для РФ)
+  install                        Install Network Stealth Core (auto для РФ)
   add-clients [N]                Add N configs to existing setup (tier-aware limit)
   add-keys [N]                   Alias of add-clients [N]
   update                         Update Xray-core

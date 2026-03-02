@@ -43,11 +43,12 @@ DEFAULT_SHELL_FILES=(
 DEFAULT_MD_FILES=(
     "$SCRIPT_DIR/README.md"
     "$SCRIPT_DIR/README.ru.md"
-    "$SCRIPT_DIR/CONTRIBUTING.md"
-    "$SCRIPT_DIR/ARCHITECTURE.md"
-    "$SCRIPT_DIR/OPERATIONS.md"
-    "$SCRIPT_DIR/CHANGELOG.md"
-    "$SCRIPT_DIR/SECURITY.md"
+    "$SCRIPT_DIR/.github/CONTRIBUTING.md"
+    "$SCRIPT_DIR/.github/CONTRIBUTING.ru.md"
+    "$SCRIPT_DIR/.github/SECURITY.md"
+    "$SCRIPT_DIR/.github/SECURITY.ru.md"
+    "$SCRIPT_DIR"/docs/en/*.md
+    "$SCRIPT_DIR"/docs/ru/*.md
 )
 
 FILES=("${DEFAULT_SHELL_FILES[@]}")

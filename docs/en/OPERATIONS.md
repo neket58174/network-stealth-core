@@ -1,6 +1,6 @@
 # Operations runbook
 
-This runbook is the operations reference for `Xray Reality Ultimate`.
+This runbook is the operations reference for **Network Stealth Core**.
 
 ## Installation entry points
 
@@ -17,23 +17,23 @@ sudo bash /tmp/xray-reality.sh install
 sudo bash <(curl -fsSL https://raw.githubusercontent.com/neket371/network-stealth-core/main/xray-reality.sh) install
 ```
 
-If `/dev/fd` is unavailable, switch to universal install.
+If `/dev/fd` is unavailable, use universal install.
 
-### Notes about systemd and strict integrity mode
+## Runtime assumptions
 
-- default `install`, `update`, `repair` expect working `systemd` runtime
-- for constrained environments (containers/chroot), use `--allow-no-systemd`
-- to enforce fail-closed signature policy, use `--require-minisign`
+- default `install`, `update`, and `repair` expect working `systemd`
+- for constrained environments, use `--allow-no-systemd`
+- for fail-closed signature policy, use `--require-minisign`
 
-## Public release sanity (Ubuntu 24.04 LTS)
+## Public release sanity checklist (Ubuntu 24.04 LTS)
 
-Use this list before creating a public release. Supported and verified target for this checklist: **Ubuntu 24.04 LTS**.
+Supported and validated target for this checklist: **Ubuntu 24.04 LTS**.
 
 ### Scope lock (must pass)
 
-- docs and README do not claim unverified OS support
-- install commands point to `https://github.com/neket371/network-stealth-core`
-- `LICENSE` exists in repository root
+- docs do not claim unsupported OS contracts
+- install commands target `https://github.com/neket371/network-stealth-core`
+- `LICENSE` exists in repo root
 
 ### Local quality gate (must pass)
 
@@ -43,7 +43,7 @@ make ci
 
 ### Fresh host smoke (must pass)
 
-Run on a clean Ubuntu 24.04 VM:
+On clean Ubuntu 24.04:
 
 ```bash
 curl -fL https://raw.githubusercontent.com/neket371/network-stealth-core/main/xray-reality.sh -o /tmp/xray-reality.sh
@@ -58,21 +58,21 @@ sudo xray-reality.sh uninstall --non-interactive --yes
 
 Expected:
 
-- service reaches `active` after install/update/repair
+- service is `active` after install/update/repair
 - `xray -test` exits `0`
-- new client artifacts are generated after `add-clients`
-- uninstall removes managed files and service units
+- client artifacts are generated after `add-clients`
+- uninstall removes managed files and systemd units
 
-### Security/log sanity (must pass)
+### Security and logging sanity (must pass)
 
-- no private keys or full VLESS links are written to install log
-- `clients.txt` links are printed only to `/dev/tty`
-- `clients.json` keeps restricted permissions (`640`)
+- no private keys or full client links in install log
+- client links printed to `/dev/tty` only
+- `clients.json` remains restricted (`640`)
 
 ### Release gate (must pass)
 
-- create tag only after all checks above pass
-- if any step fails, do not publish release or package
+- create release tag only after all checks pass
+- on any red check: do not publish release/package
 
 ## Daily health check
 
@@ -93,14 +93,14 @@ sudo xray-reality.sh update
 sudo xray-reality.sh status
 ```
 
-### Add client configs
+### Add client configurations
 
 ```bash
 sudo xray-reality.sh add-clients 2
 sudo xray-reality.sh status
 ```
 
-Expected artifact set after `add-clients`:
+Expected artifact set:
 
 - `/etc/xray/private/keys/keys.txt`
 - `/etc/xray/private/keys/clients.txt`
@@ -109,23 +109,23 @@ Expected artifact set after `add-clients`:
 
 ## Incident matrix
 
-| Incident | Immediate Action | Verify |
+| Incident | Immediate action | Verify |
 |---|---|---|
 | `xray` not active | `sudo systemctl restart xray` | `systemctl is-active xray` |
-| config test fails | `xray -test -c /etc/xray/config.json` then rollback | config test exits `0` |
+| config test fails | `xray -test -c /etc/xray/config.json`, then rollback | config test exits `0` |
 | failed update | `sudo xray-reality.sh rollback` | service active + artifacts consistent |
-| domain instability | inspect `/var/lib/xray/domain-health.json` and tuning vars | fail streak trend improves |
-| firewall drift | `sudo xray-reality.sh repair` | expected ports are listening/open |
+| domain instability | inspect `/var/lib/xray/domain-health.json` | fail trend improves |
+| firewall drift | `sudo xray-reality.sh repair` | expected ports are open/listening |
 
 ## Rollback playbook
 
-### Latest session
+### Latest backup
 
 ```bash
 sudo xray-reality.sh rollback
 ```
 
-### Specific session
+### Specific backup
 
 ```bash
 sudo xray-reality.sh rollback /var/backups/xray/<session-dir>
@@ -140,15 +140,15 @@ sudo journalctl -u xray -n 100 --no-pager
 
 ## Runtime tuning knobs
 
-| Variable | Practical Effect |
+| Variable | Effect |
 |---|---|
 | `DOMAIN_HEALTH_PROBE_TIMEOUT` | probe timeout per domain |
-| `DOMAIN_HEALTH_RATE_LIMIT_MS` | spacing between probes |
-| `DOMAIN_HEALTH_MAX_PROBES` | max probes per cycle |
-| `DOMAIN_QUARANTINE_FAIL_STREAK` | quarantine trigger threshold |
+| `DOMAIN_HEALTH_RATE_LIMIT_MS` | delay between probes |
+| `DOMAIN_HEALTH_MAX_PROBES` | maximum probes per cycle |
+| `DOMAIN_QUARANTINE_FAIL_STREAK` | quarantine trigger |
 | `DOMAIN_QUARANTINE_COOLDOWN_MIN` | quarantine duration |
-| `PRIMARY_DOMAIN_MODE` | first domain selection strategy |
-| `PROGRESS_MODE` | progress rendering (`auto`, `bar`, `plain`, `none`) |
+| `PRIMARY_DOMAIN_MODE` | first-domain strategy |
+| `PROGRESS_MODE` | `auto`, `bar`, `plain`, `none` |
 
 Example:
 
@@ -169,24 +169,13 @@ Post-uninstall checks:
 
 - `id xray` should fail
 - `/etc/xray`, `/etc/xray-reality`, `/usr/local/bin/xray` should be removed
-- previously used service ports should not be listening
+- previously used service ports should not listen
 
-## Data collection for escalation
+## Escalation package
 
-When escalating incidents, collect:
+Collect before opening an issue:
 
 - `sudo xray-reality.sh diagnose`
 - `sudo journalctl -u xray -n 500 --no-pager`
-- `/etc/xray/config.json` (with secrets redacted)
-- `/etc/xray/private/keys/clients.json` (if artifact consistency is involved)
-
-## QA before changes
-
-```bash
-make lint
-make test
-make release-check
-make ci
-```
-
-Apply changes only from green commits.
+- `/etc/xray/config.json` with secrets redacted
+- `/etc/xray/private/keys/clients.json` if artifact mismatch is involved

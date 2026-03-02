@@ -1,13 +1,13 @@
 # Architecture
 
-This document describes the runtime architecture of `Xray Reality Ultimate` and the interaction contract between scripts and modules.
+This document describes runtime architecture and module contracts in **Network Stealth Core**.
 
 ## Design goals
 
-- deterministic lifecycle (`install`, `update`, `repair`, `rollback`, `uninstall`)
+- deterministic lifecycle: `install`, `update`, `repair`, `rollback`, `uninstall`
 - strict runtime validation before destructive actions
-- transactional writes with rollback on failure
-- modular shell code with clear ownership boundaries
+- transactional writes with rollback support
+- modular shell code with explicit ownership boundaries
 
 ## Runtime topology
 
@@ -71,13 +71,13 @@ flowchart LR
     G -- no --> H[fail fast]
 ```
 
-## Runtime core (`lib.sh`)
+## Runtime control plane (`lib.sh`)
 
-`lib.sh` is the control plane. It centralizes:
+`lib.sh` centralizes:
 
 - defaults and cross-module globals
 - argument parsing and config loading
-- strict validation for runtime inputs
+- strict validation of runtime inputs
 - logging, download, backup, rollback helpers
 - action dispatch to install/config/service/health/export layers
 
@@ -104,26 +104,26 @@ flowchart TD
 
 ## Module contracts
 
-| Module | Responsibility | Output Contract |
+| Module | Responsibility | Contract |
 |---|---|---|
-| `modules/lib/globals_contract.sh` | shared global defaults and array declarations | stable `set -u` behavior for all sourced modules |
-| `modules/lib/cli.sh` | argument parsing and CLI/env normalization | validated action, runtime flags, and overrides |
-| `modules/lib/validation.sh` | validators for domains, ports, IPs, durations, URLs | reusable security checks across flows |
-| `modules/lib/firewall.sh` | firewall rule apply/rollback helpers | deterministic network rule lifecycle |
-| `modules/lib/lifecycle.sh` | backup stack and rollback orchestration | consistent rollback and cleanup semantics |
-| `modules/install/bootstrap.sh` | distro-aware dependency and bootstrap helpers | predictable package/install behavior |
-| `modules/config/domain_planner.sh` | domain ranking, quarantine, planning | bounded no-repeat domain allocation |
-| `modules/config/add_clients.sh` | `add-clients`/`add-keys` mutation logic | synchronized client artifacts and inbounds |
+| `modules/lib/globals_contract.sh` | shared defaults and array declarations | stable `set -u` behavior across sourced modules |
+| `modules/lib/cli.sh` | argument parsing and CLI/env normalization | validated action and runtime overrides |
+| `modules/lib/validation.sh` | validators for domains, ports, IPs, ranges, URLs | reusable security checks across flows |
+| `modules/lib/firewall.sh` | firewall apply and rollback helpers | deterministic network rule lifecycle |
+| `modules/lib/lifecycle.sh` | backup stack and rollback orchestration | consistent rollback semantics |
+| `modules/install/bootstrap.sh` | distro-aware bootstrap helpers | predictable dependency/install path |
+| `modules/config/domain_planner.sh` | ranking, quarantine, selection planning | bounded no-repeat domain allocation |
+| `modules/config/add_clients.sh` | `add-clients` mutation logic | synchronized client artifacts and inbounds |
 
 ## Transaction model
 
-All mutating actions are designed as transactions:
+Every mutating action follows one pattern:
 
-1. create backup snapshot for critical files/state
-2. apply candidate changes to temporary or staged paths
+1. capture backup snapshot of critical state
+2. build candidate changes in staged files
 3. validate candidate (`xray -test` and runtime guards)
-4. commit changes atomically
-5. rollback automatically on failure
+4. commit atomically
+5. rollback automatically on non-zero failure path
 
 ### Failure path
 
@@ -137,30 +137,30 @@ sequenceDiagram
 
     F->>B: register pre-change state
     F->>C: apply modifications
-    F->>R: restart/reload runtime
+    F->>R: restart or reload runtime
     alt success
         F->>B: prune temporary backups
     else failure
         R->>X: non-zero exit path
         X->>B: restore tracked files
-        X->>R: rollback firewall/runtime state
+        X->>R: rollback firewall and runtime state
     end
 ```
 
 ## Domain planning and health feedback
 
-Domain selection is not random-only. The planner combines:
+Domain selection is adaptive, not random-only. Planner inputs:
 
-- static tier/custom inputs
+- static tier or custom list
 - health ranking from `DOMAIN_HEALTH_FILE`
 - quarantine based on fail streak and cooldown
-- no-repeat sequencing until pool exhaustion
+- no-repeat sequence until pool exhaustion
 
 This reduces repetitive traffic patterns and avoids persistently failing domains.
 
 ## Generated artifacts
 
-| Path | Produced By | Intended Permissions |
+| Path | Produced by | Intended permissions |
 |---|---|---|
 | `/etc/xray/config.json` | `config.sh` | `0640`, `root:xray` |
 | `/etc/xray-reality/config.env` | `config.sh` | `0600`, root-only |
@@ -168,14 +168,14 @@ This reduces repetitive traffic patterns and avoids persistently failing domains
 | `/etc/xray/private/keys/clients.txt` | `config.sh` | `0640`, `root:xray` |
 | `/etc/xray/private/keys/clients.json` | `config.sh` | `0640`, `root:xray` |
 | `/var/lib/xray/domain-health.json` | `health.sh` | runtime state file |
-| `/etc/systemd/system/xray.service` | `service.sh` | service unit with restrictive settings |
+| `/etc/systemd/system/xray.service` | `service.sh` | hardened service unit |
 
-## QA and release control layers
+## Quality and release gates
 
-The project keeps three quality layers:
+Three control layers:
 
 - local: `make lint`, `make test`, `make release-check`
 - CI: lint + tests + audits + Ubuntu smoke
-- release: consistency checks and artifact policy gates
+- release: consistency checks and release policy gate
 
-This structure keeps daily development fast while preserving release integrity.
+This keeps daily development fast while preserving release integrity.
