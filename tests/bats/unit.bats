@@ -1355,7 +1355,8 @@ EOF
     grep -Fq "printf \"Количество VPN-ключей добавить (1-%s): \" \"\$max_add\" >&\"\$tty_fd\"" ./modules/config/add_clients.sh
     grep -Fq "tty_print_box \"\$tty_fd\" \"\$RED\" \"\$uninstall_title\" 60 90" ./service.sh
     grep -Fq "Вы уверены? Введите yes для подтверждения или no для отмены:" ./service.sh
-    grep -Fq "read -r -u \"\$tty_fd\" confirm" ./service.sh
+    grep -Fq "prompt_yes_no_from_tty \\" ./service.sh
+    grep -Fq "\"Введите '\''yes'\'' для подтверждения или '\''no'\'' для отмены\"" ./service.sh
     grep -Fq "open_interactive_tty_fd tty_fd" ./lib.sh
     grep -Fq "Укажите путь вручную для %s:" ./lib.sh
     grep -Fq "read -r -u \"\$tty_fd\" custom_path" ./lib.sh
@@ -1364,6 +1365,7 @@ EOF
     ! grep -Fq "read -r -p \"Сколько VPN-ключей создать? (1-\${max_configs}): \" input < /dev/tty" ./install.sh
     ! grep -Fq "read -r -p \"Сколько VPN-ключей добавить? (1-\${max_add}): \" input < /dev/tty" ./modules/config/add_clients.sh
     ! grep -Fq "read -r -u \"\$tty_fd\" -p \"Вы уверены? Введите yes для подтверждения или no для отмены: \" confirm" ./service.sh
+    ! grep -Fq "read -r -u \"\$tty_fd\" confirm" ./service.sh
     ! grep -Fq "read -r -u \"\$tty_fd\" -p \"  Укажите путь вручную для \${description}: \" custom_path" ./lib.sh
     echo "ok"
   '

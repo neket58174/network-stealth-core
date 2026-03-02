@@ -722,28 +722,20 @@ uninstall_all() {
     fi
 
     if [[ "$require_confirmation" == "true" ]]; then
-        local confirm
-        while true; do
-            if ! tty_printf "$tty_fd" 'Вы уверены? Введите yes для подтверждения или no для отмены: '; then
-                exec {tty_fd}>&-
-                log ERROR "Не удалось вывести запрос подтверждения в /dev/tty"
-                exit 1
-            fi
-            if ! read -r -u "$tty_fd" confirm; then
-                exec {tty_fd}>&-
-                log ERROR "Не удалось прочитать подтверждение из /dev/tty"
-                exit 1
-            fi
-            confirm=$(normalize_tty_input "$confirm")
-            if is_yes_input "$confirm"; then
-                break
-            elif is_no_input "$confirm"; then
-                exec {tty_fd}>&-
+        local prompt_rc=0
+        if ! prompt_yes_no_from_tty \
+            "$tty_fd" \
+            "Вы уверены? Введите yes для подтверждения или no для отмены: " \
+            "Введите 'yes' для подтверждения или 'no' для отмены"; then
+            prompt_rc=$?
+            exec {tty_fd}>&-
+            if ((prompt_rc == 1)); then
                 log INFO "Удаление отменено"
                 exit 0
             fi
-            tty_printf "$tty_fd" '%bВведите '\''yes'\'' для подтверждения или '\''no'\'' для отмены%b\n' "$RED" "$NC"
-        done
+            log ERROR "Не удалось прочитать подтверждение из /dev/tty"
+            exit 1
+        fi
         exec {tty_fd}>&-
     else
         log INFO "Неблокирующее удаление: подтверждение пропущено (--yes/non-interactive)"
