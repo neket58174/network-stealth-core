@@ -1395,6 +1395,8 @@ EOF
     source ./lib.sh
     is_yes_input "yes"$'\''\r'\''
     is_yes_input "  YES  "
+    is_yes_input $'\''\e[200~yes\e[201~'\''
+    is_yes_input "yеs"
     is_no_input " no "$'\''\r'\''
     is_no_input "nо"
     is_no_input "НЕТ"

@@ -410,7 +410,13 @@ ui_box_sanitize_text() {
 
 normalize_tty_input() {
     local value="${1:-}"
+    # Drop common terminal control artifacts (for example bracketed paste markers).
+    value="${value//$'\e[200~'/}"
+    value="${value//$'\e[201~'/}"
     value="${value//$'\r'/}"
+    value="${value//$'\e'/}"
+    # Keep printable text only; interactive yes/no tokens must be plain words.
+    value=$(printf '%s' "$value" | tr -d '\000-\010\013\014\016-\037\177')
     value=$(trim_ws "$value")
     printf '%s' "$value"
 }
@@ -472,12 +478,28 @@ normalize_yes_no_token() {
     printf '%s' "$value"
 }
 
-is_yes_input() {
+normalize_yes_token_hint() {
     local value
+    value=$(normalize_yes_no_token "${1:-}")
+    # Handle common visual lookalikes in latin "yes".
+    value="${value//у/y}"
+    value="${value//е/e}"
+    value="${value//ѕ/s}"
+    printf '%s' "$value"
+}
+
+is_yes_input() {
+    local value hinted
     value=$(normalize_yes_no_token "${1:-}")
     case "$value" in
         yes | y | да | д) return 0 ;;
-        *) return 1 ;;
+        *)
+            hinted=$(normalize_yes_token_hint "$value")
+            case "$hinted" in
+                yes | y) return 0 ;;
+                *) return 1 ;;
+            esac
+            ;;
     esac
 }
 
