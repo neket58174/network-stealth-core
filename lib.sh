@@ -507,6 +507,7 @@ tty_print_box() {
 canonicalize_confirmation_token() {
     local value
     value=$(normalize_tty_input "${1:-}")
+    value=$(strip_confirmation_wrappers "$value")
     # Normalize known uppercase Cyrillic symbols explicitly (locale-agnostic).
     value="${value//Ё/e}"
     value="${value//Е/e}"
@@ -531,6 +532,29 @@ canonicalize_confirmation_token() {
     value="${value//а/a}"
     value="${value//т/t}"
     value=$(printf '%s' "$value" | sed -E 's/[^a-z0-9]+//g')
+    printf '%s' "$value"
+}
+
+strip_confirmation_wrappers() {
+    local value
+    value=$(trim_ws "${1:-}")
+
+    local first last pair
+    while ((${#value} >= 2)); do
+        first="${value:0:1}"
+        last="${value: -1}"
+        pair="${first}${last}"
+        case "$pair" in
+            "''" | "\"\"" | "``" | "[]" | "()" | "{}" | "<>")
+                value="${value:1:${#value}-2}"
+                value=$(trim_ws "$value")
+                ;;
+            *)
+                break
+                ;;
+        esac
+    done
+
     printf '%s' "$value"
 }
 
@@ -576,7 +600,7 @@ prompt_yes_no_from_tty() {
     local tty_fd="${1:-}"
     local prompt_text="${2:-}"
     local retry_text="${3:-Введите yes или no}"
-    local answer normalized
+    local answer normalized token
 
     [[ "$tty_fd" =~ ^[0-9]+$ ]] || return 2
 
@@ -588,12 +612,14 @@ prompt_yes_no_from_tty() {
             return 2
         fi
         normalized=$(normalize_tty_input "$answer")
-        if is_yes_input "$normalized"; then
-            return 0
-        fi
-        if [[ -z "$normalized" ]] || is_no_input "$normalized"; then
+        if [[ -z "$normalized" ]]; then
             return 1
         fi
+        token=$(canonicalize_confirmation_token "$normalized")
+        case "$token" in
+            yes | y | da | d) return 0 ;;
+            no | n | net) return 1 ;;
+        esac
         if ! tty_printf "$tty_fd" '%s\n' "$retry_text"; then
             return 2
         fi

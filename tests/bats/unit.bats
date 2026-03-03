@@ -1394,13 +1394,13 @@ EOF
     grep -Fq "printf \"Профиль [1/2/3/4]: \" >&\"\$tty_fd\"" ./install.sh
     grep -Fq "read -r -u \"\$tty_fd\" input" ./install.sh
     grep -Fq "prompt_yes_no_from_tty() {" ./lib.sh
-    grep -Fq "prompt_yes_no_from_tty \"\$tty_fd\" \"Подтвердите (yes/no): \" \"Введите yes или no\"" ./install.sh
+    grep -Fq "prompt_yes_no_from_tty \"\$tty_fd\" \"Подтвердите (yes/no): \" \"Введите yes или no (без кавычек)\"" ./install.sh
     grep -Fq "printf \"Количество VPN-ключей (1-%s): \" \"\$max_configs\" >&\"\$tty_fd\"" ./install.sh
     grep -Fq "printf \"Количество VPN-ключей добавить (1-%s): \" \"\$max_add\" >&\"\$tty_fd\"" ./modules/config/add_clients.sh
     grep -Fq "tty_print_box \"\$tty_fd\" \"\$RED\" \"\$uninstall_title\" 60 90" ./service.sh
     grep -Fq "Вы уверены? Введите yes для подтверждения или no для отмены:" ./service.sh
     grep -Fq "prompt_yes_no_from_tty \\" ./service.sh
-    grep -Fq "\"Введите '\''yes'\'' для подтверждения или '\''no'\'' для отмены\"" ./service.sh
+    grep -Fq "\"Введите yes или no (без кавычек)\"" ./service.sh
     ! grep -Fq "if ! prompt_yes_no_from_tty" ./service.sh
     grep -Fq "open_interactive_tty_fd tty_fd" ./lib.sh
     grep -Fq "Укажите путь вручную для %s:" ./lib.sh
@@ -1534,10 +1534,39 @@ EOF
     [[ "$(canonicalize_confirmation_token "НЕТ")" == "net" ]]
     [[ "$(canonicalize_confirmation_token "но")" == "no" ]]
     [[ "$(canonicalize_confirmation_token "d-a")" == "da" ]]
+    [[ "$(canonicalize_confirmation_token "\"yes\"")" == "yes" ]]
+    [[ "$(canonicalize_confirmation_token "[ no ]")" == "no" ]]
+    sq=$(printf "\\047")
+    [[ "$(canonicalize_confirmation_token "${sq}yes${sq}")" == "yes" ]]
     echo "ok"
   '
     [ "$status" -eq 0 ]
     [ "$output" = "ok" ]
+}
+
+@test "prompt_yes_no_from_tty accepts yes without retry" {
+    run bash -eo pipefail -c '
+    source ./lib.sh
+    retry_count=0
+    tty_printf() {
+      if [[ "${3:-}" == "Введите yes или no (без кавычек)" ]]; then
+        retry_count=$((retry_count + 1))
+      fi
+      :
+    }
+    tmp=$(mktemp)
+    trap "rm -f \"$tmp\"" EXIT
+    printf "yes\n" > "$tmp"
+    exec 9<"$tmp"
+    if prompt_yes_no_from_tty 9 "Подтвердите (yes/no): " "Введите yes или no (без кавычек)"; then
+      rc=0
+    else
+      rc=$?
+    fi
+    echo "rc=$rc retry=$retry_count"
+  '
+    [ "$status" -eq 0 ]
+    [ "$output" = "rc=0 retry=0" ]
 }
 
 @test "prompt_yes_no_from_tty accepts no without retry" {
@@ -1557,6 +1586,31 @@ EOF
   '
     [ "$status" -eq 0 ]
     [ "$output" = "rc=1" ]
+}
+
+@test "prompt_yes_no_from_tty accepts quoted yes without retry" {
+    run bash -eo pipefail -c '
+    source ./lib.sh
+    retry_count=0
+    tty_printf() {
+      if [[ "${3:-}" == "Введите yes или no (без кавычек)" ]]; then
+        retry_count=$((retry_count + 1))
+      fi
+      :
+    }
+    tmp=$(mktemp)
+    trap "rm -f \"$tmp\"" EXIT
+    printf "\"yes\"\n" > "$tmp"
+    exec 9<"$tmp"
+    if prompt_yes_no_from_tty 9 "Подтвердите (yes/no): " "Введите yes или no (без кавычек)"; then
+      rc=0
+    else
+      rc=$?
+    fi
+    echo "rc=$rc retry=$retry_count"
+  '
+    [ "$status" -eq 0 ]
+    [ "$output" = "rc=0 retry=0" ]
 }
 
 @test "prompt_yes_no_from_tty retries invalid then accepts no" {
@@ -1582,6 +1636,31 @@ EOF
   '
     [ "$status" -eq 0 ]
     [ "$output" = "rc=1 retry=1" ]
+}
+
+@test "prompt_yes_no_from_tty retries invalid then accepts yes" {
+    run bash -eo pipefail -c '
+    source ./lib.sh
+    retry_count=0
+    tty_printf() {
+      if [[ "${3:-}" == "Введите yes или no (без кавычек)" ]]; then
+        retry_count=$((retry_count + 1))
+      fi
+      :
+    }
+    tmp=$(mktemp)
+    trap "rm -f \"$tmp\"" EXIT
+    printf "abc\nyes\n" > "$tmp"
+    exec 9<"$tmp"
+    if prompt_yes_no_from_tty 9 "Подтвердите (yes/no): " "Введите yes или no (без кавычек)"; then
+      rc=0
+    else
+      rc=$?
+    fi
+    echo "rc=$rc retry=$retry_count"
+  '
+    [ "$status" -eq 0 ]
+    [ "$output" = "rc=0 retry=1" ]
 }
 
 @test "ui_box_width_for_lines respects min and max bounds" {

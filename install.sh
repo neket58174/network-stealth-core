@@ -126,7 +126,7 @@ confirm_minisign_fallback() {
     printf '%bПродолжить установку только по SHA256?%b\n' "$YELLOW" "$NC" >&"$tty_fd"
 
     local prompt_rc=0
-    if prompt_yes_no_from_tty "$tty_fd" "Подтвердите (yes/no): " "Введите yes или no"; then
+    if prompt_yes_no_from_tty "$tty_fd" "Подтвердите (yes/no): " "Введите yes или no (без кавычек)"; then
         exec {tty_fd}>&-
         return 0
     fi

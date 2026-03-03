@@ -726,7 +726,7 @@ uninstall_all() {
         prompt_yes_no_from_tty \
             "$tty_fd" \
             "Вы уверены? Введите yes для подтверждения или no для отмены: " \
-            "Введите 'yes' для подтверждения или 'no' для отмены"
+            "Введите yes или no (без кавычек)"
         prompt_rc=$?
         exec {tty_fd}>&-
         if ((prompt_rc == 1)); then
