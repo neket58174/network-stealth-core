@@ -26,6 +26,8 @@ sudo bash <(curl -fsSL https://raw.githubusercontent.com/neket371/network-stealt
 - по умолчанию `install`, `update`, `repair` требуют рабочий `systemd`
 - для ограниченных окружений есть `--allow-no-systemd`
 - для fail-closed проверки подписи используйте `--require-minisign`
+- для custom source-пути wrapper требуется явный opt-in:
+  `XRAY_ALLOW_CUSTOM_DATA_DIR=true XRAY_DATA_DIR=/secure/path`
 
 ## Release sanity checklist (Ubuntu 24.04 LTS)
 

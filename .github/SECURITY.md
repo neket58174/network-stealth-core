@@ -41,6 +41,7 @@ Target response windows:
 - artifact integrity checks (`sha256`, optional strict `REQUIRE_MINISIGN=true`)
 - pinned minisign trust anchor with fingerprint check (`MINISIGN_KEY`)
 - bootstrap pin control via `XRAY_REPO_COMMIT`
+- wrapper code-source trust boundary for `XRAY_DATA_DIR` with explicit opt-in (`XRAY_ALLOW_CUSTOM_DATA_DIR=true`)
 
 Current pinned minisign key fingerprint (`sha256` of `MINISIGN_KEY` content):
 
@@ -102,6 +103,7 @@ These flags weaken default guarantees and should be temporary:
 - `ALLOW_UNVERIFIED_MINISIGN_BOOTSTRAP=true`
 - `ALLOW_NO_SYSTEMD=true`
 - `GEO_VERIFY_HASH=false`
+- `XRAY_ALLOW_CUSTOM_DATA_DIR=true` (only for trusted, non-world-writable module source paths)
 
 ## Operational recommendations
 

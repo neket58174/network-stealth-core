@@ -7,6 +7,7 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" 2> /dev/null && pwd 2> /
 MODULE_DIR=""
 DEFAULT_DATA_DIR="/usr/local/share/xray-reality"
 XRAY_DATA_DIR="${XRAY_DATA_DIR:-$DEFAULT_DATA_DIR}"
+XRAY_ALLOW_CUSTOM_DATA_DIR="${XRAY_ALLOW_CUSTOM_DATA_DIR:-false}"
 REPO_URL="${XRAY_REPO_URL:-https://github.com/neket371/network-stealth-core.git}"
 REPO_REF="${XRAY_REPO_REF:-${XRAY_REPO_BRANCH:-}}"
 REPO_COMMIT="${XRAY_REPO_COMMIT:-}"
@@ -85,14 +86,55 @@ is_trusted_wrapper_source_dir() {
 }
 
 validate_wrapper_data_dir_trust() {
+    local custom_norm=""
+
     if is_trusted_wrapper_source_dir "$XRAY_DATA_DIR"; then
         return 0
     fi
 
-    echo "ERROR: XRAY_DATA_DIR is untrusted for code sourcing: ${XRAY_DATA_DIR:-<empty>}" >&2
-    echo "Allowed code-source paths: ${DEFAULT_DATA_DIR} or SCRIPT_DIR (${SCRIPT_DIR:-<empty>})" >&2
-    echo "Unset XRAY_DATA_DIR or set it to a trusted path before running wrapper." >&2
-    exit 1
+    if [[ "$XRAY_ALLOW_CUSTOM_DATA_DIR" != "true" ]]; then
+        echo "ERROR: XRAY_DATA_DIR is untrusted for code sourcing: ${XRAY_DATA_DIR:-<empty>}" >&2
+        echo "Allowed code-source paths by default: ${DEFAULT_DATA_DIR} or SCRIPT_DIR (${SCRIPT_DIR:-<empty>})" >&2
+        echo "To explicitly allow custom code-source path, set XRAY_ALLOW_CUSTOM_DATA_DIR=true." >&2
+        exit 1
+    fi
+
+    custom_norm=$(normalize_wrapper_path "$XRAY_DATA_DIR" || true)
+    if [[ -z "$custom_norm" || ! -d "$custom_norm" ]]; then
+        echo "ERROR: XRAY_DATA_DIR is not a valid directory: ${XRAY_DATA_DIR:-<empty>}" >&2
+        exit 1
+    fi
+
+    if ! has_safe_wrapper_source_permissions "$custom_norm"; then
+        echo "ERROR: XRAY_DATA_DIR has unsafe permissions (group/other writable): ${custom_norm}" >&2
+        echo "Set secure permissions (for example chmod 755) before using XRAY_ALLOW_CUSTOM_DATA_DIR=true." >&2
+        exit 1
+    fi
+}
+
+has_safe_wrapper_source_permissions() {
+    local dir="${1:-}"
+    local mode=""
+    local group_digit
+    local other_digit
+
+    [[ -n "$dir" && -d "$dir" ]] || return 1
+
+    if command -v stat > /dev/null 2>&1; then
+        mode=$(stat -c '%a' -- "$dir" 2> /dev/null || true)
+        if [[ -z "$mode" ]]; then
+            mode=$(stat -f '%Lp' -- "$dir" 2> /dev/null || true)
+        fi
+    fi
+
+    [[ "$mode" =~ ^[0-7]{3,4}$ ]] || return 1
+    mode="${mode: -3}"
+    group_digit="${mode:1:1}"
+    other_digit="${mode:2:1}"
+
+    (((8#${group_digit} & 2) == 0)) || return 1
+    (((8#${other_digit} & 2) == 0)) || return 1
+    return 0
 }
 
 parse_wrapper_args() {
@@ -261,6 +303,7 @@ verify_pinned_commit() {
 
 BOOTSTRAP_REQUIRE_PIN=$(parse_bootstrap_bool "$BOOTSTRAP_REQUIRE_PIN" true)
 BOOTSTRAP_AUTO_PIN=$(parse_bootstrap_bool "$BOOTSTRAP_AUTO_PIN" true)
+XRAY_ALLOW_CUSTOM_DATA_DIR=$(parse_bootstrap_bool "$XRAY_ALLOW_CUSTOM_DATA_DIR" false)
 trap cleanup_install_dir EXIT
 
 resolve_ref_exact_commit() {

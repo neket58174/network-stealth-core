@@ -39,6 +39,7 @@
 - проверка целостности артефактов (`sha256`, optional `REQUIRE_MINISIGN=true`)
 - закреплённый minisign trust anchor с fingerprint-check (`MINISIGN_KEY`)
 - bootstrap pin через `XRAY_REPO_COMMIT`
+- trust-boundary для source-кода wrapper по `XRAY_DATA_DIR` с явным opt-in (`XRAY_ALLOW_CUSTOM_DATA_DIR=true`)
 
 Текущий fingerprint trust anchor (`sha256` контента `MINISIGN_KEY`):
 
@@ -98,6 +99,7 @@
 - `ALLOW_UNVERIFIED_MINISIGN_BOOTSTRAP=true`
 - `ALLOW_NO_SYSTEMD=true`
 - `GEO_VERIFY_HASH=false`
+- `XRAY_ALLOW_CUSTOM_DATA_DIR=true` (только для доверенного каталога модулей без group/other writable)
 
 ## Рекомендации эксплуатации
 

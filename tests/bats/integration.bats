@@ -223,6 +223,151 @@ EOF
   '
     [ "$status" -ne 0 ]
     [[ "$output" == *"XRAY_DATA_DIR is untrusted for code sourcing"* ]]
+    [[ "$output" == *"XRAY_ALLOW_CUSTOM_DATA_DIR=true"* ]]
+}
+
+@test "wrapper allows custom XRAY_DATA_DIR only with explicit opt-in and safe permissions" {
+    run bash -eo pipefail -c '
+    set -euo pipefail
+    tmp="$(mktemp -d)"
+    custom="$tmp/custom-data"
+    mkdir -p "$custom/modules/lib" "$custom/modules/config" "$custom/modules/install" "$tmp/mockbin"
+
+    cat > "$custom/lib.sh" << '"'"'EOF'"'"'
+#!/usr/bin/env bash
+MODULE_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+main() { echo "wrapper-ok"; }
+EOF
+    chmod +x "$custom/lib.sh"
+    : > "$custom/install.sh"
+    : > "$custom/config.sh"
+    : > "$custom/service.sh"
+    : > "$custom/health.sh"
+    : > "$custom/export.sh"
+    : > "$custom/modules/lib/validation.sh"
+    : > "$custom/modules/lib/common_utils.sh"
+    : > "$custom/modules/lib/globals_contract.sh"
+    : > "$custom/modules/lib/firewall.sh"
+    : > "$custom/modules/lib/lifecycle.sh"
+    : > "$custom/modules/lib/runtime_reuse.sh"
+    : > "$custom/modules/lib/domain_sources.sh"
+    : > "$custom/modules/config/domain_planner.sh"
+    : > "$custom/modules/config/add_clients.sh"
+    : > "$custom/modules/config/shared_helpers.sh"
+    : > "$custom/modules/install/bootstrap.sh"
+
+    real_stat="$(command -v stat)"
+    cat > "$tmp/mockbin/stat" << EOF
+#!/usr/bin/env bash
+if [[ "\${1:-}" == "-c" && "\${2:-}" == "%a" ]]; then
+    echo 755
+    exit 0
+fi
+exec "$real_stat" "\$@"
+EOF
+    chmod +x "$tmp/mockbin/stat"
+
+    cp ./xray-reality.sh "$tmp/xray-reality.sh"
+    chmod +x "$tmp/xray-reality.sh"
+
+    PATH="$tmp/mockbin:$PATH" \
+      XRAY_DATA_DIR="$custom" \
+      XRAY_ALLOW_CUSTOM_DATA_DIR=true \
+      bash "$tmp/xray-reality.sh" --help
+  '
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"wrapper-ok"* ]]
+}
+
+@test "wrapper rejects custom XRAY_DATA_DIR with unsafe permissions even with opt-in" {
+    run bash -eo pipefail -c '
+    set -euo pipefail
+    tmp="$(mktemp -d)"
+    custom="$tmp/custom-data"
+    mkdir -p "$custom/modules/lib" "$custom/modules/config" "$custom/modules/install" "$tmp/mockbin"
+
+    cat > "$custom/lib.sh" << '"'"'EOF'"'"'
+#!/usr/bin/env bash
+MODULE_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+main() { echo "wrapper-ok"; }
+EOF
+    chmod +x "$custom/lib.sh"
+    : > "$custom/install.sh"
+    : > "$custom/config.sh"
+    : > "$custom/service.sh"
+    : > "$custom/health.sh"
+    : > "$custom/export.sh"
+    : > "$custom/modules/lib/validation.sh"
+    : > "$custom/modules/lib/common_utils.sh"
+    : > "$custom/modules/lib/globals_contract.sh"
+    : > "$custom/modules/lib/firewall.sh"
+    : > "$custom/modules/lib/lifecycle.sh"
+    : > "$custom/modules/lib/runtime_reuse.sh"
+    : > "$custom/modules/lib/domain_sources.sh"
+    : > "$custom/modules/config/domain_planner.sh"
+    : > "$custom/modules/config/add_clients.sh"
+    : > "$custom/modules/config/shared_helpers.sh"
+    : > "$custom/modules/install/bootstrap.sh"
+
+    real_stat="$(command -v stat)"
+    cat > "$tmp/mockbin/stat" << EOF
+#!/usr/bin/env bash
+if [[ "\${1:-}" == "-c" && "\${2:-}" == "%a" ]]; then
+    echo 777
+    exit 0
+fi
+exec "$real_stat" "\$@"
+EOF
+    chmod +x "$tmp/mockbin/stat"
+
+    cp ./xray-reality.sh "$tmp/xray-reality.sh"
+    chmod +x "$tmp/xray-reality.sh"
+
+    PATH="$tmp/mockbin:$PATH" \
+      XRAY_DATA_DIR="$custom" \
+      XRAY_ALLOW_CUSTOM_DATA_DIR=true \
+      bash "$tmp/xray-reality.sh" --help
+  '
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"XRAY_DATA_DIR has unsafe permissions"* ]]
+}
+
+@test "wrapper keeps default trusted SCRIPT_DIR flow without custom opt-in" {
+    run bash -eo pipefail -c '
+    set -euo pipefail
+    tmp="$(mktemp -d)"
+    mkdir -p "$tmp/modules/lib" "$tmp/modules/config" "$tmp/modules/install"
+
+    cat > "$tmp/lib.sh" << '"'"'EOF'"'"'
+#!/usr/bin/env bash
+MODULE_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+main() { echo "wrapper-ok"; }
+EOF
+    chmod +x "$tmp/lib.sh"
+    : > "$tmp/install.sh"
+    : > "$tmp/config.sh"
+    : > "$tmp/service.sh"
+    : > "$tmp/health.sh"
+    : > "$tmp/export.sh"
+    : > "$tmp/modules/lib/validation.sh"
+    : > "$tmp/modules/lib/common_utils.sh"
+    : > "$tmp/modules/lib/globals_contract.sh"
+    : > "$tmp/modules/lib/firewall.sh"
+    : > "$tmp/modules/lib/lifecycle.sh"
+    : > "$tmp/modules/lib/runtime_reuse.sh"
+    : > "$tmp/modules/lib/domain_sources.sh"
+    : > "$tmp/modules/config/domain_planner.sh"
+    : > "$tmp/modules/config/add_clients.sh"
+    : > "$tmp/modules/config/shared_helpers.sh"
+    : > "$tmp/modules/install/bootstrap.sh"
+
+    cp ./xray-reality.sh "$tmp/xray-reality.sh"
+    chmod +x "$tmp/xray-reality.sh"
+
+    XRAY_ALLOW_CUSTOM_DATA_DIR=false bash "$tmp/xray-reality.sh" --help
+  '
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"wrapper-ok"* ]]
 }
 
 @test "wrapper maps legacy main ref to ubuntu and falls back to ref clone in non-strict mode" {

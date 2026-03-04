@@ -123,10 +123,20 @@ Legacy aliases `global-ms10` and `global-ms10-auto` are still accepted for backw
 ```
 
 `XRAY_DATA_DIR` is not an arbitrary trusted code source in wrapper mode.  
-Wrapper code sourcing is restricted to:
+Wrapper code sourcing is restricted by default to:
 
 - current script directory (`SCRIPT_DIR`)
 - `/usr/local/share/xray-reality`
+
+For a custom module source directory, explicit opt-in is required:
+
+```bash
+XRAY_ALLOW_CUSTOM_DATA_DIR=true XRAY_DATA_DIR=/secure/path bash /tmp/xray-reality.sh install
+```
+
+Security requirement for custom source path:
+
+- directory must not be group/other writable
 
 ## Documentation map
 

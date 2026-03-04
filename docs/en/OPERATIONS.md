@@ -26,6 +26,8 @@ Migration note: legacy `main` is supported as a temporary alias for one release 
 - default `install`, `update`, and `repair` expect working `systemd`
 - for constrained environments, use `--allow-no-systemd`
 - for fail-closed signature policy, use `--require-minisign`
+- custom wrapper source path requires explicit opt-in:
+  `XRAY_ALLOW_CUSTOM_DATA_DIR=true XRAY_DATA_DIR=/secure/path`
 
 ## Public release sanity checklist (Ubuntu 24.04 LTS)
 
