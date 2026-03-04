@@ -173,7 +173,13 @@ jobs:
           set -euo pipefail
           COMPLEXITY_STAGE=3 bash scripts/check-shell-complexity.sh
       - name: BATS
-        run: bats tests/bats
+        run: |
+          set -euo pipefail
+          if bats --help | grep -q -- '--print-output-on-failure'; then
+            bats --print-output-on-failure tests/bats
+          else
+            bats tests/bats
+          fi
 
   packages-tag-scenario:
     name: packages tag scenario

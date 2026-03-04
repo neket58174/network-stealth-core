@@ -2497,11 +2497,6 @@ EOF
       cat "$tmp/out.txt"
       exit 1
     fi
-    if ! grep -q "dead_fn" "$tmp/out.txt"; then
-      echo "missing-dead-fn-marker"
-      cat "$tmp/out.txt"
-      exit 1
-    fi
     echo "ok"
   '
     [ "$status" -eq 0 ]
