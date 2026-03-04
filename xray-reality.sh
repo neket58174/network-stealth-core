@@ -52,6 +52,49 @@ parse_bootstrap_bool() {
     esac
 }
 
+normalize_wrapper_path() {
+    local path="${1:-}"
+    [[ -n "$path" ]] || return 1
+    if command -v realpath > /dev/null 2>&1; then
+        realpath -m -- "$path" 2> /dev/null && return 0
+    fi
+    if command -v readlink > /dev/null 2>&1; then
+        readlink -f -- "$path" 2> /dev/null && return 0
+    fi
+    if [[ "$path" == "/" ]]; then
+        printf '/\n'
+    else
+        printf '%s\n' "${path%/}"
+    fi
+}
+
+is_trusted_wrapper_source_dir() {
+    local candidate="${1:-}"
+    local candidate_norm=""
+    local script_norm=""
+    local default_norm=""
+
+    candidate_norm=$(normalize_wrapper_path "$candidate" || true)
+    script_norm=$(normalize_wrapper_path "${SCRIPT_DIR:-}" || true)
+    default_norm=$(normalize_wrapper_path "$DEFAULT_DATA_DIR" || true)
+
+    [[ -n "$candidate_norm" ]] || return 1
+    [[ -n "$default_norm" && "$candidate_norm" == "$default_norm" ]] && return 0
+    [[ -n "$script_norm" && "$candidate_norm" == "$script_norm" ]] && return 0
+    return 1
+}
+
+validate_wrapper_data_dir_trust() {
+    if is_trusted_wrapper_source_dir "$XRAY_DATA_DIR"; then
+        return 0
+    fi
+
+    echo "ERROR: XRAY_DATA_DIR is untrusted for code sourcing: ${XRAY_DATA_DIR:-<empty>}" >&2
+    echo "Allowed code-source paths: ${DEFAULT_DATA_DIR} or SCRIPT_DIR (${SCRIPT_DIR:-<empty>})" >&2
+    echo "Unset XRAY_DATA_DIR or set it to a trusted path before running wrapper." >&2
+    exit 1
+}
+
 parse_wrapper_args() {
     local args=("$@")
     local i=0
@@ -302,6 +345,7 @@ is_commit_ref() {
 parse_wrapper_args "$@"
 BOOTSTRAP_DEFAULT_REF=$(normalize_bootstrap_default_ref "$BOOTSTRAP_DEFAULT_REF")
 REPO_REF=$(normalize_repo_ref_alias "$REPO_REF")
+validate_wrapper_data_dir_trust
 
 LIB_PATH=""
 for dir in "$SCRIPT_DIR" "$XRAY_DATA_DIR"; do

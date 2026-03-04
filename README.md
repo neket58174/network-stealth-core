@@ -122,6 +122,12 @@ Legacy aliases `global-ms10` and `global-ms10-auto` are still accepted for backw
 --verbose
 ```
 
+`XRAY_DATA_DIR` is not an arbitrary trusted code source in wrapper mode.  
+Wrapper code sourcing is restricted to:
+
+- current script directory (`SCRIPT_DIR`)
+- `/usr/local/share/xray-reality`
+
 ## Documentation map
 
 | Path | Purpose |

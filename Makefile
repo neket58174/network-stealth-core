@@ -23,9 +23,11 @@ WORKFLOWS := .github/workflows/ci.yml .github/workflows/nightly-smoke.yml .githu
 
 lint:
 	command -v shellcheck >/dev/null
+	command -v bashate >/dev/null
 	command -v shfmt >/dev/null
 	command -v actionlint >/dev/null
 	shellcheck -x -e SC1091 $(SHELL_SOURCES) $(TEST_SOURCES)
+	bashate -i E003,E006,E042,E043 $(SHELL_SOURCES) $(TEST_SOURCES)
 	shfmt -d -i 4 -ci -sr $(SHELL_SOURCES) $(TEST_SOURCES)
 	actionlint -oneline $(WORKFLOWS)
 	bash scripts/check-dead-functions.sh

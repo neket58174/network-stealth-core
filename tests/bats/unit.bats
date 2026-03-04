@@ -2443,6 +2443,8 @@ EOF
     grep -q '\''check-workflow-pinning.sh'\'' ./Makefile
     grep -q '\''check-security-baseline.sh'\'' ./Makefile
     grep -q '\''check-docs-commands.sh'\'' ./Makefile
+    grep -q '\''command -v bashate'\'' ./Makefile
+    grep -q '\''bashate -i E003,E006,E042,E043'\'' ./Makefile
     echo "ok"
   '
     [ "$status" -eq 0 ]
@@ -2456,6 +2458,78 @@ EOF
   '
     [ "$status" -eq 0 ]
     [ "$output" = "ok" ]
+}
+
+@test "dead-function checker ignores comment and string mentions" {
+    run bash -eo pipefail -c '
+    set -euo pipefail
+    tmp="$(mktemp -d)"
+    trap "rm -rf \"$tmp\"" EXIT
+    mkdir -p "$tmp/scripts" "$tmp/modules/lib" "$tmp/modules/config" "$tmp/modules/install"
+
+    cp ./scripts/check-dead-functions.sh "$tmp/scripts/check-dead-functions.sh"
+    chmod +x "$tmp/scripts/check-dead-functions.sh"
+
+    for f in xray-reality.sh install.sh config.sh service.sh health.sh export.sh; do
+      cat > "$tmp/$f" <<'"'"'EOF'"'"'
+#!/usr/bin/env bash
+:
+EOF
+    done
+
+    cat > "$tmp/lib.sh" <<'"'"'EOF'"'"'
+#!/usr/bin/env bash
+alive_fn() { :; }
+dead_fn() { :; }
+alive_fn
+echo "dead_fn appears in string"
+# dead_fn appears in comment
+EOF
+
+    if (cd "$tmp/scripts" && bash ./check-dead-functions.sh > "$tmp/out.txt" 2>&1); then
+      echo "unexpected-success"
+      cat "$tmp/out.txt"
+      exit 1
+    fi
+
+    grep -q "dead-function-check: found functions without call sites" "$tmp/out.txt"
+    echo "ok"
+  '
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"ok"* ]]
+}
+
+@test "dead-function checker accepts real shell call sites" {
+    run bash -eo pipefail -c '
+    set -euo pipefail
+    tmp="$(mktemp -d)"
+    trap "rm -rf \"$tmp\"" EXIT
+    mkdir -p "$tmp/scripts" "$tmp/modules/lib" "$tmp/modules/config" "$tmp/modules/install"
+
+    cp ./scripts/check-dead-functions.sh "$tmp/scripts/check-dead-functions.sh"
+    chmod +x "$tmp/scripts/check-dead-functions.sh"
+
+    for f in xray-reality.sh install.sh config.sh service.sh health.sh export.sh; do
+      cat > "$tmp/$f" <<'"'"'EOF'"'"'
+#!/usr/bin/env bash
+:
+EOF
+    done
+
+    cat > "$tmp/lib.sh" <<'"'"'EOF'"'"'
+#!/usr/bin/env bash
+alive_fn() { :; }
+dead_fn() { :; }
+alive_fn
+dead_fn
+EOF
+
+    (cd "$tmp/scripts" && bash ./check-dead-functions.sh > "$tmp/out.txt" 2>&1)
+    grep -q "dead-function-check: ok" "$tmp/out.txt"
+    echo "ok"
+  '
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"ok"* ]]
 }
 
 @test "dockerfile runs non-root and defines healthcheck" {

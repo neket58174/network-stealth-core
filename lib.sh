@@ -566,13 +566,13 @@ normalize_yes_no_token() {
 
 normalize_yes_token_hint() {
     local value
-    value=$(canonicalize_confirmation_token "${1:-}")
+    value=$(normalize_yes_no_token "${1:-}")
     printf '%s' "$value"
 }
 
 is_yes_input() {
     local value
-    value=$(canonicalize_confirmation_token "${1:-}")
+    value=$(normalize_yes_token_hint "${1:-}")
     case "$value" in
         yes | y | da | d) return 0 ;;
         *) return 1 ;;
@@ -581,7 +581,7 @@ is_yes_input() {
 
 is_no_input() {
     local value
-    value=$(canonicalize_confirmation_token "${1:-}")
+    value=$(normalize_yes_no_token "${1:-}")
     case "$value" in
         no | n | net) return 0 ;;
         *) return 1 ;;
@@ -615,12 +615,13 @@ prompt_yes_no_from_tty() {
         if [[ -z "$normalized" ]]; then
             return 1
         fi
-        token=$(canonicalize_confirmation_token "$normalized")
-        case "$token" in
-            yes | y | da | d) return 0 ;;
-            no | n | net) return 1 ;;
-            *) ;;
-        esac
+        token=$(normalize_yes_no_token "$normalized")
+        if is_yes_input "$token"; then
+            return 0
+        fi
+        if is_no_input "$token"; then
+            return 1
+        fi
         if ! tty_printf "$tty_fd" '%s\n' "$retry_text"; then
             return 2
         fi

@@ -213,6 +213,18 @@ EOF
     [ "$status" -eq 0 ]
 }
 
+@test "wrapper rejects untrusted XRAY_DATA_DIR for code sourcing" {
+    run bash -eo pipefail -c '
+    set -euo pipefail
+    tmp="$(mktemp -d)"
+    cp ./xray-reality.sh "$tmp/xray-reality.sh"
+    chmod +x "$tmp/xray-reality.sh"
+    XRAY_DATA_DIR="$tmp/untrusted-data" bash "$tmp/xray-reality.sh" --help
+  '
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"XRAY_DATA_DIR is untrusted for code sourcing"* ]]
+}
+
 @test "wrapper maps legacy main ref to ubuntu and falls back to ref clone in non-strict mode" {
     run bash -eo pipefail -c '
     set -euo pipefail
