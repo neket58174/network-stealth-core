@@ -30,10 +30,11 @@ done
 
 for def in "${DEFS[@]}"; do
     IFS='|' read -r file line fn <<< "$def"
+    def_base="$(basename "$file")"
     pattern="(^|[^A-Za-z0-9_])${fn}([^A-Za-z0-9_]|$)"
     matches="$(rg -n --pcre2 "$pattern" "${FILES[@]}" || true)"
 
-    calls="$(printf '%s\n' "$matches" | awk -v fn="$fn" '
+    calls="$(printf '%s\n' "$matches" | awk -v fn="$fn" -v def_file="$file" -v def_line="$line" -v def_base="$def_base" '
         function strip_shell_literals(s,    out, i, ch, state, sq, cmd_depth) {
             out = ""
             state = "code"
@@ -112,12 +113,22 @@ for def in "${DEFS[@]}"; do
             return out
         }
         {
-            text=$0
-            if (match(text, /:[0-9]+:/)) {
-                text=substr(text, RSTART + RLENGTH)
+            raw=$0
+            if (match(raw, /:[0-9]+:/)) {
+                match_file=substr(raw, 1, RSTART - 1)
+                match_line=substr(raw, RSTART + 1, RLENGTH - 2)
+                text=substr(raw, RSTART + RLENGTH)
             } else {
                 next
             }
+
+            # Always ignore the exact function definition location.
+            # Fallback by basename+line keeps behavior stable when path renderings differ
+            # between shells (for example, /tmp/... vs C:/... under mingw).
+            if ((match_file == def_file || (match_file ~ ("(^|/)" def_base "$"))) && match_line == def_line) {
+                next
+            }
+
             clean=strip_shell_literals(text)
             if (clean ~ "^[[:space:]]*$") {
                 next
