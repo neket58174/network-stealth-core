@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Network Stealth Core 4.2.3 - Автоматизация установки и сопровождения Xray Reality (xhttp-first + Reality)
+# Network Stealth Core 5.1.0 - Автоматизация установки и сопровождения Xray Reality (xhttp-first + Reality)
 
 set -euo pipefail
 
 SCRIPT_DIR="${SCRIPT_DIR:-$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)}"
 
-readonly SCRIPT_VERSION="4.2.3"
+readonly SCRIPT_VERSION="5.1.0"
 readonly SCRIPT_NAME="Network Stealth Core"
 
 XRAY_USER="xray"

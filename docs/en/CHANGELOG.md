@@ -7,6 +7,19 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
+## [5.1.0] - 2026-03-07
+
+### Changed
+
+- made `install` a minimal xhttp-first default path with `ru-auto` and auto-selected config count
+- moved manual profile/count prompts behind `install --advanced`
+- added `migrate-stealth` as the supported managed migration path from legacy `grpc/http2`
+- promoted `clients.json` schema v2 with per-config `variants[]`
+- generated xhttp client artifacts as `recommended (auto)` and `rescue (packet-up)` variants
+- exported raw per-variant xray client json files under `export/raw-xray/`
+- expanded lifecycle coverage for minimal install, advanced install, and legacy-to-xhttp migration paths
+- refreshed the bilingual docs set to reflect the xhttp-first baseline and legacy-transport compatibility window
+
 ## [4.2.3] - 2026-03-06
 
 ### Changed

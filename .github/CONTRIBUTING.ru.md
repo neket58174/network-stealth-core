@@ -2,24 +2,34 @@
 
 Спасибо за вклад в **Network Stealth Core**.
 
-Этот документ описывает базовый рабочий процесс, который нужен для безопасных и проверяемых изменений.
+Этот документ описывает рабочий процесс для безопасных и проверяемых изменений.
 
 ## Базовые правила
 
 - коммиты должны быть узкими и понятными
 - rollback и security-поведение нельзя ломать
-- изменение функционала должно сопровождаться тестами и обновлением документации
-- несовместимые изменения без явной фиксации недопустимы
+- tests и docs нужно обновлять вместе с поведением
+- скрытые compatibility-breaks недопустимы
+
+## Текущий продуктовый baseline
+
+Перед изменением поведения считайте публичными такие контракты:
+
+- `install` = минимальный xhttp-first strongest-default путь
+- `install --advanced` = ручная установка через prompt’ы
+- `migrate-stealth` = штатная managed-миграция с legacy `grpc/http2`
+- `clients.json` = schema v2 с `variants[]` для каждого конфига
+- `export/raw-xray/` = raw xray client json по вариантам
 
 ## Локальная подготовка
 
 ### Что нужно
 
-- Linux или WSL
-- Bash 4.3+
-- Git
+- linux или wsl
+- bash 4.3+
+- git
 - `shellcheck`, `shfmt`, `bats`, `actionlint`
-- Node.js (или `npx`) для markdown lint
+- node.js (или `npx`) для markdown lint
 
 ### Клонирование и upstream
 
@@ -30,9 +40,25 @@ git remote add upstream https://github.com/neket371/network-stealth-core.git
 git fetch upstream
 ```
 
-## Обязательные проверки
+## Структура репозитория
 
-Перед `push`:
+| Путь | Назначение |
+|---|---|
+| `xray-reality.sh` | bootstrap wrapper |
+| `lib.sh` | runtime core и dispatcher |
+| `install.sh` | dependency setup и lifecycle entrypoints |
+| `config.sh` | генерация конфигурации и клиентских артефактов |
+| `service.sh` | systemd, firewall и runtime status |
+| `health.sh` | health monitor и diagnostics |
+| `export.sh` | шаблоны клиентских export-файлов |
+| `modules/` | переиспользуемые модули |
+| `tests/bats/` | shell unit и integration tests |
+| `tests/e2e/` | lifecycle и migration сценарии |
+| `docs/` | двуязычная документация |
+
+## Обязательные локальные проверки
+
+Перед push:
 
 ```bash
 make lint
@@ -49,44 +75,44 @@ bats tests/bats
 bash scripts/check-release-consistency.sh
 ```
 
-## Политика сложности shell-кода
+## Стандарты кода
 
-В репозитории действует поэтапный complexity-gate для shell.
-
-- лимит stage 3: файл <= 2800 строк
-- лимит stage 3: функция <= 320 строк
-
-Если `lib.sh` растёт, лимиты не ослабляются. Логику нужно выносить в `modules/lib/*.sh` без изменения runtime-контрактов.
-
-## Стандарты shell-кода
-
-1. код должен быть безопасен под `set -euo pipefail`
+1. shell-код должен быть безопасен под `set -euo pipefail`
 2. переменные должны быть корректно экранированы
-3. не использовать `eval` для пользовательского ввода
-4. использовать общие валидаторы и утилиты
-5. критичные файлы писать атомарно
-6. мутации обязаны оставаться rollback-safe
+3. нельзя использовать `eval` для пользовательского ввода
+4. нужно переиспользовать общие валидаторы
+5. критичные файлы нужно писать атомарно
+6. мутирующие потоки обязаны оставаться rollback-safe
 
-## Риски повышенного внимания
+## Зоны повышенного риска
+
+Изменения в этих местах требуют усиленного покрытия:
 
 - bootstrap и download verification
 - права доступа и пути
 - генерация unit-файлов systemd
 - применение и rollback firewall
 - backup stack и cleanup traps
+- миграция между legacy transport и xhttp
+- клиентские артефакты и export-пути
 
-## Checklist для PR
+## Ожидания по тестам
 
-- [ ] локальные проверки зелёные (`make ci`)
-- [ ] изменённое поведение покрыто тестами
-- [ ] пользовательская документация обновлена
-- [ ] `docs/en/CHANGELOG.md` дополнен при необходимости
-- [ ] секреты не попали в коммит
-- [ ] rollback и security-контракты сохранены
+- каждое изменение поведения должно включать или обновлять bats-покрытие
+- lifecycle-чувствительные изменения должны включать e2e-проверки
+- docs update обязан проходить markdown lint и docs command contract checks
+
+Полезные таргетированные прогоны:
+
+```bash
+bats tests/bats/unit.bats
+bats tests/bats/integration.bats
+bats tests/bats/transport.bats
+```
 
 ## Обновление документации
 
-Обычно затрагиваются:
+Изменения поведения обычно затрагивают:
 
 - `README.md`
 - `README.ru.md`
@@ -95,9 +121,28 @@ bash scripts/check-release-consistency.sh
 - `.github/CONTRIBUTING.md`
 - `.github/SECURITY.md`
 
+Если изменение касается install-контракта, миграции или артефактов, обновляйте обе языковые версии в том же проходе.
+
+## Ожидания по release metadata
+
+Если вы готовите релиз:
+
+- обновите `SCRIPT_VERSION`
+- обновите release markers в wrapper и readme
+- добавьте совпадающие секции в оба changelog
+- не ставьте тег, пока branch ci не зеленый
+
+## Checklist для pull request
+
+- [ ] локальные проверки зелёные (`make ci`)
+- [ ] tests покрывают измененное поведение
+- [ ] docs обновлены для пользовательских изменений
+- [ ] оба changelog обновлены, если затронуты release metadata
+- [ ] секреты не попали в коммит
+- [ ] rollback и security-контракты сохранены
+
 ## Сообщение об уязвимостях
 
 Публичные issue для уязвимостей не создаются.
 
-Используйте private vulnerability reporting в GitHub.  
-См. [.github/SECURITY.ru.md](SECURITY.ru.md).
+Используйте GitHub private vulnerability reporting. См. [SECURITY.ru.md](SECURITY.ru.md).

@@ -6,8 +6,8 @@ This document defines the security posture and disclosure process for **Network 
 
 | Version line | Status |
 |---|---|
-| `4.2.x` | supported |
-| `<4.2` | unsupported in this repository |
+| `5.1.x` | supported |
+| `<5.1` | unsupported in this repository |
 
 ## Reporting vulnerabilities
 
@@ -15,28 +15,29 @@ Use responsible disclosure:
 
 1. do not open public issues for security bugs
 2. use GitHub private vulnerability reporting
-3. include impact, reproduction steps, affected version or commit, and optional patch proposal
+3. include impact, reproduction steps, affected version or commit, and an optional patch proposal
 
 Target response windows:
 
 - initial triage: up to 48 hours
 - critical patch target: up to 7 days
 
-## Threat model (practical)
+## Practical threat model
 
 | Threat | Mitigation |
 |---|---|
 | bootstrap and download tampering | pinned bootstrap support, SHA256 checks, optional strict minisign mode |
 | command or path injection | strict validators and safe path guards |
 | partial write corruption | atomic writes and staged validation |
-| failed update or install | rollback stack and runtime reconciliation |
+| failed update, repair, or migration | rollback stack and runtime reconciliation |
 | service over-privilege | dedicated `xray` user and restrictive `systemd` settings |
+| stale client artifact exposure | strict permissions plus full artifact rebuild from managed config |
 
 ## Security controls
 
 ### Integrity and download surface
 
-- HTTPS-only download flows with strict validation
+- https-only download flows with strict validation
 - allowlisted critical hosts (`DOWNLOAD_HOST_ALLOWLIST`)
 - artifact integrity checks (`sha256`, optional strict `REQUIRE_MINISIGN=true`)
 - pinned minisign trust anchor with fingerprint check (`MINISIGN_KEY`)
@@ -70,10 +71,16 @@ Project unit applies controls such as:
 Validation coverage includes:
 
 - domain, port, IPv4, IPv6 formats
-- gRPC service names
+- gRPC service names and xhttp path normalization
 - destructive operation path safety
 - URL and schedule format checks
 - runtime range constraints
+
+### Artifact safety
+
+- `clients.json` is schema v2 and remains permission-restricted
+- xhttp-first installs generate per-config variants instead of one ambiguous client link
+- raw xray exports are rebuilt from managed config and stored under restricted paths
 
 ### Rollback safety
 
@@ -91,8 +98,9 @@ Validation coverage includes:
 | `/etc/xray-reality/config.env` | `root:root` | `0600` | runtime snapshot |
 | `/etc/xray/private` | `root:xray` | `0750` | sensitive root directory |
 | `/etc/xray/private/keys/keys.txt` | `root:root` | `0400` | private key material |
-| `/etc/xray/private/keys/clients.txt` | `root:xray` | `0640` | client links |
-| `/etc/xray/private/keys/clients.json` | `root:xray` | `0640` | structured client metadata |
+| `/etc/xray/private/keys/clients.txt` | `root:xray` | `0640` | human-readable client summary |
+| `/etc/xray/private/keys/clients.json` | `root:xray` | `0640` | structured client metadata (`schema_version: 2`) |
+| `/etc/xray/private/keys/export/raw-xray/*.json` | `root:xray` | `0640` | raw xray client artifacts |
 | `/var/backups/xray` | `root:root` | `0700` | rollback sessions |
 
 ## Risky overrides
@@ -108,7 +116,7 @@ These flags weaken default guarantees and should be temporary:
 ## Operational recommendations
 
 1. prefer tagged releases for production-like deployments
-2. update regularly within maintenance windows
+2. keep legacy `grpc/http2` installs on a short migration window
 3. monitor `journalctl -u xray` and health logs
 4. restrict shell and admin access to the host
 5. rotate or redeploy when compromise is suspected
@@ -123,4 +131,4 @@ Security-sensitive behavior is covered by:
 - export schema validation
 - CI audit gates and docs command contract checks
 
-For operations-side incident response, see [docs/en/OPERATIONS.md](../docs/en/OPERATIONS.md).
+For operations-side incident response, see [../docs/en/OPERATIONS.md](../docs/en/OPERATIONS.md).

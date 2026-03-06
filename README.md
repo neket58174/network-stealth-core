@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/neket371/network-stealth-core/releases"><img alt="release" src="https://img.shields.io/badge/release-v4.2.3-0f766e"></a>
+  <a href="https://github.com/neket371/network-stealth-core/releases"><img alt="release" src="https://img.shields.io/badge/release-v5.1.0-0f766e"></a>
   <a href="LICENSE"><img alt="license" src="https://img.shields.io/badge/license-MIT-97ca00"></a>
   <a href="docs/en/OPERATIONS.md"><img alt="platform" src="https://img.shields.io/badge/platform-ubuntu%2024.04-1d4ed8"></a>
   <a href="Makefile"><img alt="qa" src="https://img.shields.io/badge/qa-make%20ci-334155"></a>
@@ -86,7 +86,7 @@ Legacy alias note:
 
 | Command | Description |
 |---|---|
-| `install` | Full stack install |
+| `install` | Minimal xhttp-first install |
 | `migrate-stealth` | Migrate managed legacy `grpc/http2` install to `xhttp` |
 | `add-clients [N]` | Add `N` client configurations |
 | `add-keys [N]` | Alias to `add-clients` |
@@ -132,6 +132,13 @@ contract notes:
 - `install` = minimal xhttp-first path (`ru-auto`, strongest default)
 - `install --advanced` = manual profile/count prompts for power users
 - `migrate-stealth` = supported conversion path for managed legacy `grpc/http2` installs
+
+artifact contract:
+
+- `clients.json` now uses `schema_version: 2`
+- each config stores `variants[]`
+- xhttp-first installs generate `recommended (auto)` and `rescue (packet-up)` variants
+- raw per-variant xray json files are exported under `export/raw-xray/`
 
 `XRAY_DATA_DIR` is not an arbitrary trusted code source in wrapper mode.  
 Wrapper code sourcing is restricted by default to:

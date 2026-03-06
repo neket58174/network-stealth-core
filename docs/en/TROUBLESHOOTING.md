@@ -1,12 +1,8 @@
 # Troubleshooting
 
-Use this guide when installation or runtime behavior is not as expected.
+Use this guide when installation, migration, or runtime behavior is not as expected.
 
 ## 1. Install aborted
-
-### Symptom
-
-Install stops with `operation aborted` and points to install log.
 
 ### Checks
 
@@ -19,9 +15,45 @@ sudo xray-reality.sh diagnose
 
 - missing dependencies or broken package mirrors
 - no writable target path
-- invalid existing config that fails safety checks
+- existing runtime files that fail safety validation
 
-## 2. Service is active but expected ports are not listening
+## 2. Unexpected manual prompts during install
+
+Default `install` should follow the minimal xhttp-first path.
+
+If you need manual profile or config-count prompts, run:
+
+```bash
+sudo xray-reality.sh install --advanced
+```
+
+If automation unexpectedly blocks on prompts, add:
+
+```bash
+--yes --non-interactive
+```
+
+## 3. Status shows `legacy transport`
+
+### Meaning
+
+The managed install still uses legacy `grpc` or `http2`.
+
+### Recommended action
+
+```bash
+sudo xray-reality.sh status --verbose
+sudo xray-reality.sh migrate-stealth --non-interactive --yes
+sudo xray-reality.sh status --verbose
+```
+
+Expected post-state:
+
+- `Transport: xhttp`
+- no `legacy transport` warning
+- rebuilt client artifacts and raw xray exports
+
+## 4. Service is active but expected ports are not listening
 
 ### Checks
 
@@ -34,9 +66,9 @@ sudo ss -tlnp | grep xray
 
 ### Typical causes
 
-- conflicting systemd drop-ins overriding `ExecStart` or user/group
+- conflicting systemd drop-ins overriding `ExecStart` or runtime user
 - stale config not matching generated client artifacts
-- firewall mismatch after external changes
+- firewall drift after external changes
 
 ### Recovery
 
@@ -44,7 +76,50 @@ sudo ss -tlnp | grep xray
 sudo xray-reality.sh repair --non-interactive --yes
 ```
 
-## 3. Minisign warning appears
+## 5. Client artifacts look inconsistent
+
+### Symptoms
+
+- `clients.txt` and `clients.json` disagree
+- expected `recommended` / `rescue` variants are missing
+- `export/raw-xray/` files are absent or stale
+
+### Recovery
+
+```bash
+sudo xray-reality.sh repair --non-interactive --yes
+sudo xray-reality.sh status --verbose
+```
+
+Then inspect:
+
+- `/etc/xray/private/keys/clients.txt`
+- `/etc/xray/private/keys/clients.json`
+- `/etc/xray/private/keys/export/raw-xray/`
+
+## 6. `migrate-stealth` fails
+
+### Checks
+
+```bash
+sudo journalctl -u xray -n 200 --no-pager
+sudo xray -test -c /etc/xray/config.json
+sudo xray-reality.sh diagnose
+```
+
+### Common causes
+
+- existing managed config is already broken before migration
+- local artifacts were manually changed outside the managed flow
+- systemd or firewall state is already inconsistent
+
+### Safe fallback
+
+```bash
+sudo xray-reality.sh rollback
+```
+
+## 7. Minisign warning appears
 
 ### Meaning
 
@@ -52,21 +127,24 @@ Release did not expose minisign signature or local verifier was unavailable.
 
 ### What to do
 
-- for strict environments, run with `--require-minisign`
-- otherwise allow SHA256-only flow explicitly
+- for strict environments, use `--require-minisign`
+- otherwise continue only if SHA256-only mode is acceptable in your threat model
 
-## 4. DNS timeout errors in client logs
+## 8. DNS timeout errors in client logs
 
-### Symptom
+### Symptoms
 
-Client shows repeated `dns: exchange failed ... context deadline exceeded`.
+Repeated client-side errors like:
+
+- `dns: exchange failed`
+- `context deadline exceeded`
 
 ### Checklist
 
-- validate server is reachable from client network
-- test with another generated config/profile
-- verify local client DNS strategy and outbound DNS rules
-- check if local network blocks selected upstream DNS
+- test another generated config or the `rescue` variant
+- verify the server is reachable from the client network
+- review local client DNS strategy and outbound rules
+- confirm local network does not block the chosen DNS path
 
 Server-side quick check:
 
@@ -75,23 +153,24 @@ sudo xray-reality.sh status
 sudo journalctl -u xray -n 200 --no-pager
 ```
 
-## 5. Uninstall prompt behaves unexpectedly
+## 9. Uninstall confirmation behaves unexpectedly
 
 If confirmation input is not accepted:
 
-- type plain `yes` or `no` (without quotes)
+- type plain `yes` or `no`
 - avoid pasted text with hidden characters
-- use non-interactive mode for automation:
+- use automation-safe mode when appropriate:
 
 ```bash
 sudo xray-reality.sh uninstall --yes --non-interactive
 ```
 
-## 6. Last-resort recovery
+## 10. Last-resort recovery
 
 ```bash
 sudo xray-reality.sh rollback
 sudo xray-reality.sh status
+sudo xray-reality.sh diagnose
 ```
 
-If rollback does not restore service behavior, collect diagnostics and open an issue with sanitized logs/config.
+If rollback does not restore service behavior, open an issue with sanitized logs and exact commands.

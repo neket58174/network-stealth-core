@@ -2,34 +2,43 @@
 
 This roadmap is a directional public plan, not a strict delivery promise.
 
-## Current priorities
+## Current baseline
 
-1. Reliability of install/update/repair flows
-2. Deterministic rollback under edge-case failures
-3. Better operator observability and diagnostics
-4. Documentation quality for public onboarding
+v5.1.0 establishes:
 
-## Near-term work
+- minimal xhttp-first install as the strongest default
+- `install --advanced` for manual prompt-driven setup
+- `migrate-stealth` for managed legacy migration
+- schema v2 client artifacts with per-config variants
 
-- Improve domain health telemetry readability
-- Expand targeted tests around lifecycle edge cases
-- Keep CI fast while preserving release safety gates
-- Refine prompts and UX for interactive and non-interactive modes
+## Near-term priorities
 
-## Mid-term work
+1. transport-aware health checks beyond simple listening-port validation
+2. cleaner capability matrix for client export formats
+3. more migration and rollback coverage around legacy installs
+4. tighter docs consistency across all public surfaces
 
-- Improve profile-level flexibility without breaking safe defaults
-- Add more structured diagnostics export formats
-- Better separation of policy config vs generated runtime artifacts
+## Next improvements
 
-## Out of scope (for now)
+- better domain-health readability and operator verdicts
+- more explicit compatibility notes for each client/export target
+- stronger artifact validation after `update`, `repair`, and migration
+- measurement loops for real-world RF network behavior
 
-- broad multi-OS support claims without CI validation
-- enterprise orchestration features without clear maintenance budget
-- opaque behavior changes without changelog and migration notes
+## Mid-term direction
 
-## How to influence roadmap
+- retire legacy `grpc/http2` after the compatibility window
+- separate policy inputs more clearly from generated runtime artifacts
+- add optional experimental stealth tiers without weakening the default path
 
-- open a Discussion with concrete use case and expected behavior
-- provide reproducible issue data for reliability gaps
-- submit PRs that include tests and docs
+## Out of scope for now
+
+- broad multi-os promises without ci validation
+- enterprise orchestration features without a clear maintenance budget
+- silent behavior changes without changelog and migration notes
+
+## How to influence the roadmap
+
+- open a Discussion with a concrete use case
+- attach reproducible diagnostics for reliability gaps
+- submit PRs with tests and bilingual docs updates

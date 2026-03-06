@@ -2,33 +2,46 @@
 
 Добро пожаловать в документацию **Network Stealth Core**.
 
+## С чего начать
+
+- [../../README.ru.md](../../README.ru.md) — быстрый старт и карта команд
+- [OPERATIONS.md](OPERATIONS.md) — установка, сопровождение, rollback и release-проверки
+- [TROUBLESHOOTING.md](TROUBLESHOOTING.md) — диагностика по симптомам
+
+## Текущий baseline
+
+- `install` = минимальный xhttp-first strongest-default путь
+- `install --advanced` = ручной выбор профиля и числа конфигов
+- `migrate-stealth` = managed-миграция с legacy `grpc/http2`
+- `clients.json` = schema v2 с `variants[]` для каждого конфига
+- `export/raw-xray/` = raw xray client json по вариантам
+
 ## Базовые документы
 
 | Документ | Назначение |
 |---|---|
-| [ARCHITECTURE.md](ARCHITECTURE.md) | Архитектура рантайма, контракты модулей, rollback-модель |
-| [OPERATIONS.md](OPERATIONS.md) | Эксплуатационный runbook и release-проверки |
-| [CHANGELOG.md](CHANGELOG.md) | История релизов и изменения по версиям |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | архитектура рантайма, контракты модулей, артефакты |
+| [OPERATIONS.md](OPERATIONS.md) | day-2 runbook, миграция и обслуживание |
+| [CHANGELOG.md](CHANGELOG.md) | релизные изменения и история версий |
 
-## Документы для операторов
-
-| Документ | Назначение |
-|---|---|
-| [FAQ.md](FAQ.md) | Частые вопросы и практические ответы |
-| [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | Диагностика по симптомам |
-| [GLOSSARY.md](GLOSSARY.md) | Термины, используемые в проекте |
-
-## Документы публичного репозитория
+## Документы для оператора
 
 | Документ | Назначение |
 |---|---|
-| [COMMUNITY.md](COMMUNITY.md) | Работа с комьюнити и формат взаимодействия |
-| [ROADMAP.md](ROADMAP.md) | Текущий план развития |
-| [.github/CONTRIBUTING.ru.md](../../.github/CONTRIBUTING.ru.md) | Гайд для контрибьюторов (RU) |
-| [.github/SECURITY.ru.md](../../.github/SECURITY.ru.md) | Политика безопасности (RU) |
+| [FAQ.md](FAQ.md) | частые вопросы по профилям, prompt’ам и поведению рантайма |
+| [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | восстановление после install/migration/artifact ошибок |
+| [GLOSSARY.md](GLOSSARY.md) | термины из логов, документации и скриптов |
+
+## Документы проекта
+
+| Документ | Назначение |
+|---|---|
+| [COMMUNITY.md](COMMUNITY.md) | discussions, качество issue и полевые отчёты |
+| [ROADMAP.md](ROADMAP.md) | вектор после v5 и ближние приоритеты |
+| [../../.github/CONTRIBUTING.ru.md](../../.github/CONTRIBUTING.ru.md) | процесс контрибьюта и quality-gates |
+| [../../.github/SECURITY.ru.md](../../.github/SECURITY.ru.md) | поддерживаемые версии, threat model и disclosure |
 
 ## Переключение языков
 
-- Английская документация: [../en/INDEX.md](../en/INDEX.md)
-- Главный README: [../../README.md](../../README.md)
-- Русский README: [../../README.ru.md](../../README.ru.md)
+- english docs: [../en/INDEX.md](../en/INDEX.md)
+- english readme: [../../README.md](../../README.md)

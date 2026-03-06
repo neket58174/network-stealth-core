@@ -1,35 +1,44 @@
 # Roadmap
 
-Этот roadmap отражает публичное направление развития, а не жёсткие сроки релизов.
+Этот roadmap отражает публичное направление развития, а не жесткие сроки.
 
-## Текущие приоритеты
+## Текущий baseline
 
-1. Надёжность install/update/repair сценариев
-2. Предсказуемый rollback в edge-case сбоях
-3. Улучшение диагностируемости для оператора
-4. Качественная документация для публичного onboarding
+v5.1.0 закрепляет:
 
-## Ближний горизонт
+- минимальный xhttp-first install как strongest default
+- `install --advanced` для ручной настройки через prompt’ы
+- `migrate-stealth` для managed legacy-миграции
+- schema v2 клиентских артефактов с вариантами по конфигу
 
-- Улучшить читаемость domain health telemetry
-- Расширить тесты на lifecycle edge-cases
-- Удерживать быстрый CI при сохранении release-gates
-- Отшлифовать UX prompt-сценариев для interactive/non-interactive режимов
+## Ближние приоритеты
+
+1. transport-aware health checks, а не только проверка listening-портов
+2. более честная capability-матрица клиентских export-форматов
+3. усиление migration и rollback покрытия для legacy install
+4. дальнейшая синхронизация всей публичной документации
+
+## Следующие улучшения
+
+- повысить читаемость domain-health и operator verdicts
+- сделать compatibility notes по каждому client/export target явнее
+- усилить проверку артефактов после `update`, `repair` и миграции
+- собрать measurement loop для реального поведения в рф-сетях
 
 ## Средний горизонт
 
-- Повысить гибкость профилей без ослабления safe defaults
-- Добавить более структурированный экспорт диагностики
-- Чётче разделить policy-конфиг и generated runtime артефакты
+- вывести legacy `grpc/http2` из активной продуктовой линии после compatibility window
+- четче отделить policy inputs от generated runtime artifacts
+- добавить optional experimental stealth tiers без ослабления дефолтного пути
 
 ## Пока вне scope
 
-- громкие заявления по multi-OS без CI-валидации
-- enterprise-фичи без понятного ресурса поддержки
-- неочевидные behavioral changes без changelog/migration notes
+- широкие multi-os обещания без ci-валидации
+- enterprise orchestration без понятного бюджета поддержки
+- скрытые behavioral changes без changelog и migration notes
 
-## Как повлиять на roadmap
+## Как влиять на roadmap
 
 - открыть Discussion с конкретным use-case
-- приложить воспроизводимые данные по найденному багу
-- прислать PR с тестами и обновлением документации
+- приложить воспроизводимую диагностику reliability-проблем
+- присылать PR сразу с тестами и двуязычным docs update

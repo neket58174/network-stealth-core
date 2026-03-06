@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/neket371/network-stealth-core/releases"><img alt="release" src="https://img.shields.io/badge/release-v4.2.3-0f766e"></a>
+  <a href="https://github.com/neket371/network-stealth-core/releases"><img alt="release" src="https://img.shields.io/badge/release-v5.1.0-0f766e"></a>
   <a href="LICENSE"><img alt="license" src="https://img.shields.io/badge/license-MIT-97ca00"></a>
   <a href="docs/ru/OPERATIONS.md"><img alt="platform" src="https://img.shields.io/badge/platform-ubuntu%2024.04-1d4ed8"></a>
   <a href="Makefile"><img alt="qa" src="https://img.shields.io/badge/qa-make%20ci-334155"></a>
@@ -86,7 +86,7 @@ sudo XRAY_BOOTSTRAP_DEFAULT_REF=release bash /tmp/xray-reality.sh install
 
 | Команда | Назначение |
 |---|---|
-| `install` | Полная установка |
+| `install` | Минимальная xhttp-first установка |
 | `migrate-stealth` | Миграция managed legacy `grpc/http2` установки на `xhttp` |
 | `add-clients [N]` | Добавляет `N` клиентских конфигов |
 | `add-keys [N]` | Алиас `add-clients` |
@@ -132,6 +132,13 @@ Legacy-алиасы `global-ms10` и `global-ms10-auto` пока поддерж�
 - `install` = минимальный xhttp-first путь (`ru-auto`, strongest default)
 - `install --advanced` = ручные prompt’ы для выбора профиля и числа конфигов
 - `migrate-stealth` = штатная миграция managed legacy `grpc/http2` инсталлов
+
+контракт артефактов:
+
+- `clients.json` теперь использует `schema_version: 2`
+- каждый конфиг хранит `variants[]`
+- xhttp-first install создает варианты `recommended (auto)` и `rescue (packet-up)`
+- raw xray json по вариантам экспортируются в `export/raw-xray/`
 
 `XRAY_DATA_DIR` в wrapper-режиме не является произвольным доверенным источником кода.  
 По умолчанию загрузка кода wrapper ограничена только путями:

@@ -1,12 +1,8 @@
 # Troubleshooting
 
-Этот документ помогает диагностировать сбои установки и рантайма.
+Этот документ помогает диагностировать сбои установки, миграции и рантайма.
 
 ## 1. Установка прервалась
-
-### Симптом
-
-Install завершается с ошибкой и ссылкой на install log.
 
 ### Проверки
 
@@ -17,11 +13,47 @@ sudo xray-reality.sh diagnose
 
 ### Частые причины
 
-- не установлены зависимости или проблемный mirror пакетов
+- не установлены зависимости или сломан пакетный mirror
 - нет прав на запись в целевые пути
-- существующий конфиг не проходит safety-проверки
+- существующие runtime-файлы не проходят safety-валидацию
 
-## 2. Сервис active, но порты не слушаются
+## 2. Во время install появились неожиданные ручные prompt’ы
+
+Обычный `install` должен идти по минимальному xhttp-first пути.
+
+Если нужен ручной выбор профиля и числа конфигов, запускайте:
+
+```bash
+sudo xray-reality.sh install --advanced
+```
+
+Если автоматизация неожиданно блокируется на prompt’ах, добавьте:
+
+```bash
+--yes --non-interactive
+```
+
+## 3. В `status` показан `legacy transport`
+
+### Что это значит
+
+Managed-установка все еще использует `grpc` или `http2`.
+
+### Рекомендуемое действие
+
+```bash
+sudo xray-reality.sh status --verbose
+sudo xray-reality.sh migrate-stealth --non-interactive --yes
+sudo xray-reality.sh status --verbose
+```
+
+Ожидаемое состояние после миграции:
+
+- `Transport: xhttp`
+- нет предупреждения `legacy transport`
+- артефакты и raw xray exports пересобраны
+
+## 4. Сервис active, но нужные порты не слушаются
 
 ### Проверки
 
@@ -34,9 +66,9 @@ sudo ss -tlnp | grep xray
 
 ### Частые причины
 
-- конфликтующие systemd drop-in, меняющие `ExecStart` или `User`
-- рассинхрон между `config.json` и клиентскими артефактами
-- дрейф firewall после внешних изменений
+- конфликтующие systemd drop-in меняют `ExecStart` или runtime user
+- `config.json` рассинхронизирован с клиентскими артефактами
+- после внешних изменений произошел дрейф firewall
 
 ### Восстановление
 
@@ -44,7 +76,50 @@ sudo ss -tlnp | grep xray
 sudo xray-reality.sh repair --non-interactive --yes
 ```
 
-## 3. Предупреждение по minisign
+## 5. Клиентские артефакты выглядят неконсистентно
+
+### Симптомы
+
+- `clients.txt` и `clients.json` не совпадают
+- пропали варианты `recommended` / `rescue`
+- отсутствуют или устарели файлы в `export/raw-xray/`
+
+### Восстановление
+
+```bash
+sudo xray-reality.sh repair --non-interactive --yes
+sudo xray-reality.sh status --verbose
+```
+
+Проверьте:
+
+- `/etc/xray/private/keys/clients.txt`
+- `/etc/xray/private/keys/clients.json`
+- `/etc/xray/private/keys/export/raw-xray/`
+
+## 6. `migrate-stealth` завершился ошибкой
+
+### Проверки
+
+```bash
+sudo journalctl -u xray -n 200 --no-pager
+sudo xray -test -c /etc/xray/config.json
+sudo xray-reality.sh diagnose
+```
+
+### Типовые причины
+
+- managed-конфиг уже сломан до миграции
+- локальные артефакты были вручную изменены вне managed flow
+- systemd или firewall уже находятся в неконсистентном состоянии
+
+### Безопасный fallback
+
+```bash
+sudo xray-reality.sh rollback
+```
+
+## 7. Появилось предупреждение про minisign
 
 ### Что это значит
 
@@ -52,46 +127,50 @@ sudo xray-reality.sh repair --non-interactive --yes
 
 ### Что делать
 
-- для строгого контура запускайте с `--require-minisign`
-- либо явно подтверждайте SHA256-only режим
+- для строгого контура используйте `--require-minisign`
+- иначе продолжайте только если SHA256-only режим допустим в вашей threat model
 
-## 4. DNS timeout в логах клиента
+## 8. DNS timeout в логах клиента
 
-### Симптом
+### Симптомы
 
-Повторяются ошибки `dns: exchange failed ... context deadline exceeded`.
+Повторяются ошибки вида:
+
+- `dns: exchange failed`
+- `context deadline exceeded`
 
 ### Checklist
 
+- протестировать другой сгенерированный конфиг или `rescue` вариант
 - проверить доступность сервера из клиентской сети
-- протестировать другой сгенерированный конфиг/профиль
-- проверить DNS-настройки клиента и стратегию резолва
-- проверить, не блокируется ли выбранный upstream DNS
+- проверить локальную DNS-стратегию клиента и outbound rules
+- убедиться, что сеть не блокирует выбранный DNS-путь
 
-Быстрая проверка сервера:
+Быстрая серверная проверка:
 
 ```bash
 sudo xray-reality.sh status
 sudo journalctl -u xray -n 200 --no-pager
 ```
 
-## 5. Проблемы с подтверждением uninstall
+## 9. Подтверждение uninstall ведет себя странно
 
 Если подтверждение не принимается:
 
 - вводите только `yes` или `no`
-- не вставляйте текст из буфера с скрытыми символами
-- для автоматизации используйте non-interactive режим:
+- не вставляйте текст со скрытыми символами
+- для автоматизации используйте:
 
 ```bash
 sudo xray-reality.sh uninstall --yes --non-interactive
 ```
 
-## 6. Аварийное восстановление
+## 10. Аварийное восстановление
 
 ```bash
 sudo xray-reality.sh rollback
 sudo xray-reality.sh status
+sudo xray-reality.sh diagnose
 ```
 
-Если rollback не помогает, соберите диагностику и откройте issue, приложив очищенные от секретов логи.
+Если rollback не помогает, откройте issue и приложите очищенные логи и точные команды.

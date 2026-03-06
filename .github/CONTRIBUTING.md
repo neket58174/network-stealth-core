@@ -8,18 +8,28 @@ This guide defines the expected workflow for safe and reviewable changes.
 
 - keep commits focused and small
 - preserve rollback and security behavior
-- include tests and docs updates with behavior changes
+- update tests and docs with behavior changes
 - avoid silent compatibility breaks
+
+## Current product baseline
+
+Before changing behavior, assume these contracts are public:
+
+- `install` = minimal xhttp-first strongest-default path
+- `install --advanced` = manual prompt-driven setup
+- `migrate-stealth` = supported managed migration from legacy `grpc/http2`
+- `clients.json` = schema v2 with per-config `variants[]`
+- `export/raw-xray/` = raw per-variant xray client json artifacts
 
 ## Local setup
 
 ### Prerequisites
 
-- Linux or WSL
-- Bash 4.3+
-- Git
+- linux or wsl
+- bash 4.3+
+- git
 - `shellcheck`, `shfmt`, `bats`, `actionlint`
-- Node.js (or `npx`) for markdown lint
+- node.js (or `npx`) for markdown lint
 
 ### Clone and track upstream
 
@@ -36,14 +46,14 @@ git fetch upstream
 |---|---|
 | `xray-reality.sh` | bootstrap wrapper |
 | `lib.sh` | runtime core and dispatcher |
-| `install.sh` | dependency setup and Xray install/update |
-| `config.sh` | config generation and key/client artifacts |
-| `service.sh` | systemd, firewall, lifecycle operations |
+| `install.sh` | dependency setup and lifecycle entrypoints |
+| `config.sh` | config generation and client artifacts |
+| `service.sh` | systemd, firewall, and runtime status |
 | `health.sh` | health monitor and diagnostics |
 | `export.sh` | client export templates |
 | `modules/` | extracted reusable modules |
 | `tests/bats/` | shell unit and integration tests |
-| `tests/e2e/` | lifecycle and scenario tests |
+| `tests/e2e/` | lifecycle and migration scenarios |
 | `docs/` | bilingual documentation |
 
 ## Mandatory local checks
@@ -65,15 +75,6 @@ bats tests/bats
 bash scripts/check-release-consistency.sh
 ```
 
-## Shell complexity policy
-
-This repository enforces staged shell complexity gates.
-
-- stage 3 limit: file <= 2800 lines
-- stage 3 limit: function <= 320 lines
-
-For any `lib.sh` growth, do not relax limits. Extract logic into `modules/lib/*.sh` and keep runtime contracts unchanged.
-
 ## Coding standards
 
 1. keep scripts safe under `set -euo pipefail`
@@ -92,50 +93,22 @@ Changes in these areas require extra coverage:
 - systemd unit generation
 - firewall apply and rollback
 - backup stack and cleanup traps
+- migration between legacy transport and xhttp
+- generated client artifacts and export paths
 
 ## Testing expectations
 
-- every behavior change should include or update BATS coverage
+- every behavior change should include or update bats coverage
 - lifecycle-sensitive changes should include e2e checks
 - docs updates must pass markdown lint and command-contract checks
 
-Example targeted runs:
+Useful targeted runs:
 
 ```bash
 bats tests/bats/unit.bats
 bats tests/bats/integration.bats
-bats tests/bats/health.bats
+bats tests/bats/transport.bats
 ```
-
-## Branch and commit style
-
-### Branch naming
-
-- `fix/<topic>`
-- `feat/<topic>`
-- `docs/<topic>`
-- `security/<topic>`
-
-### Commit format
-
-```text
-type(scope): summary
-```
-
-Examples:
-
-- `fix(config): harden temporary config validation`
-- `docs(readme): refresh quick-start and docs map`
-- `security(wrapper): tighten bootstrap pin checks`
-
-## Pull request checklist
-
-- [ ] local checks are green (`make ci`)
-- [ ] tests cover changed behavior
-- [ ] docs updated for user-visible changes
-- [ ] `docs/en/CHANGELOG.md` updated when needed
-- [ ] no secrets in commits
-- [ ] rollback and security behavior preserved
 
 ## Documentation update scope
 
@@ -148,9 +121,28 @@ Behavior changes usually affect:
 - `.github/CONTRIBUTING.md`
 - `.github/SECURITY.md`
 
+If a change touches public install behavior, migration, or artifacts, update both languages in the same pass.
+
+## Release metadata expectations
+
+If you prepare a release:
+
+- bump `SCRIPT_VERSION`
+- update wrapper/readme release markers
+- add matching sections to both changelogs
+- do not tag until branch CI is green
+
+## Pull request checklist
+
+- [ ] local checks are green (`make ci`)
+- [ ] tests cover changed behavior
+- [ ] docs updated for user-visible changes
+- [ ] both changelogs updated when release metadata is involved
+- [ ] no secrets in commits
+- [ ] rollback and security behavior preserved
+
 ## Security reporting
 
 Do not open public issues for vulnerabilities.
 
-Use GitHub private vulnerability reporting.  
-See [.github/SECURITY.md](SECURITY.md).
+Use GitHub private vulnerability reporting. See [SECURITY.md](SECURITY.md).

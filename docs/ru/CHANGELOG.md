@@ -7,6 +7,19 @@
 
 ## [Unreleased]
 
+## [5.1.0] - 2026-03-07
+
+### Changed
+
+- `install` переведен в минимальный xhttp-first путь по умолчанию с `ru-auto` и auto-выбором числа конфигов
+- ручные prompt’ы выбора профиля и числа конфигов перенесены за `install --advanced`
+- добавлен `migrate-stealth` как штатная managed-миграция с legacy `grpc/http2`
+- `clients.json` переведен на schema v2 с `variants[]` для каждого конфига
+- xhttp-клиентские артефакты теперь создаются как `recommended (auto)` и `rescue (packet-up)` варианты
+- raw xray json по вариантам экспортируются в `export/raw-xray/`
+- расширено lifecycle-покрытие для minimal install, advanced install и миграции legacy-to-xhttp
+- двуязычная документация приведена к xhttp-first baseline и compatibility-окну для legacy transport
+
 ## [4.2.3] - 2026-03-06
 
 ### Changed
