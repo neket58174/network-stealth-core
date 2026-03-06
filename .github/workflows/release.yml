@@ -71,7 +71,7 @@ jobs:
         run: |
           set -euo pipefail
           sudo apt-get update -qq
-          sudo apt-get install -y shellcheck bats python3-pip tar golang-go
+          sudo apt-get install -y shellcheck bats python3-pip tar golang-go ripgrep
           mkdir -p "$HOME/.local/bin"
           export PATH="$HOME/.local/bin:$PATH"
           if ! command -v shfmt >/dev/null 2>&1; then
