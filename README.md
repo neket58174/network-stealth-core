@@ -39,6 +39,7 @@ If commands are copied from a mirror or fork, verify the source before execution
 ### Recommended: universal install
 
 default install is xhttp-first and keeps prompts to a minimum (`ru-auto`, strongest default path).
+use `install --advanced` only when you need manual profile and config-count prompts.
 
 ```bash
 curl -fL https://raw.githubusercontent.com/neket371/network-stealth-core/ubuntu/xray-reality.sh -o /tmp/xray-reality.sh
@@ -86,6 +87,7 @@ Legacy alias note:
 | Command | Description |
 |---|---|
 | `install` | Full stack install |
+| `migrate-stealth` | Migrate managed legacy `grpc/http2` install to `xhttp` |
 | `add-clients [N]` | Add `N` client configurations |
 | `add-keys [N]` | Alias to `add-clients` |
 | `update` | Update Xray core |
@@ -124,6 +126,12 @@ Legacy aliases `global-ms10` and `global-ms10-auto` are still accepted for backw
 --yes --non-interactive
 --verbose
 ```
+
+contract notes:
+
+- `install` = minimal xhttp-first path (`ru-auto`, strongest default)
+- `install --advanced` = manual profile/count prompts for power users
+- `migrate-stealth` = supported conversion path for managed legacy `grpc/http2` installs
 
 `XRAY_DATA_DIR` is not an arbitrary trusted code source in wrapper mode.  
 Wrapper code sourcing is restricted by default to:

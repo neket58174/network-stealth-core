@@ -26,7 +26,8 @@ It means the preferred SNI endpoint did not pass availability checks, so planner
 
 ## Can I create mixed profile sets (for example RU + one global)?
 
-Current profile flow is selected per action (`ru`, `global-50`, or `custom`).
+Default `install` now uses the minimal xhttp-first path (`ru-auto`).
+Use `install --advanced` or explicit profile overrides when you need manual profile selection (`ru`, `global-50`, or `custom`).
 Mixed pools in one pass are not first-class yet; use separate generation actions.
 
 ## Why does minisign prompt appear?

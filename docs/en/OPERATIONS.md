@@ -21,6 +21,11 @@ If `/dev/fd` is unavailable, use universal install.
 
 Migration note: legacy `main` is supported as a temporary alias for one release cycle; canonical branch is `ubuntu`.
 
+Install contract note:
+
+- `install` uses the minimal xhttp-first path (`ru-auto`, auto count, strongest default)
+- `install --advanced` enables manual profile/count prompts
+
 ## Runtime assumptions
 
 - default `install`, `update`, and `repair` expect working `systemd`
@@ -55,8 +60,8 @@ sudo bash /tmp/xray-reality.sh install
 sudo xray-reality.sh status
 sudo xray -test -c /etc/xray/config.json
 sudo xray-reality.sh add-clients 1 --non-interactive --yes
-sudo xray-reality.sh update --non-interactive --yes
 sudo xray-reality.sh repair --non-interactive --yes
+sudo xray-reality.sh update --non-interactive --yes
 sudo xray-reality.sh uninstall --non-interactive --yes
 ```
 
@@ -108,8 +113,24 @@ Expected artifact set:
 
 - `/etc/xray/private/keys/keys.txt`
 - `/etc/xray/private/keys/clients.txt`
-- `/etc/xray/private/keys/clients.json`
+- `/etc/xray/private/keys/clients.json` (`schema_version: 2`, per-config `variants[]`)
 - `/etc/xray/private/keys/export/*`
+
+For xhttp-first installs, `export/raw-xray/` contains per-variant raw Xray client JSON files.
+
+### Migrate managed legacy transport
+
+```bash
+sudo xray-reality.sh status --verbose
+sudo xray-reality.sh migrate-stealth --non-interactive --yes
+sudo xray-reality.sh status --verbose
+```
+
+Expected:
+
+- pre-migration status may show `legacy transport`
+- post-migration status shows `Transport: xhttp`
+- `clients.json` and `export/raw-xray/` are rebuilt for xhttp variants
 
 ## Incident matrix
 

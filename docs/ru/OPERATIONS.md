@@ -21,6 +21,11 @@ sudo bash <(curl -fsSL https://raw.githubusercontent.com/neket371/network-stealt
 
 Заметка миграции: legacy `main` поддерживается как временный alias на один релизный цикл; каноническая ветка — `ubuntu`.
 
+Заметка по install-контракту:
+
+- `install` использует минимальный xhttp-first путь (`ru-auto`, auto count, strongest default)
+- `install --advanced` включает ручные prompt’ы выбора профиля и числа конфигов
+
 ## Runtime-допущения
 
 - по умолчанию `install`, `update`, `repair` требуют рабочий `systemd`
@@ -53,8 +58,8 @@ sudo bash /tmp/xray-reality.sh install
 sudo xray-reality.sh status
 sudo xray -test -c /etc/xray/config.json
 sudo xray-reality.sh add-clients 1 --non-interactive --yes
-sudo xray-reality.sh update --non-interactive --yes
 sudo xray-reality.sh repair --non-interactive --yes
+sudo xray-reality.sh update --non-interactive --yes
 sudo xray-reality.sh uninstall --non-interactive --yes
 ```
 
@@ -95,8 +100,24 @@ sudo xray-reality.sh status
 
 - `/etc/xray/private/keys/keys.txt`
 - `/etc/xray/private/keys/clients.txt`
-- `/etc/xray/private/keys/clients.json`
+- `/etc/xray/private/keys/clients.json` (`schema_version: 2`, `variants[]` для каждого конфига)
 - `/etc/xray/private/keys/export/*`
+
+Для xhttp-first install в `export/raw-xray/` лежат raw Xray client JSON-файлы по вариантам.
+
+### Миграция managed legacy transport
+
+```bash
+sudo xray-reality.sh status --verbose
+sudo xray-reality.sh migrate-stealth --non-interactive --yes
+sudo xray-reality.sh status --verbose
+```
+
+Ожидание:
+
+- до миграции статус может показывать `legacy transport`
+- после миграции статус показывает `Transport: xhttp`
+- `clients.json` и `export/raw-xray/` пересобраны под xhttp-варианты
 
 ## Матрица инцидентов
 

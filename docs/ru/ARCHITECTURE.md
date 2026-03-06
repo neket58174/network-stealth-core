@@ -109,7 +109,8 @@ Wrapper выполняет:
 | `/etc/xray-reality/config.env` | `config.sh` | `0600`, root-only |
 | `/etc/xray/private/keys/keys.txt` | `config.sh` | `0400`, `root:root` |
 | `/etc/xray/private/keys/clients.txt` | `config.sh` | `0640`, `root:xray` |
-| `/etc/xray/private/keys/clients.json` | `config.sh` | `0640`, `root:xray` |
+| `/etc/xray/private/keys/clients.json` | `config.sh` | `0640`, `root:xray`, schema v2 с `variants[]` |
+| `/etc/xray/private/keys/export/raw-xray/*` | `config.sh` / `export.sh` | `0640`, `root:xray` |
 | `/var/lib/xray/domain-health.json` | `health.sh` | runtime state |
 | `/etc/systemd/system/xray.service` | `service.sh` | hardened unit |
 

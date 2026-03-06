@@ -73,3 +73,72 @@ hash_as_root() {
     local file="$1"
     run_root sha256sum "$file" | awk '{print $1}'
 }
+
+assert_clients_json_xhttp_contract() {
+    local json_path="$1"
+    local expected_count="$2"
+
+    # shellcheck disable=SC2016
+    if ! run_root jq -e --argjson expected "$expected_count" '
+        .schema_version == 2
+        and .transport == "xhttp"
+        and ((.configs | length) == $expected)
+        and ([.configs[] |
+            (.transport == "xhttp")
+            and (.recommended_variant == "recommended")
+            and ((.variants | length) == 2)
+            and (([.variants[].key] | sort) == ["recommended", "rescue"])
+            and (([.variants[].mode] | sort) == ["auto", "packet-up"])
+            and (([.variants[].xray_client_file_v4 // empty] | length) == 2)
+        ] | all)
+    ' "$json_path" > /dev/null; then
+        echo "xhttp clients.json contract check failed: ${json_path}" >&2
+        run_root jq '.' "$json_path" >&2 || true
+        exit 1
+    fi
+}
+
+assert_clients_json_legacy_contract() {
+    local json_path="$1"
+    local expected_count="$2"
+    local transport="$3"
+
+    # shellcheck disable=SC2016
+    if ! run_root jq -e --argjson expected "$expected_count" --arg transport "$transport" '
+        .schema_version == 2
+        and .transport == $transport
+        and ((.configs | length) == $expected)
+        and ([.configs[] |
+            (.transport == $transport)
+            and (.recommended_variant == "standard")
+            and ((.variants | length) == 1)
+            and (.variants[0].key == "standard")
+            and (((.variants[0].mode // "") | length) == 0)
+            and (((.variants[0].xray_client_file_v4 // "") | length) == 0)
+        ] | all)
+    ' "$json_path" > /dev/null; then
+        echo "legacy clients.json contract check failed: ${json_path}" >&2
+        run_root jq '.' "$json_path" >&2 || true
+        exit 1
+    fi
+}
+
+assert_raw_xray_exports_exist() {
+    local json_path="$1"
+    local raw_file=""
+    local found_any=false
+
+    while IFS= read -r raw_file; do
+        [[ -n "$raw_file" ]] || continue
+        found_any=true
+        if ! run_root test -f "$raw_file"; then
+            echo "missing raw xray export: ${raw_file}" >&2
+            exit 1
+        fi
+    done < <(run_root jq -r '.configs[] | .variants[] | .xray_client_file_v4 // empty, .xray_client_file_v6 // empty' "$json_path")
+
+    if [[ "$found_any" != true ]]; then
+        echo "no raw xray exports declared in ${json_path}" >&2
+        exit 1
+    fi
+}

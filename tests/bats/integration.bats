@@ -34,6 +34,18 @@
     [[ "$output" == *"add-keys"* ]]
 }
 
+@test "help shows migrate-stealth command" {
+    run bash -eo pipefail -c 'bash ./xray-reality.sh --help'
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"migrate-stealth"* ]]
+}
+
+@test "help shows advanced install flag" {
+    run bash -eo pipefail -c 'bash ./xray-reality.sh --help'
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"--advanced"* ]]
+}
+
 @test "dry-run add-clients exits successfully" {
     run bash -eo pipefail -c 'bash ./xray-reality.sh --dry-run add-clients'
     [ "$status" -eq 0 ]
@@ -103,6 +115,16 @@
   '
     [ "$status" -eq 0 ]
     [ "$output" = "repair" ]
+}
+
+@test "migrate-stealth is parsed as valid action" {
+    run bash -eo pipefail -c '
+    source ./lib.sh
+    parse_args migrate-stealth
+    echo "$ACTION"
+  '
+    [ "$status" -eq 0 ]
+    [ "$output" = "migrate-stealth" ]
 }
 
 @test "help shows full removal description for uninstall" {

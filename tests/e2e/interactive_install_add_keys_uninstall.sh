@@ -19,14 +19,14 @@ trap cleanup EXIT
 echo "==> pre-clean"
 cleanup
 
-echo "==> interactive install (global-50 profile)"
+echo "==> interactive advanced install (global-50 profile)"
 export ROOT_DIR SCRIPT_PATH START_PORT INITIAL_CONFIGS ADD_CONFIGS
 expect << 'EXPECT_INSTALL'
 set timeout 900
 set saw_profile 0
 set saw_count 0
 
-spawn bash -lc "source \"$env(ROOT_DIR)/tests/e2e/lib.sh\"; run_root env START_PORT=$env(START_PORT) SERVER_IP=127.0.0.1 DOMAIN_CHECK=false SKIP_REALITY_CHECK=true ALLOW_INSECURE_SHA256=true bash \"$env(SCRIPT_PATH)\" install"
+spawn bash -lc "source \"$env(ROOT_DIR)/tests/e2e/lib.sh\"; run_root env START_PORT=$env(START_PORT) SERVER_IP=127.0.0.1 DOMAIN_CHECK=false SKIP_REALITY_CHECK=true ALLOW_INSECURE_SHA256=true bash \"$env(SCRIPT_PATH)\" install --advanced"
 
 expect {
     -re {Профиль \[1/2/3/4\]:} {
@@ -52,7 +52,7 @@ if {$code != 0} {
     exit $code
 }
 if {$saw_profile != 1 || $saw_count != 1} {
-    puts stderr "Interactive install prompts were not observed"
+    puts stderr "Advanced install prompts were not observed"
     exit 1
 }
 EXPECT_INSTALL
