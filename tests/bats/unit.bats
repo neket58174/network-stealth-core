@@ -2027,6 +2027,33 @@ EOF
     [[ "$output" == *"ok"* ]]
 }
 
+@test "load_existing_vless_encryptions_from_artifacts keeps in-memory values when legacy artifacts are stale" {
+    run bash -eo pipefail -c '
+    source ./lib.sh
+    tmp_dir=$(mktemp -d)
+    trap "rm -rf \"$tmp_dir\"" EXIT
+    XRAY_KEYS="$tmp_dir"
+    CONFIG_DOMAINS=(market.yandex.ru snob.ru)
+    CONFIG_VLESS_ENCRYPTIONS=(enc-alpha enc-beta)
+    cat > "$tmp_dir/clients.json" <<JSON
+{
+  "schema_version": 3,
+  "transport": "xhttp",
+  "configs": [
+    { "domain": "market.yandex.ru", "vless_encryption": "none", "recommended_variant": "recommended", "variants": [] },
+    { "domain": "snob.ru", "vless_encryption": "none", "recommended_variant": "recommended", "variants": [] }
+  ]
+}
+JSON
+    load_existing_vless_encryptions_from_artifacts
+    [[ "${CONFIG_VLESS_ENCRYPTIONS[0]}" == "enc-alpha" ]]
+    [[ "${CONFIG_VLESS_ENCRYPTIONS[1]}" == "enc-beta" ]]
+    echo "ok"
+  '
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"ok"* ]]
+}
+
 @test "add_clients_flow rebuilds artifacts from config after append" {
     run bash -eo pipefail -c '
     grep -q '\''rebuild_client_artifacts_from_config || {'\'' ./modules/config/add_clients.sh

@@ -96,6 +96,7 @@ load_existing_metadata_from_config() {
 load_existing_vless_encryptions_from_artifacts() {
     local json_file="${XRAY_KEYS}/clients.json"
     local keys_file="${XRAY_KEYS}/keys.txt"
+    local -a existing_encryptions=("${CONFIG_VLESS_ENCRYPTIONS[@]}")
     CONFIG_VLESS_ENCRYPTIONS=()
 
     local -a keys_encryptions=()
@@ -141,6 +142,11 @@ load_existing_vless_encryptions_from_artifacts() {
 
         if [[ -z "$encryption" && -n "${keys_encryptions[$i]:-}" ]]; then
             encryption="${keys_encryptions[$i]}"
+        fi
+        if [[ -z "$encryption" || "$encryption" == "none" ]]; then
+            if [[ -n "${existing_encryptions[$i]:-}" && "${existing_encryptions[$i]}" != "none" ]]; then
+                encryption="${existing_encryptions[$i]}"
+            fi
         fi
         if [[ -z "$encryption" ]]; then
             encryption="none"
