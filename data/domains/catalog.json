@@ -1,0 +1,4618 @@
+{
+  "schema_version": 1,
+  "generated_by": "network-stealth-core",
+  "tiers": {
+    "priority": [
+      "yandex.ru",
+      "disk.yandex.ru",
+      "mail.ru",
+      "market.yandex.ru",
+      "vk.com",
+      "sberbank.ru"
+    ],
+    "tier_ru": [
+      {
+        "domain": "yandex.ru",
+        "provider_family": "yandex.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 6,
+        "risk": "normal",
+        "sni_pool": [
+          "yandex.ru",
+          "www.yandex.ru",
+          "m.yandex.ru",
+          "api.yandex.ru",
+          "cdn.yandex.ru",
+          "static.yandex.ru",
+          "auth.yandex.ru",
+          "login.yandex.ru",
+          "lk.yandex.ru",
+          "img.yandex.ru"
+        ]
+      },
+      {
+        "domain": "disk.yandex.ru",
+        "provider_family": "yandex.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 5,
+        "risk": "normal",
+        "sni_pool": [
+          "disk.yandex.ru",
+          "www.disk.yandex.ru",
+          "m.disk.yandex.ru",
+          "api.disk.yandex.ru",
+          "cdn.disk.yandex.ru",
+          "static.disk.yandex.ru",
+          "auth.disk.yandex.ru",
+          "login.disk.yandex.ru",
+          "lk.disk.yandex.ru",
+          "img.disk.yandex.ru"
+        ]
+      },
+      {
+        "domain": "mail.ru",
+        "provider_family": "mail.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 4,
+        "risk": "normal",
+        "sni_pool": [
+          "mail.ru",
+          "www.mail.ru",
+          "m.mail.ru",
+          "api.mail.ru",
+          "cdn.mail.ru",
+          "static.mail.ru",
+          "auth.mail.ru",
+          "login.mail.ru",
+          "lk.mail.ru",
+          "img.mail.ru"
+        ]
+      },
+      {
+        "domain": "dzen.ru",
+        "provider_family": "dzen.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "dzen.ru",
+          "www.dzen.ru",
+          "m.dzen.ru",
+          "api.dzen.ru",
+          "cdn.dzen.ru",
+          "static.dzen.ru",
+          "auth.dzen.ru",
+          "login.dzen.ru",
+          "lk.dzen.ru",
+          "img.dzen.ru"
+        ]
+      },
+      {
+        "domain": "kinopoisk.ru",
+        "provider_family": "kinopoisk.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "kinopoisk.ru",
+          "www.kinopoisk.ru",
+          "m.kinopoisk.ru",
+          "api.kinopoisk.ru",
+          "cdn.kinopoisk.ru",
+          "static.kinopoisk.ru",
+          "auth.kinopoisk.ru",
+          "login.kinopoisk.ru",
+          "lk.kinopoisk.ru",
+          "img.kinopoisk.ru"
+        ]
+      },
+      {
+        "domain": "market.yandex.ru",
+        "provider_family": "yandex.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 3,
+        "risk": "normal",
+        "sni_pool": [
+          "market.yandex.ru",
+          "www.market.yandex.ru",
+          "m.market.yandex.ru",
+          "api.market.yandex.ru",
+          "cdn.market.yandex.ru",
+          "static.market.yandex.ru",
+          "auth.market.yandex.ru",
+          "login.market.yandex.ru",
+          "lk.market.yandex.ru",
+          "img.market.yandex.ru"
+        ]
+      },
+      {
+        "domain": "ya.ru",
+        "provider_family": "ya.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "ya.ru",
+          "www.ya.ru",
+          "m.ya.ru",
+          "api.ya.ru",
+          "cdn.ya.ru",
+          "static.ya.ru",
+          "auth.ya.ru",
+          "login.ya.ru",
+          "lk.ya.ru",
+          "img.ya.ru"
+        ]
+      },
+      {
+        "domain": "auto.ru",
+        "provider_family": "auto.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "auto.ru",
+          "www.auto.ru",
+          "m.auto.ru",
+          "api.auto.ru",
+          "cdn.auto.ru",
+          "static.auto.ru",
+          "auth.auto.ru",
+          "login.auto.ru",
+          "lk.auto.ru",
+          "img.auto.ru"
+        ]
+      },
+      {
+        "domain": "yandex.cloud",
+        "provider_family": "yandex.cloud",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "yandex.cloud",
+          "www.yandex.cloud",
+          "m.yandex.cloud",
+          "api.yandex.cloud",
+          "cdn.yandex.cloud",
+          "static.yandex.cloud",
+          "auth.yandex.cloud",
+          "login.yandex.cloud",
+          "lk.yandex.cloud",
+          "img.yandex.cloud"
+        ]
+      },
+      {
+        "domain": "music.yandex.ru",
+        "provider_family": "yandex.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "music.yandex.ru",
+          "www.music.yandex.ru",
+          "m.music.yandex.ru",
+          "api.music.yandex.ru",
+          "cdn.music.yandex.ru",
+          "static.music.yandex.ru",
+          "auth.music.yandex.ru",
+          "login.music.yandex.ru",
+          "lk.music.yandex.ru",
+          "img.music.yandex.ru"
+        ]
+      },
+      {
+        "domain": "news.yandex.ru",
+        "provider_family": "yandex.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "news.yandex.ru",
+          "www.news.yandex.ru",
+          "m.news.yandex.ru",
+          "api.news.yandex.ru",
+          "cdn.news.yandex.ru",
+          "static.news.yandex.ru",
+          "auth.news.yandex.ru",
+          "login.news.yandex.ru",
+          "lk.news.yandex.ru",
+          "img.news.yandex.ru"
+        ]
+      },
+      {
+        "domain": "maps.yandex.ru",
+        "provider_family": "yandex.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "maps.yandex.ru",
+          "www.maps.yandex.ru",
+          "m.maps.yandex.ru",
+          "api.maps.yandex.ru",
+          "cdn.maps.yandex.ru",
+          "static.maps.yandex.ru",
+          "auth.maps.yandex.ru",
+          "login.maps.yandex.ru",
+          "lk.maps.yandex.ru",
+          "img.maps.yandex.ru"
+        ]
+      },
+      {
+        "domain": "travel.yandex.ru",
+        "provider_family": "yandex.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "travel.yandex.ru",
+          "www.travel.yandex.ru",
+          "m.travel.yandex.ru",
+          "api.travel.yandex.ru",
+          "cdn.travel.yandex.ru",
+          "static.travel.yandex.ru",
+          "auth.travel.yandex.ru",
+          "login.travel.yandex.ru",
+          "lk.travel.yandex.ru",
+          "img.travel.yandex.ru"
+        ]
+      },
+      {
+        "domain": "pogoda.yandex.ru",
+        "provider_family": "yandex.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "pogoda.yandex.ru",
+          "www.pogoda.yandex.ru",
+          "m.pogoda.yandex.ru",
+          "api.pogoda.yandex.ru",
+          "cdn.pogoda.yandex.ru",
+          "static.pogoda.yandex.ru",
+          "auth.pogoda.yandex.ru",
+          "login.pogoda.yandex.ru",
+          "lk.pogoda.yandex.ru",
+          "img.pogoda.yandex.ru"
+        ]
+      },
+      {
+        "domain": "afisha.ru",
+        "provider_family": "afisha.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "afisha.ru",
+          "www.afisha.ru",
+          "m.afisha.ru",
+          "api.afisha.ru",
+          "cdn.afisha.ru",
+          "static.afisha.ru",
+          "auth.afisha.ru",
+          "login.afisha.ru",
+          "lk.afisha.ru",
+          "img.afisha.ru"
+        ]
+      },
+      {
+        "domain": "vk.com",
+        "provider_family": "vk.com",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 2,
+        "risk": "normal",
+        "sni_pool": [
+          "vk.com",
+          "www.vk.com",
+          "m.vk.com",
+          "api.vk.com",
+          "cdn.vk.com",
+          "static.vk.com",
+          "auth.vk.com",
+          "login.vk.com",
+          "lk.vk.com",
+          "img.vk.com"
+        ]
+      },
+      {
+        "domain": "ok.ru",
+        "provider_family": "ok.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "ok.ru",
+          "www.ok.ru",
+          "m.ok.ru",
+          "api.ok.ru",
+          "cdn.ok.ru",
+          "static.ok.ru",
+          "auth.ok.ru",
+          "login.ok.ru",
+          "lk.ok.ru",
+          "img.ok.ru"
+        ]
+      },
+      {
+        "domain": "rutube.ru",
+        "provider_family": "rutube.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "rutube.ru",
+          "www.rutube.ru",
+          "m.rutube.ru",
+          "api.rutube.ru",
+          "cdn.rutube.ru",
+          "static.rutube.ru",
+          "auth.rutube.ru",
+          "login.rutube.ru",
+          "lk.rutube.ru",
+          "img.rutube.ru"
+        ]
+      },
+      {
+        "domain": "pikabu.ru",
+        "provider_family": "pikabu.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "pikabu.ru",
+          "www.pikabu.ru",
+          "m.pikabu.ru",
+          "api.pikabu.ru",
+          "cdn.pikabu.ru",
+          "static.pikabu.ru",
+          "auth.pikabu.ru",
+          "login.pikabu.ru",
+          "lk.pikabu.ru",
+          "img.pikabu.ru"
+        ]
+      },
+      {
+        "domain": "vc.ru",
+        "provider_family": "vc.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "vc.ru",
+          "www.vc.ru",
+          "m.vc.ru",
+          "api.vc.ru",
+          "cdn.vc.ru",
+          "static.vc.ru",
+          "auth.vc.ru",
+          "login.vc.ru",
+          "lk.vc.ru",
+          "img.vc.ru"
+        ]
+      },
+      {
+        "domain": "habr.com",
+        "provider_family": "habr.com",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "habr.com",
+          "www.habr.com",
+          "m.habr.com",
+          "api.habr.com",
+          "cdn.habr.com",
+          "static.habr.com",
+          "auth.habr.com",
+          "login.habr.com",
+          "lk.habr.com",
+          "img.habr.com"
+        ]
+      },
+      {
+        "domain": "sports.ru",
+        "provider_family": "sports.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "sports.ru",
+          "www.sports.ru",
+          "m.sports.ru",
+          "api.sports.ru",
+          "cdn.sports.ru",
+          "static.sports.ru",
+          "auth.sports.ru",
+          "login.sports.ru",
+          "lk.sports.ru",
+          "img.sports.ru"
+        ]
+      },
+      {
+        "domain": "championat.com",
+        "provider_family": "championat.com",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "championat.com",
+          "www.championat.com",
+          "m.championat.com",
+          "api.championat.com",
+          "cdn.championat.com",
+          "static.championat.com",
+          "auth.championat.com",
+          "login.championat.com",
+          "lk.championat.com",
+          "img.championat.com"
+        ]
+      },
+      {
+        "domain": "drive2.ru",
+        "provider_family": "drive2.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "drive2.ru",
+          "www.drive2.ru",
+          "m.drive2.ru",
+          "api.drive2.ru",
+          "cdn.drive2.ru",
+          "static.drive2.ru",
+          "auth.drive2.ru",
+          "login.drive2.ru",
+          "lk.drive2.ru",
+          "img.drive2.ru"
+        ]
+      },
+      {
+        "domain": "kp.ru",
+        "provider_family": "kp.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "kp.ru",
+          "www.kp.ru",
+          "m.kp.ru",
+          "api.kp.ru",
+          "cdn.kp.ru",
+          "static.kp.ru",
+          "auth.kp.ru",
+          "login.kp.ru",
+          "lk.kp.ru",
+          "img.kp.ru"
+        ]
+      },
+      {
+        "domain": "aif.ru",
+        "provider_family": "aif.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "aif.ru",
+          "www.aif.ru",
+          "m.aif.ru",
+          "api.aif.ru",
+          "cdn.aif.ru",
+          "static.aif.ru",
+          "auth.aif.ru",
+          "login.aif.ru",
+          "lk.aif.ru",
+          "img.aif.ru"
+        ]
+      },
+      {
+        "domain": "rg.ru",
+        "provider_family": "rg.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "rg.ru",
+          "www.rg.ru",
+          "m.rg.ru",
+          "api.rg.ru",
+          "cdn.rg.ru",
+          "static.rg.ru",
+          "auth.rg.ru",
+          "login.rg.ru",
+          "lk.rg.ru",
+          "img.rg.ru"
+        ]
+      },
+      {
+        "domain": "vedomosti.ru",
+        "provider_family": "vedomosti.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "vedomosti.ru",
+          "www.vedomosti.ru",
+          "m.vedomosti.ru",
+          "api.vedomosti.ru",
+          "cdn.vedomosti.ru",
+          "static.vedomosti.ru",
+          "auth.vedomosti.ru",
+          "login.vedomosti.ru",
+          "lk.vedomosti.ru",
+          "img.vedomosti.ru"
+        ]
+      },
+      {
+        "domain": "fontanka.ru",
+        "provider_family": "fontanka.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "fontanka.ru",
+          "www.fontanka.ru",
+          "m.fontanka.ru",
+          "api.fontanka.ru",
+          "cdn.fontanka.ru",
+          "static.fontanka.ru",
+          "auth.fontanka.ru",
+          "login.fontanka.ru",
+          "lk.fontanka.ru",
+          "img.fontanka.ru"
+        ]
+      },
+      {
+        "domain": "ngs.ru",
+        "provider_family": "ngs.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "ngs.ru",
+          "www.ngs.ru",
+          "m.ngs.ru",
+          "api.ngs.ru",
+          "cdn.ngs.ru",
+          "static.ngs.ru",
+          "auth.ngs.ru",
+          "login.ngs.ru",
+          "lk.ngs.ru",
+          "img.ngs.ru"
+        ]
+      },
+      {
+        "domain": "e1.ru",
+        "provider_family": "e1.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "e1.ru",
+          "www.e1.ru",
+          "m.e1.ru",
+          "api.e1.ru",
+          "cdn.e1.ru",
+          "static.e1.ru",
+          "auth.e1.ru",
+          "login.e1.ru",
+          "lk.e1.ru",
+          "img.e1.ru"
+        ]
+      },
+      {
+        "domain": "74.ru",
+        "provider_family": "74.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "74.ru",
+          "www.74.ru",
+          "m.74.ru",
+          "api.74.ru",
+          "cdn.74.ru",
+          "static.74.ru",
+          "auth.74.ru",
+          "login.74.ru",
+          "lk.74.ru",
+          "img.74.ru"
+        ]
+      },
+      {
+        "domain": "59.ru",
+        "provider_family": "59.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "59.ru",
+          "www.59.ru",
+          "m.59.ru",
+          "api.59.ru",
+          "cdn.59.ru",
+          "static.59.ru",
+          "auth.59.ru",
+          "login.59.ru",
+          "lk.59.ru",
+          "img.59.ru"
+        ]
+      },
+      {
+        "domain": "66.ru",
+        "provider_family": "66.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "66.ru",
+          "www.66.ru",
+          "m.66.ru",
+          "api.66.ru",
+          "cdn.66.ru",
+          "static.66.ru",
+          "auth.66.ru",
+          "login.66.ru",
+          "lk.66.ru",
+          "img.66.ru"
+        ]
+      },
+      {
+        "domain": "161.ru",
+        "provider_family": "161.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "161.ru",
+          "www.161.ru",
+          "m.161.ru",
+          "api.161.ru",
+          "cdn.161.ru",
+          "static.161.ru",
+          "auth.161.ru",
+          "login.161.ru",
+          "lk.161.ru",
+          "img.161.ru"
+        ]
+      },
+      {
+        "domain": "ozon.ru",
+        "provider_family": "ozon.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "ozon.ru",
+          "www.ozon.ru",
+          "m.ozon.ru",
+          "api.ozon.ru",
+          "cdn.ozon.ru",
+          "static.ozon.ru",
+          "auth.ozon.ru",
+          "login.ozon.ru",
+          "lk.ozon.ru",
+          "img.ozon.ru"
+        ]
+      },
+      {
+        "domain": "wildberries.ru",
+        "provider_family": "wildberries.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "wildberries.ru",
+          "www.wildberries.ru",
+          "m.wildberries.ru",
+          "api.wildberries.ru",
+          "cdn.wildberries.ru",
+          "static.wildberries.ru",
+          "auth.wildberries.ru",
+          "login.wildberries.ru",
+          "lk.wildberries.ru",
+          "img.wildberries.ru"
+        ]
+      },
+      {
+        "domain": "avito.ru",
+        "provider_family": "avito.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "avito.ru",
+          "www.avito.ru",
+          "m.avito.ru",
+          "api.avito.ru",
+          "cdn.avito.ru",
+          "static.avito.ru",
+          "auth.avito.ru",
+          "login.avito.ru",
+          "lk.avito.ru",
+          "img.avito.ru"
+        ]
+      },
+      {
+        "domain": "dns-shop.ru",
+        "provider_family": "dns-shop.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "dns-shop.ru",
+          "www.dns-shop.ru",
+          "m.dns-shop.ru",
+          "api.dns-shop.ru",
+          "cdn.dns-shop.ru",
+          "static.dns-shop.ru",
+          "auth.dns-shop.ru",
+          "login.dns-shop.ru",
+          "lk.dns-shop.ru",
+          "img.dns-shop.ru"
+        ]
+      },
+      {
+        "domain": "citilink.ru",
+        "provider_family": "citilink.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "citilink.ru",
+          "www.citilink.ru",
+          "m.citilink.ru",
+          "api.citilink.ru",
+          "cdn.citilink.ru",
+          "static.citilink.ru",
+          "auth.citilink.ru",
+          "login.citilink.ru",
+          "lk.citilink.ru",
+          "img.citilink.ru"
+        ]
+      },
+      {
+        "domain": "detmir.ru",
+        "provider_family": "detmir.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "detmir.ru",
+          "www.detmir.ru",
+          "m.detmir.ru",
+          "api.detmir.ru",
+          "cdn.detmir.ru",
+          "static.detmir.ru",
+          "auth.detmir.ru",
+          "login.detmir.ru",
+          "lk.detmir.ru",
+          "img.detmir.ru"
+        ]
+      },
+      {
+        "domain": "megamarket.ru",
+        "provider_family": "megamarket.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "megamarket.ru",
+          "www.megamarket.ru",
+          "m.megamarket.ru",
+          "api.megamarket.ru",
+          "cdn.megamarket.ru",
+          "static.megamarket.ru",
+          "auth.megamarket.ru",
+          "login.megamarket.ru",
+          "lk.megamarket.ru",
+          "img.megamarket.ru"
+        ]
+      },
+      {
+        "domain": "wb.ru",
+        "provider_family": "wb.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "wb.ru",
+          "www.wb.ru",
+          "m.wb.ru",
+          "api.wb.ru",
+          "cdn.wb.ru",
+          "static.wb.ru",
+          "auth.wb.ru",
+          "login.wb.ru",
+          "lk.wb.ru",
+          "img.wb.ru"
+        ]
+      },
+      {
+        "domain": "mvideo.ru",
+        "provider_family": "mvideo.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "mvideo.ru",
+          "www.mvideo.ru",
+          "m.mvideo.ru",
+          "api.mvideo.ru",
+          "cdn.mvideo.ru",
+          "static.mvideo.ru",
+          "auth.mvideo.ru",
+          "login.mvideo.ru",
+          "lk.mvideo.ru",
+          "img.mvideo.ru"
+        ]
+      },
+      {
+        "domain": "eldorado.ru",
+        "provider_family": "eldorado.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "eldorado.ru",
+          "www.eldorado.ru",
+          "m.eldorado.ru",
+          "api.eldorado.ru",
+          "cdn.eldorado.ru",
+          "static.eldorado.ru",
+          "auth.eldorado.ru",
+          "login.eldorado.ru",
+          "lk.eldorado.ru",
+          "img.eldorado.ru"
+        ]
+      },
+      {
+        "domain": "lamoda.ru",
+        "provider_family": "lamoda.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "lamoda.ru",
+          "www.lamoda.ru",
+          "m.lamoda.ru",
+          "api.lamoda.ru",
+          "cdn.lamoda.ru",
+          "static.lamoda.ru",
+          "auth.lamoda.ru",
+          "login.lamoda.ru",
+          "lk.lamoda.ru",
+          "img.lamoda.ru"
+        ]
+      },
+      {
+        "domain": "hoff.ru",
+        "provider_family": "hoff.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "hoff.ru",
+          "www.hoff.ru",
+          "m.hoff.ru",
+          "api.hoff.ru",
+          "cdn.hoff.ru",
+          "static.hoff.ru",
+          "auth.hoff.ru",
+          "login.hoff.ru",
+          "lk.hoff.ru",
+          "img.hoff.ru"
+        ]
+      },
+      {
+        "domain": "petrovich.ru",
+        "provider_family": "petrovich.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "petrovich.ru",
+          "www.petrovich.ru",
+          "m.petrovich.ru",
+          "api.petrovich.ru",
+          "cdn.petrovich.ru",
+          "static.petrovich.ru",
+          "auth.petrovich.ru",
+          "login.petrovich.ru",
+          "lk.petrovich.ru",
+          "img.petrovich.ru"
+        ]
+      },
+      {
+        "domain": "lemanapro.ru",
+        "provider_family": "lemanapro.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "lemanapro.ru",
+          "www.lemanapro.ru",
+          "m.lemanapro.ru",
+          "api.lemanapro.ru",
+          "cdn.lemanapro.ru",
+          "static.lemanapro.ru",
+          "auth.lemanapro.ru",
+          "login.lemanapro.ru",
+          "lk.lemanapro.ru",
+          "img.lemanapro.ru"
+        ]
+      },
+      {
+        "domain": "vseinstrumenti.ru",
+        "provider_family": "vseinstrumenti.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "vseinstrumenti.ru",
+          "www.vseinstrumenti.ru",
+          "m.vseinstrumenti.ru",
+          "api.vseinstrumenti.ru",
+          "cdn.vseinstrumenti.ru",
+          "static.vseinstrumenti.ru",
+          "auth.vseinstrumenti.ru",
+          "login.vseinstrumenti.ru",
+          "lk.vseinstrumenti.ru",
+          "img.vseinstrumenti.ru"
+        ]
+      },
+      {
+        "domain": "perekrestok.ru",
+        "provider_family": "perekrestok.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "perekrestok.ru",
+          "www.perekrestok.ru",
+          "m.perekrestok.ru",
+          "api.perekrestok.ru",
+          "cdn.perekrestok.ru",
+          "static.perekrestok.ru",
+          "auth.perekrestok.ru",
+          "login.perekrestok.ru",
+          "lk.perekrestok.ru",
+          "img.perekrestok.ru"
+        ]
+      },
+      {
+        "domain": "vprok.ru",
+        "provider_family": "vprok.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "vprok.ru",
+          "www.vprok.ru",
+          "m.vprok.ru",
+          "api.vprok.ru",
+          "cdn.vprok.ru",
+          "static.vprok.ru",
+          "auth.vprok.ru",
+          "login.vprok.ru",
+          "lk.vprok.ru",
+          "img.vprok.ru"
+        ]
+      },
+      {
+        "domain": "samokat.ru",
+        "provider_family": "samokat.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "samokat.ru",
+          "www.samokat.ru",
+          "m.samokat.ru",
+          "api.samokat.ru",
+          "cdn.samokat.ru",
+          "static.samokat.ru",
+          "auth.samokat.ru",
+          "login.samokat.ru",
+          "lk.samokat.ru",
+          "img.samokat.ru"
+        ]
+      },
+      {
+        "domain": "sbermarket.ru",
+        "provider_family": "sbermarket.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "sbermarket.ru",
+          "www.sbermarket.ru",
+          "m.sbermarket.ru",
+          "api.sbermarket.ru",
+          "cdn.sbermarket.ru",
+          "static.sbermarket.ru",
+          "auth.sbermarket.ru",
+          "login.sbermarket.ru",
+          "lk.sbermarket.ru",
+          "img.sbermarket.ru"
+        ]
+      },
+      {
+        "domain": "chitai-gorod.ru",
+        "provider_family": "chitai-gorod.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "chitai-gorod.ru",
+          "www.chitai-gorod.ru",
+          "m.chitai-gorod.ru",
+          "api.chitai-gorod.ru",
+          "cdn.chitai-gorod.ru",
+          "static.chitai-gorod.ru",
+          "auth.chitai-gorod.ru",
+          "login.chitai-gorod.ru",
+          "lk.chitai-gorod.ru",
+          "img.chitai-gorod.ru"
+        ]
+      },
+      {
+        "domain": "sberbank.ru",
+        "provider_family": "sberbank.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 1,
+        "risk": "normal",
+        "sni_pool": [
+          "sberbank.ru",
+          "www.sberbank.ru",
+          "m.sberbank.ru",
+          "api.sberbank.ru",
+          "cdn.sberbank.ru",
+          "static.sberbank.ru",
+          "auth.sberbank.ru",
+          "login.sberbank.ru",
+          "lk.sberbank.ru",
+          "img.sberbank.ru"
+        ]
+      },
+      {
+        "domain": "tbank.ru",
+        "provider_family": "tbank.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "tbank.ru",
+          "www.tbank.ru",
+          "m.tbank.ru",
+          "api.tbank.ru",
+          "cdn.tbank.ru",
+          "static.tbank.ru",
+          "auth.tbank.ru",
+          "login.tbank.ru",
+          "lk.tbank.ru",
+          "img.tbank.ru"
+        ]
+      },
+      {
+        "domain": "tinkoff.ru",
+        "provider_family": "tinkoff.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "tinkoff.ru",
+          "www.tinkoff.ru",
+          "m.tinkoff.ru",
+          "api.tinkoff.ru",
+          "cdn.tinkoff.ru",
+          "static.tinkoff.ru",
+          "auth.tinkoff.ru",
+          "login.tinkoff.ru",
+          "lk.tinkoff.ru",
+          "img.tinkoff.ru"
+        ]
+      },
+      {
+        "domain": "alfabank.ru",
+        "provider_family": "alfabank.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "alfabank.ru",
+          "www.alfabank.ru",
+          "m.alfabank.ru",
+          "api.alfabank.ru",
+          "cdn.alfabank.ru",
+          "static.alfabank.ru",
+          "auth.alfabank.ru",
+          "login.alfabank.ru",
+          "lk.alfabank.ru",
+          "img.alfabank.ru"
+        ]
+      },
+      {
+        "domain": "vtb.ru",
+        "provider_family": "vtb.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "vtb.ru",
+          "www.vtb.ru",
+          "m.vtb.ru",
+          "api.vtb.ru",
+          "cdn.vtb.ru",
+          "static.vtb.ru",
+          "auth.vtb.ru",
+          "login.vtb.ru",
+          "lk.vtb.ru",
+          "img.vtb.ru"
+        ]
+      },
+      {
+        "domain": "gazprombank.ru",
+        "provider_family": "gazprombank.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "gazprombank.ru",
+          "www.gazprombank.ru",
+          "m.gazprombank.ru",
+          "api.gazprombank.ru",
+          "cdn.gazprombank.ru",
+          "static.gazprombank.ru",
+          "auth.gazprombank.ru",
+          "login.gazprombank.ru",
+          "lk.gazprombank.ru",
+          "img.gazprombank.ru"
+        ]
+      },
+      {
+        "domain": "yoomoney.ru",
+        "provider_family": "yoomoney.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "yoomoney.ru",
+          "www.yoomoney.ru",
+          "m.yoomoney.ru",
+          "api.yoomoney.ru",
+          "cdn.yoomoney.ru",
+          "static.yoomoney.ru",
+          "auth.yoomoney.ru",
+          "login.yoomoney.ru",
+          "lk.yoomoney.ru",
+          "img.yoomoney.ru"
+        ]
+      },
+      {
+        "domain": "banki.ru",
+        "provider_family": "banki.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "banki.ru",
+          "www.banki.ru",
+          "m.banki.ru",
+          "api.banki.ru",
+          "cdn.banki.ru",
+          "static.banki.ru",
+          "auth.banki.ru",
+          "login.banki.ru",
+          "lk.banki.ru",
+          "img.banki.ru"
+        ]
+      },
+      {
+        "domain": "sravni.ru",
+        "provider_family": "sravni.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "sravni.ru",
+          "www.sravni.ru",
+          "m.sravni.ru",
+          "api.sravni.ru",
+          "cdn.sravni.ru",
+          "static.sravni.ru",
+          "auth.sravni.ru",
+          "login.sravni.ru",
+          "lk.sravni.ru",
+          "img.sravni.ru"
+        ]
+      },
+      {
+        "domain": "raiffeisen.ru",
+        "provider_family": "raiffeisen.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "raiffeisen.ru",
+          "www.raiffeisen.ru",
+          "m.raiffeisen.ru",
+          "api.raiffeisen.ru",
+          "cdn.raiffeisen.ru",
+          "static.raiffeisen.ru",
+          "auth.raiffeisen.ru",
+          "login.raiffeisen.ru",
+          "lk.raiffeisen.ru",
+          "img.raiffeisen.ru"
+        ]
+      },
+      {
+        "domain": "rosbank.ru",
+        "provider_family": "rosbank.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "rosbank.ru",
+          "www.rosbank.ru",
+          "m.rosbank.ru",
+          "api.rosbank.ru",
+          "cdn.rosbank.ru",
+          "static.rosbank.ru",
+          "auth.rosbank.ru",
+          "login.rosbank.ru",
+          "lk.rosbank.ru",
+          "img.rosbank.ru"
+        ]
+      },
+      {
+        "domain": "psbank.ru",
+        "provider_family": "psbank.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "psbank.ru",
+          "www.psbank.ru",
+          "m.psbank.ru",
+          "api.psbank.ru",
+          "cdn.psbank.ru",
+          "static.psbank.ru",
+          "auth.psbank.ru",
+          "login.psbank.ru",
+          "lk.psbank.ru",
+          "img.psbank.ru"
+        ]
+      },
+      {
+        "domain": "sovcombank.ru",
+        "provider_family": "sovcombank.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "sovcombank.ru",
+          "www.sovcombank.ru",
+          "m.sovcombank.ru",
+          "api.sovcombank.ru",
+          "cdn.sovcombank.ru",
+          "static.sovcombank.ru",
+          "auth.sovcombank.ru",
+          "login.sovcombank.ru",
+          "lk.sovcombank.ru",
+          "img.sovcombank.ru"
+        ]
+      },
+      {
+        "domain": "akbars.ru",
+        "provider_family": "akbars.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "akbars.ru",
+          "www.akbars.ru",
+          "m.akbars.ru",
+          "api.akbars.ru",
+          "cdn.akbars.ru",
+          "static.akbars.ru",
+          "auth.akbars.ru",
+          "login.akbars.ru",
+          "lk.akbars.ru",
+          "img.akbars.ru"
+        ]
+      },
+      {
+        "domain": "domrfbank.ru",
+        "provider_family": "domrfbank.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "domrfbank.ru",
+          "www.domrfbank.ru",
+          "m.domrfbank.ru",
+          "api.domrfbank.ru",
+          "cdn.domrfbank.ru",
+          "static.domrfbank.ru",
+          "auth.domrfbank.ru",
+          "login.domrfbank.ru",
+          "lk.domrfbank.ru",
+          "img.domrfbank.ru"
+        ]
+      },
+      {
+        "domain": "cbr.ru",
+        "provider_family": "cbr.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "cbr.ru",
+          "www.cbr.ru",
+          "m.cbr.ru",
+          "api.cbr.ru",
+          "cdn.cbr.ru",
+          "static.cbr.ru",
+          "auth.cbr.ru",
+          "login.cbr.ru",
+          "lk.cbr.ru",
+          "img.cbr.ru"
+        ]
+      },
+      {
+        "domain": "rshb.ru",
+        "provider_family": "rshb.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "rshb.ru",
+          "www.rshb.ru",
+          "m.rshb.ru",
+          "api.rshb.ru",
+          "cdn.rshb.ru",
+          "static.rshb.ru",
+          "auth.rshb.ru",
+          "login.rshb.ru",
+          "lk.rshb.ru",
+          "img.rshb.ru"
+        ]
+      },
+      {
+        "domain": "gosuslugi.ru",
+        "provider_family": "gosuslugi.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "gosuslugi.ru",
+          "www.gosuslugi.ru",
+          "m.gosuslugi.ru",
+          "api.gosuslugi.ru",
+          "cdn.gosuslugi.ru",
+          "static.gosuslugi.ru",
+          "auth.gosuslugi.ru",
+          "login.gosuslugi.ru",
+          "lk.gosuslugi.ru",
+          "img.gosuslugi.ru"
+        ]
+      },
+      {
+        "domain": "mos.ru",
+        "provider_family": "mos.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "mos.ru",
+          "www.mos.ru",
+          "m.mos.ru",
+          "api.mos.ru",
+          "cdn.mos.ru",
+          "static.mos.ru",
+          "auth.mos.ru",
+          "login.mos.ru",
+          "lk.mos.ru",
+          "img.mos.ru"
+        ]
+      },
+      {
+        "domain": "nalog.ru",
+        "provider_family": "nalog.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "nalog.ru",
+          "www.nalog.ru",
+          "m.nalog.ru",
+          "api.nalog.ru",
+          "cdn.nalog.ru",
+          "static.nalog.ru",
+          "auth.nalog.ru",
+          "login.nalog.ru",
+          "lk.nalog.ru",
+          "img.nalog.ru"
+        ]
+      },
+      {
+        "domain": "zakupki.gov.ru",
+        "provider_family": "zakupki.gov.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "zakupki.gov.ru",
+          "www.zakupki.gov.ru",
+          "m.zakupki.gov.ru",
+          "api.zakupki.gov.ru",
+          "cdn.zakupki.gov.ru",
+          "static.zakupki.gov.ru",
+          "auth.zakupki.gov.ru",
+          "login.zakupki.gov.ru",
+          "lk.zakupki.gov.ru",
+          "img.zakupki.gov.ru"
+        ]
+      },
+      {
+        "domain": "rzd.ru",
+        "provider_family": "rzd.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "rzd.ru",
+          "www.rzd.ru",
+          "m.rzd.ru",
+          "api.rzd.ru",
+          "cdn.rzd.ru",
+          "static.rzd.ru",
+          "auth.rzd.ru",
+          "login.rzd.ru",
+          "lk.rzd.ru",
+          "img.rzd.ru"
+        ]
+      },
+      {
+        "domain": "sfr.gov.ru",
+        "provider_family": "sfr.gov.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "sfr.gov.ru",
+          "www.sfr.gov.ru",
+          "m.sfr.gov.ru",
+          "api.sfr.gov.ru",
+          "cdn.sfr.gov.ru",
+          "static.sfr.gov.ru",
+          "auth.sfr.gov.ru",
+          "login.sfr.gov.ru",
+          "lk.sfr.gov.ru",
+          "img.sfr.gov.ru"
+        ]
+      },
+      {
+        "domain": "fssp.gov.ru",
+        "provider_family": "fssp.gov.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "fssp.gov.ru",
+          "www.fssp.gov.ru",
+          "m.fssp.gov.ru",
+          "api.fssp.gov.ru",
+          "cdn.fssp.gov.ru",
+          "static.fssp.gov.ru",
+          "auth.fssp.gov.ru",
+          "login.fssp.gov.ru",
+          "lk.fssp.gov.ru",
+          "img.fssp.gov.ru"
+        ]
+      },
+      {
+        "domain": "gibdd.ru",
+        "provider_family": "gibdd.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "gibdd.ru",
+          "www.gibdd.ru",
+          "m.gibdd.ru",
+          "api.gibdd.ru",
+          "cdn.gibdd.ru",
+          "static.gibdd.ru",
+          "auth.gibdd.ru",
+          "login.gibdd.ru",
+          "lk.gibdd.ru",
+          "img.gibdd.ru"
+        ]
+      },
+      {
+        "domain": "rosreestr.gov.ru",
+        "provider_family": "rosreestr.gov.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "rosreestr.gov.ru",
+          "www.rosreestr.gov.ru",
+          "m.rosreestr.gov.ru",
+          "api.rosreestr.gov.ru",
+          "cdn.rosreestr.gov.ru",
+          "static.rosreestr.gov.ru",
+          "auth.rosreestr.gov.ru",
+          "login.rosreestr.gov.ru",
+          "lk.rosreestr.gov.ru",
+          "img.rosreestr.gov.ru"
+        ]
+      },
+      {
+        "domain": "rostrud.gov.ru",
+        "provider_family": "rostrud.gov.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "rostrud.gov.ru",
+          "www.rostrud.gov.ru",
+          "m.rostrud.gov.ru",
+          "api.rostrud.gov.ru",
+          "cdn.rostrud.gov.ru",
+          "static.rostrud.gov.ru",
+          "auth.rostrud.gov.ru",
+          "login.rostrud.gov.ru",
+          "lk.rostrud.gov.ru",
+          "img.rostrud.gov.ru"
+        ]
+      },
+      {
+        "domain": "trudvsem.ru",
+        "provider_family": "trudvsem.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "trudvsem.ru",
+          "www.trudvsem.ru",
+          "m.trudvsem.ru",
+          "api.trudvsem.ru",
+          "cdn.trudvsem.ru",
+          "static.trudvsem.ru",
+          "auth.trudvsem.ru",
+          "login.trudvsem.ru",
+          "lk.trudvsem.ru",
+          "img.trudvsem.ru"
+        ]
+      },
+      {
+        "domain": "minzdrav.gov.ru",
+        "provider_family": "minzdrav.gov.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "minzdrav.gov.ru",
+          "www.minzdrav.gov.ru",
+          "m.minzdrav.gov.ru",
+          "api.minzdrav.gov.ru",
+          "cdn.minzdrav.gov.ru",
+          "static.minzdrav.gov.ru",
+          "auth.minzdrav.gov.ru",
+          "login.minzdrav.gov.ru",
+          "lk.minzdrav.gov.ru",
+          "img.minzdrav.gov.ru"
+        ]
+      },
+      {
+        "domain": "minfin.gov.ru",
+        "provider_family": "minfin.gov.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "minfin.gov.ru",
+          "www.minfin.gov.ru",
+          "m.minfin.gov.ru",
+          "api.minfin.gov.ru",
+          "cdn.minfin.gov.ru",
+          "static.minfin.gov.ru",
+          "auth.minfin.gov.ru",
+          "login.minfin.gov.ru",
+          "lk.minfin.gov.ru",
+          "img.minfin.gov.ru"
+        ]
+      },
+      {
+        "domain": "edu.gov.ru",
+        "provider_family": "edu.gov.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "edu.gov.ru",
+          "www.edu.gov.ru",
+          "m.edu.gov.ru",
+          "api.edu.gov.ru",
+          "cdn.edu.gov.ru",
+          "static.edu.gov.ru",
+          "auth.edu.gov.ru",
+          "login.edu.gov.ru",
+          "lk.edu.gov.ru",
+          "img.edu.gov.ru"
+        ]
+      },
+      {
+        "domain": "customs.gov.ru",
+        "provider_family": "customs.gov.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "customs.gov.ru",
+          "www.customs.gov.ru",
+          "m.customs.gov.ru",
+          "api.customs.gov.ru",
+          "cdn.customs.gov.ru",
+          "static.customs.gov.ru",
+          "auth.customs.gov.ru",
+          "login.customs.gov.ru",
+          "lk.customs.gov.ru",
+          "img.customs.gov.ru"
+        ]
+      },
+      {
+        "domain": "megafon.ru",
+        "provider_family": "megafon.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "megafon.ru",
+          "www.megafon.ru",
+          "m.megafon.ru",
+          "api.megafon.ru",
+          "cdn.megafon.ru",
+          "static.megafon.ru",
+          "auth.megafon.ru",
+          "login.megafon.ru",
+          "lk.megafon.ru",
+          "img.megafon.ru"
+        ]
+      },
+      {
+        "domain": "mts.ru",
+        "provider_family": "mts.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "mts.ru",
+          "www.mts.ru",
+          "m.mts.ru",
+          "api.mts.ru",
+          "cdn.mts.ru",
+          "static.mts.ru",
+          "auth.mts.ru",
+          "login.mts.ru",
+          "lk.mts.ru",
+          "img.mts.ru"
+        ]
+      },
+      {
+        "domain": "beeline.ru",
+        "provider_family": "beeline.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "beeline.ru",
+          "www.beeline.ru",
+          "m.beeline.ru",
+          "api.beeline.ru",
+          "cdn.beeline.ru",
+          "static.beeline.ru",
+          "auth.beeline.ru",
+          "login.beeline.ru",
+          "lk.beeline.ru",
+          "img.beeline.ru"
+        ]
+      },
+      {
+        "domain": "tele2.ru",
+        "provider_family": "tele2.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "tele2.ru",
+          "www.tele2.ru",
+          "m.tele2.ru",
+          "api.tele2.ru",
+          "cdn.tele2.ru",
+          "static.tele2.ru",
+          "auth.tele2.ru",
+          "login.tele2.ru",
+          "lk.tele2.ru",
+          "img.tele2.ru"
+        ]
+      },
+      {
+        "domain": "rt.ru",
+        "provider_family": "rt.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "rt.ru",
+          "www.rt.ru",
+          "m.rt.ru",
+          "api.rt.ru",
+          "cdn.rt.ru",
+          "static.rt.ru",
+          "auth.rt.ru",
+          "login.rt.ru",
+          "lk.rt.ru",
+          "img.rt.ru"
+        ]
+      },
+      {
+        "domain": "yota.ru",
+        "provider_family": "yota.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "yota.ru",
+          "www.yota.ru",
+          "m.yota.ru",
+          "api.yota.ru",
+          "cdn.yota.ru",
+          "static.yota.ru",
+          "auth.yota.ru",
+          "login.yota.ru",
+          "lk.yota.ru",
+          "img.yota.ru"
+        ]
+      },
+      {
+        "domain": "mgts.ru",
+        "provider_family": "mgts.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "mgts.ru",
+          "www.mgts.ru",
+          "m.mgts.ru",
+          "api.mgts.ru",
+          "cdn.mgts.ru",
+          "static.mgts.ru",
+          "auth.mgts.ru",
+          "login.mgts.ru",
+          "lk.mgts.ru",
+          "img.mgts.ru"
+        ]
+      },
+      {
+        "domain": "dom.ru",
+        "provider_family": "dom.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "dom.ru",
+          "www.dom.ru",
+          "m.dom.ru",
+          "api.dom.ru",
+          "cdn.dom.ru",
+          "static.dom.ru",
+          "auth.dom.ru",
+          "login.dom.ru",
+          "lk.dom.ru",
+          "img.dom.ru"
+        ]
+      },
+      {
+        "domain": "tattelecom.ru",
+        "provider_family": "tattelecom.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "tattelecom.ru",
+          "www.tattelecom.ru",
+          "m.tattelecom.ru",
+          "api.tattelecom.ru",
+          "cdn.tattelecom.ru",
+          "static.tattelecom.ru",
+          "auth.tattelecom.ru",
+          "login.tattelecom.ru",
+          "lk.tattelecom.ru",
+          "img.tattelecom.ru"
+        ]
+      },
+      {
+        "domain": "reg.ru",
+        "provider_family": "reg.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "reg.ru",
+          "www.reg.ru",
+          "m.reg.ru",
+          "api.reg.ru",
+          "cdn.reg.ru",
+          "static.reg.ru",
+          "auth.reg.ru",
+          "login.reg.ru",
+          "lk.reg.ru",
+          "img.reg.ru"
+        ]
+      },
+      {
+        "domain": "nic.ru",
+        "provider_family": "nic.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "nic.ru",
+          "www.nic.ru",
+          "m.nic.ru",
+          "api.nic.ru",
+          "cdn.nic.ru",
+          "static.nic.ru",
+          "auth.nic.ru",
+          "login.nic.ru",
+          "lk.nic.ru",
+          "img.nic.ru"
+        ]
+      },
+      {
+        "domain": "okko.tv",
+        "provider_family": "okko.tv",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "okko.tv",
+          "www.okko.tv",
+          "m.okko.tv",
+          "api.okko.tv",
+          "cdn.okko.tv",
+          "static.okko.tv",
+          "auth.okko.tv",
+          "login.okko.tv",
+          "lk.okko.tv",
+          "img.okko.tv"
+        ]
+      },
+      {
+        "domain": "ivi.ru",
+        "provider_family": "ivi.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "ivi.ru",
+          "www.ivi.ru",
+          "m.ivi.ru",
+          "api.ivi.ru",
+          "cdn.ivi.ru",
+          "static.ivi.ru",
+          "auth.ivi.ru",
+          "login.ivi.ru",
+          "lk.ivi.ru",
+          "img.ivi.ru"
+        ]
+      },
+      {
+        "domain": "kion.ru",
+        "provider_family": "kion.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "kion.ru",
+          "www.kion.ru",
+          "m.kion.ru",
+          "api.kion.ru",
+          "cdn.kion.ru",
+          "static.kion.ru",
+          "auth.kion.ru",
+          "login.kion.ru",
+          "lk.kion.ru",
+          "img.kion.ru"
+        ]
+      },
+      {
+        "domain": "kaspersky.ru",
+        "provider_family": "kaspersky.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "kaspersky.ru",
+          "www.kaspersky.ru",
+          "m.kaspersky.ru",
+          "api.kaspersky.ru",
+          "cdn.kaspersky.ru",
+          "static.kaspersky.ru",
+          "auth.kaspersky.ru",
+          "login.kaspersky.ru",
+          "lk.kaspersky.ru",
+          "img.kaspersky.ru"
+        ]
+      },
+      {
+        "domain": "drweb.ru",
+        "provider_family": "drweb.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "drweb.ru",
+          "www.drweb.ru",
+          "m.drweb.ru",
+          "api.drweb.ru",
+          "cdn.drweb.ru",
+          "static.drweb.ru",
+          "auth.drweb.ru",
+          "login.drweb.ru",
+          "lk.drweb.ru",
+          "img.drweb.ru"
+        ]
+      },
+      {
+        "domain": "1c.ru",
+        "provider_family": "1c.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "1c.ru",
+          "www.1c.ru",
+          "m.1c.ru",
+          "api.1c.ru",
+          "cdn.1c.ru",
+          "static.1c.ru",
+          "auth.1c.ru",
+          "login.1c.ru",
+          "lk.1c.ru",
+          "img.1c.ru"
+        ]
+      },
+      {
+        "domain": "kontur.ru",
+        "provider_family": "kontur.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "kontur.ru",
+          "www.kontur.ru",
+          "m.kontur.ru",
+          "api.kontur.ru",
+          "cdn.kontur.ru",
+          "static.kontur.ru",
+          "auth.kontur.ru",
+          "login.kontur.ru",
+          "lk.kontur.ru",
+          "img.kontur.ru"
+        ]
+      },
+      {
+        "domain": "ria.ru",
+        "provider_family": "ria.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "ria.ru",
+          "www.ria.ru",
+          "m.ria.ru",
+          "api.ria.ru",
+          "cdn.ria.ru",
+          "static.ria.ru",
+          "auth.ria.ru",
+          "login.ria.ru",
+          "lk.ria.ru",
+          "img.ria.ru"
+        ]
+      },
+      {
+        "domain": "lenta.ru",
+        "provider_family": "lenta.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "lenta.ru",
+          "www.lenta.ru",
+          "m.lenta.ru",
+          "api.lenta.ru",
+          "cdn.lenta.ru",
+          "static.lenta.ru",
+          "auth.lenta.ru",
+          "login.lenta.ru",
+          "lk.lenta.ru",
+          "img.lenta.ru"
+        ]
+      },
+      {
+        "domain": "gazprom.ru",
+        "provider_family": "gazprom.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "gazprom.ru",
+          "www.gazprom.ru",
+          "m.gazprom.ru",
+          "api.gazprom.ru",
+          "cdn.gazprom.ru",
+          "static.gazprom.ru",
+          "auth.gazprom.ru",
+          "login.gazprom.ru",
+          "lk.gazprom.ru",
+          "img.gazprom.ru"
+        ]
+      },
+      {
+        "domain": "rbc.ru",
+        "provider_family": "rbc.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "rbc.ru",
+          "www.rbc.ru",
+          "m.rbc.ru",
+          "api.rbc.ru",
+          "cdn.rbc.ru",
+          "static.rbc.ru",
+          "auth.rbc.ru",
+          "login.rbc.ru",
+          "lk.rbc.ru",
+          "img.rbc.ru"
+        ]
+      },
+      {
+        "domain": "tass.ru",
+        "provider_family": "tass.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "tass.ru",
+          "www.tass.ru",
+          "m.tass.ru",
+          "api.tass.ru",
+          "cdn.tass.ru",
+          "static.tass.ru",
+          "auth.tass.ru",
+          "login.tass.ru",
+          "lk.tass.ru",
+          "img.tass.ru"
+        ]
+      },
+      {
+        "domain": "iz.ru",
+        "provider_family": "iz.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "iz.ru",
+          "www.iz.ru",
+          "m.iz.ru",
+          "api.iz.ru",
+          "cdn.iz.ru",
+          "static.iz.ru",
+          "auth.iz.ru",
+          "login.iz.ru",
+          "lk.iz.ru",
+          "img.iz.ru"
+        ]
+      },
+      {
+        "domain": "kommersant.ru",
+        "provider_family": "kommersant.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "kommersant.ru",
+          "www.kommersant.ru",
+          "m.kommersant.ru",
+          "api.kommersant.ru",
+          "cdn.kommersant.ru",
+          "static.kommersant.ru",
+          "auth.kommersant.ru",
+          "login.kommersant.ru",
+          "lk.kommersant.ru",
+          "img.kommersant.ru"
+        ]
+      },
+      {
+        "domain": "gazeta.ru",
+        "provider_family": "gazeta.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "gazeta.ru",
+          "www.gazeta.ru",
+          "m.gazeta.ru",
+          "api.gazeta.ru",
+          "cdn.gazeta.ru",
+          "static.gazeta.ru",
+          "auth.gazeta.ru",
+          "login.gazeta.ru",
+          "lk.gazeta.ru",
+          "img.gazeta.ru"
+        ]
+      },
+      {
+        "domain": "life.ru",
+        "provider_family": "life.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "life.ru",
+          "www.life.ru",
+          "m.life.ru",
+          "api.life.ru",
+          "cdn.life.ru",
+          "static.life.ru",
+          "auth.life.ru",
+          "login.life.ru",
+          "lk.life.ru",
+          "img.life.ru"
+        ]
+      },
+      {
+        "domain": "mk.ru",
+        "provider_family": "mk.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "mk.ru",
+          "www.mk.ru",
+          "m.mk.ru",
+          "api.mk.ru",
+          "cdn.mk.ru",
+          "static.mk.ru",
+          "auth.mk.ru",
+          "login.mk.ru",
+          "lk.mk.ru",
+          "img.mk.ru"
+        ]
+      },
+      {
+        "domain": "snob.ru",
+        "provider_family": "snob.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "snob.ru",
+          "www.snob.ru",
+          "m.snob.ru",
+          "api.snob.ru",
+          "cdn.snob.ru",
+          "static.snob.ru",
+          "auth.snob.ru",
+          "login.snob.ru",
+          "lk.snob.ru",
+          "img.snob.ru"
+        ]
+      },
+      {
+        "domain": "forbes.ru",
+        "provider_family": "forbes.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "forbes.ru",
+          "www.forbes.ru",
+          "m.forbes.ru",
+          "api.forbes.ru",
+          "cdn.forbes.ru",
+          "static.forbes.ru",
+          "auth.forbes.ru",
+          "login.forbes.ru",
+          "lk.forbes.ru",
+          "img.forbes.ru"
+        ]
+      },
+      {
+        "domain": "interfax.ru",
+        "provider_family": "interfax.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "interfax.ru",
+          "www.interfax.ru",
+          "m.interfax.ru",
+          "api.interfax.ru",
+          "cdn.interfax.ru",
+          "static.interfax.ru",
+          "auth.interfax.ru",
+          "login.interfax.ru",
+          "lk.interfax.ru",
+          "img.interfax.ru"
+        ]
+      },
+      {
+        "domain": "m24.ru",
+        "provider_family": "m24.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "m24.ru",
+          "www.m24.ru",
+          "m.m24.ru",
+          "api.m24.ru",
+          "cdn.m24.ru",
+          "static.m24.ru",
+          "auth.m24.ru",
+          "login.m24.ru",
+          "lk.m24.ru",
+          "img.m24.ru"
+        ]
+      },
+      {
+        "domain": "newizv.ru",
+        "provider_family": "newizv.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "newizv.ru",
+          "www.newizv.ru",
+          "m.newizv.ru",
+          "api.newizv.ru",
+          "cdn.newizv.ru",
+          "static.newizv.ru",
+          "auth.newizv.ru",
+          "login.newizv.ru",
+          "lk.newizv.ru",
+          "img.newizv.ru"
+        ]
+      },
+      {
+        "domain": "2gis.ru",
+        "provider_family": "2gis.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "2gis.ru",
+          "www.2gis.ru",
+          "m.2gis.ru",
+          "api.2gis.ru",
+          "cdn.2gis.ru",
+          "static.2gis.ru",
+          "auth.2gis.ru",
+          "login.2gis.ru",
+          "lk.2gis.ru",
+          "img.2gis.ru"
+        ]
+      },
+      {
+        "domain": "hh.ru",
+        "provider_family": "hh.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "hh.ru",
+          "www.hh.ru",
+          "m.hh.ru",
+          "api.hh.ru",
+          "cdn.hh.ru",
+          "static.hh.ru",
+          "auth.hh.ru",
+          "login.hh.ru",
+          "lk.hh.ru",
+          "img.hh.ru"
+        ]
+      },
+      {
+        "domain": "tutu.ru",
+        "provider_family": "tutu.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "tutu.ru",
+          "www.tutu.ru",
+          "m.tutu.ru",
+          "api.tutu.ru",
+          "cdn.tutu.ru",
+          "static.tutu.ru",
+          "auth.tutu.ru",
+          "login.tutu.ru",
+          "lk.tutu.ru",
+          "img.tutu.ru"
+        ]
+      },
+      {
+        "domain": "aeroflot.ru",
+        "provider_family": "aeroflot.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "aeroflot.ru",
+          "www.aeroflot.ru",
+          "m.aeroflot.ru",
+          "api.aeroflot.ru",
+          "cdn.aeroflot.ru",
+          "static.aeroflot.ru",
+          "auth.aeroflot.ru",
+          "login.aeroflot.ru",
+          "lk.aeroflot.ru",
+          "img.aeroflot.ru"
+        ]
+      },
+      {
+        "domain": "s7.ru",
+        "provider_family": "s7.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "s7.ru",
+          "www.s7.ru",
+          "m.s7.ru",
+          "api.s7.ru",
+          "cdn.s7.ru",
+          "static.s7.ru",
+          "auth.s7.ru",
+          "login.s7.ru",
+          "lk.s7.ru",
+          "img.s7.ru"
+        ]
+      },
+      {
+        "domain": "cdek.ru",
+        "provider_family": "cdek.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "cdek.ru",
+          "www.cdek.ru",
+          "m.cdek.ru",
+          "api.cdek.ru",
+          "cdn.cdek.ru",
+          "static.cdek.ru",
+          "auth.cdek.ru",
+          "login.cdek.ru",
+          "lk.cdek.ru",
+          "img.cdek.ru"
+        ]
+      },
+      {
+        "domain": "pochta.ru",
+        "provider_family": "pochta.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "pochta.ru",
+          "www.pochta.ru",
+          "m.pochta.ru",
+          "api.pochta.ru",
+          "cdn.pochta.ru",
+          "static.pochta.ru",
+          "auth.pochta.ru",
+          "login.pochta.ru",
+          "lk.pochta.ru",
+          "img.pochta.ru"
+        ]
+      },
+      {
+        "domain": "utair.ru",
+        "provider_family": "utair.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "utair.ru",
+          "www.utair.ru",
+          "m.utair.ru",
+          "api.utair.ru",
+          "cdn.utair.ru",
+          "static.utair.ru",
+          "auth.utair.ru",
+          "login.utair.ru",
+          "lk.utair.ru",
+          "img.utair.ru"
+        ]
+      },
+      {
+        "domain": "pobeda.aero",
+        "provider_family": "pobeda.aero",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "pobeda.aero",
+          "www.pobeda.aero",
+          "m.pobeda.aero",
+          "api.pobeda.aero",
+          "cdn.pobeda.aero",
+          "static.pobeda.aero",
+          "auth.pobeda.aero",
+          "login.pobeda.aero",
+          "lk.pobeda.aero",
+          "img.pobeda.aero"
+        ]
+      },
+      {
+        "domain": "aeroexpress.ru",
+        "provider_family": "aeroexpress.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "aeroexpress.ru",
+          "www.aeroexpress.ru",
+          "m.aeroexpress.ru",
+          "api.aeroexpress.ru",
+          "cdn.aeroexpress.ru",
+          "static.aeroexpress.ru",
+          "auth.aeroexpress.ru",
+          "login.aeroexpress.ru",
+          "lk.aeroexpress.ru",
+          "img.aeroexpress.ru"
+        ]
+      },
+      {
+        "domain": "dellin.ru",
+        "provider_family": "dellin.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "dellin.ru",
+          "www.dellin.ru",
+          "m.dellin.ru",
+          "api.dellin.ru",
+          "cdn.dellin.ru",
+          "static.dellin.ru",
+          "auth.dellin.ru",
+          "login.dellin.ru",
+          "lk.dellin.ru",
+          "img.dellin.ru"
+        ]
+      },
+      {
+        "domain": "pecom.ru",
+        "provider_family": "pecom.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "pecom.ru",
+          "www.pecom.ru",
+          "m.pecom.ru",
+          "api.pecom.ru",
+          "cdn.pecom.ru",
+          "static.pecom.ru",
+          "auth.pecom.ru",
+          "login.pecom.ru",
+          "lk.pecom.ru",
+          "img.pecom.ru"
+        ]
+      },
+      {
+        "domain": "boxberry.ru",
+        "provider_family": "boxberry.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "boxberry.ru",
+          "www.boxberry.ru",
+          "m.boxberry.ru",
+          "api.boxberry.ru",
+          "cdn.boxberry.ru",
+          "static.boxberry.ru",
+          "auth.boxberry.ru",
+          "login.boxberry.ru",
+          "lk.boxberry.ru",
+          "img.boxberry.ru"
+        ]
+      },
+      {
+        "domain": "dpd.ru",
+        "provider_family": "dpd.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "dpd.ru",
+          "www.dpd.ru",
+          "m.dpd.ru",
+          "api.dpd.ru",
+          "cdn.dpd.ru",
+          "static.dpd.ru",
+          "auth.dpd.ru",
+          "login.dpd.ru",
+          "lk.dpd.ru",
+          "img.dpd.ru"
+        ]
+      },
+      {
+        "domain": "superjob.ru",
+        "provider_family": "superjob.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "superjob.ru",
+          "www.superjob.ru",
+          "m.superjob.ru",
+          "api.superjob.ru",
+          "cdn.superjob.ru",
+          "static.superjob.ru",
+          "auth.superjob.ru",
+          "login.superjob.ru",
+          "lk.superjob.ru",
+          "img.superjob.ru"
+        ]
+      },
+      {
+        "domain": "skillbox.ru",
+        "provider_family": "skillbox.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "skillbox.ru",
+          "www.skillbox.ru",
+          "m.skillbox.ru",
+          "api.skillbox.ru",
+          "cdn.skillbox.ru",
+          "static.skillbox.ru",
+          "auth.skillbox.ru",
+          "login.skillbox.ru",
+          "lk.skillbox.ru",
+          "img.skillbox.ru"
+        ]
+      },
+      {
+        "domain": "netology.ru",
+        "provider_family": "netology.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "netology.ru",
+          "www.netology.ru",
+          "m.netology.ru",
+          "api.netology.ru",
+          "cdn.netology.ru",
+          "static.netology.ru",
+          "auth.netology.ru",
+          "login.netology.ru",
+          "lk.netology.ru",
+          "img.netology.ru"
+        ]
+      },
+      {
+        "domain": "stepik.org",
+        "provider_family": "stepik.org",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "stepik.org",
+          "www.stepik.org",
+          "m.stepik.org",
+          "api.stepik.org",
+          "cdn.stepik.org",
+          "static.stepik.org",
+          "auth.stepik.org",
+          "login.stepik.org",
+          "lk.stepik.org",
+          "img.stepik.org"
+        ]
+      },
+      {
+        "domain": "hse.ru",
+        "provider_family": "hse.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "hse.ru",
+          "www.hse.ru",
+          "m.hse.ru",
+          "api.hse.ru",
+          "cdn.hse.ru",
+          "static.hse.ru",
+          "auth.hse.ru",
+          "login.hse.ru",
+          "lk.hse.ru",
+          "img.hse.ru"
+        ]
+      },
+      {
+        "domain": "spbu.ru",
+        "provider_family": "spbu.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "spbu.ru",
+          "www.spbu.ru",
+          "m.spbu.ru",
+          "api.spbu.ru",
+          "cdn.spbu.ru",
+          "static.spbu.ru",
+          "auth.spbu.ru",
+          "login.spbu.ru",
+          "lk.spbu.ru",
+          "img.spbu.ru"
+        ]
+      },
+      {
+        "domain": "urfu.ru",
+        "provider_family": "urfu.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "urfu.ru",
+          "www.urfu.ru",
+          "m.urfu.ru",
+          "api.urfu.ru",
+          "cdn.urfu.ru",
+          "static.urfu.ru",
+          "auth.urfu.ru",
+          "login.urfu.ru",
+          "lk.urfu.ru",
+          "img.urfu.ru"
+        ]
+      },
+      {
+        "domain": "msu.ru",
+        "provider_family": "msu.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "msu.ru",
+          "www.msu.ru",
+          "m.msu.ru",
+          "api.msu.ru",
+          "cdn.msu.ru",
+          "static.msu.ru",
+          "auth.msu.ru",
+          "login.msu.ru",
+          "lk.msu.ru",
+          "img.msu.ru"
+        ]
+      },
+      {
+        "domain": "spbstu.ru",
+        "provider_family": "spbstu.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "spbstu.ru",
+          "www.spbstu.ru",
+          "m.spbstu.ru",
+          "api.spbstu.ru",
+          "cdn.spbstu.ru",
+          "static.spbstu.ru",
+          "auth.spbstu.ru",
+          "login.spbstu.ru",
+          "lk.spbstu.ru",
+          "img.spbstu.ru"
+        ]
+      },
+      {
+        "domain": "apteka.ru",
+        "provider_family": "apteka.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "apteka.ru",
+          "www.apteka.ru",
+          "m.apteka.ru",
+          "api.apteka.ru",
+          "cdn.apteka.ru",
+          "static.apteka.ru",
+          "auth.apteka.ru",
+          "login.apteka.ru",
+          "lk.apteka.ru",
+          "img.apteka.ru"
+        ]
+      },
+      {
+        "domain": "eapteka.ru",
+        "provider_family": "eapteka.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "eapteka.ru",
+          "www.eapteka.ru",
+          "m.eapteka.ru",
+          "api.eapteka.ru",
+          "cdn.eapteka.ru",
+          "static.eapteka.ru",
+          "auth.eapteka.ru",
+          "login.eapteka.ru",
+          "lk.eapteka.ru",
+          "img.eapteka.ru"
+        ]
+      },
+      {
+        "domain": "zdravcity.ru",
+        "provider_family": "zdravcity.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "zdravcity.ru",
+          "www.zdravcity.ru",
+          "m.zdravcity.ru",
+          "api.zdravcity.ru",
+          "cdn.zdravcity.ru",
+          "static.zdravcity.ru",
+          "auth.zdravcity.ru",
+          "login.zdravcity.ru",
+          "lk.zdravcity.ru",
+          "img.zdravcity.ru"
+        ]
+      },
+      {
+        "domain": "docdoc.ru",
+        "provider_family": "docdoc.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "docdoc.ru",
+          "www.docdoc.ru",
+          "m.docdoc.ru",
+          "api.docdoc.ru",
+          "cdn.docdoc.ru",
+          "static.docdoc.ru",
+          "auth.docdoc.ru",
+          "login.docdoc.ru",
+          "lk.docdoc.ru",
+          "img.docdoc.ru"
+        ]
+      },
+      {
+        "domain": "prodoctorov.ru",
+        "provider_family": "prodoctorov.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "prodoctorov.ru",
+          "www.prodoctorov.ru",
+          "m.prodoctorov.ru",
+          "api.prodoctorov.ru",
+          "cdn.prodoctorov.ru",
+          "static.prodoctorov.ru",
+          "auth.prodoctorov.ru",
+          "login.prodoctorov.ru",
+          "lk.prodoctorov.ru",
+          "img.prodoctorov.ru"
+        ]
+      },
+      {
+        "domain": "magnit.ru",
+        "provider_family": "magnit.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "magnit.ru",
+          "www.magnit.ru",
+          "m.magnit.ru",
+          "api.magnit.ru",
+          "cdn.magnit.ru",
+          "static.magnit.ru",
+          "auth.magnit.ru",
+          "login.magnit.ru",
+          "lk.magnit.ru",
+          "img.magnit.ru"
+        ]
+      },
+      {
+        "domain": "x5.ru",
+        "provider_family": "x5.ru",
+        "region": "ru",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "x5.ru",
+          "www.x5.ru",
+          "m.x5.ru",
+          "api.x5.ru",
+          "cdn.x5.ru",
+          "static.x5.ru",
+          "auth.x5.ru",
+          "login.x5.ru",
+          "lk.x5.ru",
+          "img.x5.ru"
+        ]
+      }
+    ],
+    "tier_global_ms10": [
+      {
+        "domain": "microsoft.com",
+        "provider_family": "microsoft.com",
+        "region": "global",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "microsoft.com",
+          "www.microsoft.com",
+          "login.microsoftonline.com",
+          "account.microsoft.com",
+          "portal.office.com",
+          "outlook.office.com",
+          "azure.microsoft.com",
+          "teams.microsoft.com",
+          "download.microsoft.com",
+          "support.microsoft.com"
+        ]
+      },
+      {
+        "domain": "office.com",
+        "provider_family": "office.com",
+        "region": "global",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "office.com",
+          "www.office.com",
+          "portal.office.com",
+          "login.office.com",
+          "outlook.office.com",
+          "teams.office.com",
+          "admin.office.com",
+          "account.office.com",
+          "static.office.com",
+          "cdn.office.com"
+        ]
+      },
+      {
+        "domain": "live.com",
+        "provider_family": "live.com",
+        "region": "global",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "live.com",
+          "www.live.com",
+          "login.live.com",
+          "account.live.com",
+          "signup.live.com",
+          "outlook.live.com",
+          "mail.live.com",
+          "calendar.live.com",
+          "photos.live.com",
+          "support.live.com"
+        ]
+      },
+      {
+        "domain": "outlook.com",
+        "provider_family": "outlook.com",
+        "region": "global",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "outlook.com",
+          "www.outlook.com",
+          "mail.outlook.com",
+          "login.outlook.com",
+          "account.outlook.com",
+          "outlook.office.com",
+          "webmail.outlook.com",
+          "calendar.outlook.com",
+          "support.outlook.com",
+          "static.outlook.com"
+        ]
+      },
+      {
+        "domain": "bing.com",
+        "provider_family": "bing.com",
+        "region": "global",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "bing.com",
+          "www.bing.com",
+          "cn.bing.com",
+          "api.bing.com",
+          "www2.bing.com",
+          "images.bing.com",
+          "video.bing.com",
+          "maps.bing.com",
+          "edgeservices.bing.com",
+          "support.bing.com"
+        ]
+      },
+      {
+        "domain": "msn.com",
+        "provider_family": "msn.com",
+        "region": "global",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "msn.com",
+          "www.msn.com",
+          "api.msn.com",
+          "assets.msn.com",
+          "mail.msn.com",
+          "news.msn.com",
+          "weather.msn.com",
+          "money.msn.com",
+          "sports.msn.com",
+          "support.msn.com"
+        ]
+      },
+      {
+        "domain": "azure.com",
+        "provider_family": "azure.com",
+        "region": "global",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "azure.com",
+          "www.azure.com",
+          "portal.azure.com",
+          "management.azure.com",
+          "login.microsoftonline.com",
+          "static.azure.com",
+          "docs.azure.com",
+          "learn.azure.com",
+          "download.azure.com",
+          "support.azure.com"
+        ]
+      },
+      {
+        "domain": "windows.com",
+        "provider_family": "windows.com",
+        "region": "global",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "windows.com",
+          "www.windows.com",
+          "update.windows.com",
+          "download.windows.com",
+          "support.windows.com",
+          "account.windows.com",
+          "login.windows.com",
+          "docs.windows.com",
+          "store.windows.com",
+          "cdn.windows.com"
+        ]
+      },
+      {
+        "domain": "xbox.com",
+        "provider_family": "xbox.com",
+        "region": "global",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "xbox.com",
+          "www.xbox.com",
+          "account.xbox.com",
+          "live.xbox.com",
+          "login.live.com",
+          "support.xbox.com",
+          "news.xbox.com",
+          "store.xbox.com",
+          "assets.xbox.com",
+          "static.xbox.com"
+        ]
+      },
+      {
+        "domain": "microsoftonline.com",
+        "provider_family": "microsoftonline.com",
+        "region": "global",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "microsoftonline.com",
+          "www.microsoftonline.com",
+          "m.microsoftonline.com",
+          "api.microsoftonline.com",
+          "cdn.microsoftonline.com",
+          "static.microsoftonline.com",
+          "auth.microsoftonline.com",
+          "login.microsoftonline.com",
+          "account.microsoftonline.com",
+          "admin.microsoftonline.com"
+        ]
+      },
+      {
+        "domain": "github.com",
+        "provider_family": "github.com",
+        "region": "global",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "github.com",
+          "www.github.com",
+          "m.github.com",
+          "api.github.com",
+          "codeload.github.com",
+          "gist.github.com",
+          "raw.githubusercontent.com",
+          "uploads.github.com",
+          "assets.github.com",
+          "support.github.com"
+        ]
+      },
+      {
+        "domain": "githubusercontent.com",
+        "provider_family": "githubusercontent.com",
+        "region": "global",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "githubusercontent.com",
+          "www.githubusercontent.com",
+          "avatars.githubusercontent.com",
+          "raw.githubusercontent.com",
+          "media.githubusercontent.com",
+          "objects.githubusercontent.com",
+          "camo.githubusercontent.com",
+          "user-images.githubusercontent.com",
+          "classroom.githubusercontent.com",
+          "private-user-images.githubusercontent.com"
+        ]
+      },
+      {
+        "domain": "google.com",
+        "provider_family": "google.com",
+        "region": "global",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "google.com",
+          "www.google.com",
+          "m.google.com",
+          "api.google.com",
+          "accounts.google.com",
+          "mail.google.com",
+          "support.google.com",
+          "maps.google.com",
+          "news.google.com",
+          "drive.google.com"
+        ]
+      },
+      {
+        "domain": "youtube.com",
+        "provider_family": "youtube.com",
+        "region": "global",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "youtube.com",
+          "www.youtube.com",
+          "m.youtube.com",
+          "studio.youtube.com",
+          "music.youtube.com",
+          "tv.youtube.com",
+          "accounts.youtube.com",
+          "i.youtube.com",
+          "support.youtube.com",
+          "kids.youtube.com"
+        ]
+      },
+      {
+        "domain": "gmail.com",
+        "provider_family": "gmail.com",
+        "region": "global",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "gmail.com",
+          "www.gmail.com",
+          "m.gmail.com",
+          "mail.gmail.com",
+          "support.gmail.com",
+          "accounts.gmail.com",
+          "static.gmail.com",
+          "api.gmail.com",
+          "webmail.gmail.com",
+          "smtp.gmail.com"
+        ]
+      },
+      {
+        "domain": "gstatic.com",
+        "provider_family": "gstatic.com",
+        "region": "global",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "gstatic.com",
+          "www.gstatic.com",
+          "m.gstatic.com",
+          "fonts.gstatic.com",
+          "ssl.gstatic.com",
+          "maps.gstatic.com",
+          "www2.gstatic.com",
+          "www3.gstatic.com",
+          "static.gstatic.com",
+          "storage.googleapis.com"
+        ]
+      },
+      {
+        "domain": "googleapis.com",
+        "provider_family": "googleapis.com",
+        "region": "global",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "googleapis.com",
+          "www.googleapis.com",
+          "m.googleapis.com",
+          "maps.googleapis.com",
+          "www.googleapis.com",
+          "oauth2.googleapis.com",
+          "storage.googleapis.com",
+          "compute.googleapis.com",
+          "cloudtrace.googleapis.com",
+          "vision.googleapis.com"
+        ]
+      },
+      {
+        "domain": "cloud.google.com",
+        "provider_family": "google.com",
+        "region": "global",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "cloud.google.com",
+          "www.cloud.google.com",
+          "m.cloud.google.com",
+          "api.cloud.google.com",
+          "console.cloud.google.com",
+          "static.cloud.google.com",
+          "auth.cloud.google.com",
+          "login.cloud.google.com",
+          "support.cloud.google.com",
+          "storage.cloud.google.com"
+        ]
+      },
+      {
+        "domain": "apple.com",
+        "provider_family": "apple.com",
+        "region": "global",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "apple.com",
+          "www.apple.com",
+          "m.apple.com",
+          "support.apple.com",
+          "account.apple.com",
+          "developer.apple.com",
+          "id.apple.com",
+          "music.apple.com",
+          "tv.apple.com",
+          "static.apple.com"
+        ]
+      },
+      {
+        "domain": "icloud.com",
+        "provider_family": "icloud.com",
+        "region": "global",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "icloud.com",
+          "www.icloud.com",
+          "m.icloud.com",
+          "account.icloud.com",
+          "support.icloud.com",
+          "static.icloud.com",
+          "id.icloud.com",
+          "mail.icloud.com",
+          "photos.icloud.com",
+          "calendar.icloud.com"
+        ]
+      },
+      {
+        "domain": "amazon.com",
+        "provider_family": "amazon.com",
+        "region": "global",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "amazon.com",
+          "www.amazon.com",
+          "m.amazon.com",
+          "api.amazon.com",
+          "static.amazon.com",
+          "smile.amazon.com",
+          "music.amazon.com",
+          "developer.amazon.com",
+          "pay.amazon.com",
+          "support.amazon.com"
+        ]
+      },
+      {
+        "domain": "aws.amazon.com",
+        "provider_family": "amazon.com",
+        "region": "global",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "aws.amazon.com",
+          "www.aws.amazon.com",
+          "m.aws.amazon.com",
+          "api.aws.amazon.com",
+          "console.aws.amazon.com",
+          "docs.aws.amazon.com",
+          "static.aws.amazon.com",
+          "support.aws.amazon.com",
+          "signin.aws.amazon.com",
+          "ec2.aws.amazon.com"
+        ]
+      },
+      {
+        "domain": "cloudflare.com",
+        "provider_family": "cloudflare.com",
+        "region": "global",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "cloudflare.com",
+          "www.cloudflare.com",
+          "m.cloudflare.com",
+          "api.cloudflare.com",
+          "dash.cloudflare.com",
+          "support.cloudflare.com",
+          "developers.cloudflare.com",
+          "static.cloudflare.com",
+          "blog.cloudflare.com",
+          "cdn.cloudflare.com"
+        ]
+      },
+      {
+        "domain": "wikipedia.org",
+        "provider_family": "wikipedia.org",
+        "region": "global",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "wikipedia.org",
+          "www.wikipedia.org",
+          "m.wikipedia.org",
+          "api.wikipedia.org",
+          "en.wikipedia.org",
+          "ru.wikipedia.org",
+          "commons.wikipedia.org",
+          "static.wikipedia.org",
+          "upload.wikipedia.org",
+          "support.wikipedia.org"
+        ]
+      },
+      {
+        "domain": "mozilla.org",
+        "provider_family": "mozilla.org",
+        "region": "global",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "mozilla.org",
+          "www.mozilla.org",
+          "m.mozilla.org",
+          "api.mozilla.org",
+          "support.mozilla.org",
+          "developer.mozilla.org",
+          "static.mozilla.org",
+          "accounts.mozilla.org",
+          "blog.mozilla.org",
+          "addons.mozilla.org"
+        ]
+      },
+      {
+        "domain": "firefox.com",
+        "provider_family": "firefox.com",
+        "region": "global",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "firefox.com",
+          "www.firefox.com",
+          "m.firefox.com",
+          "api.firefox.com",
+          "static.firefox.com",
+          "support.firefox.com",
+          "accounts.firefox.com",
+          "download.firefox.com",
+          "update.firefox.com",
+          "addons.firefox.com"
+        ]
+      },
+      {
+        "domain": "reddit.com",
+        "provider_family": "reddit.com",
+        "region": "global",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "reddit.com",
+          "www.reddit.com",
+          "m.reddit.com",
+          "api.reddit.com",
+          "old.reddit.com",
+          "oauth.reddit.com",
+          "static.reddit.com",
+          "i.redd.it",
+          "gateway.reddit.com",
+          "support.reddit.com"
+        ]
+      },
+      {
+        "domain": "x.com",
+        "provider_family": "x.com",
+        "region": "global",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "x.com",
+          "www.x.com",
+          "m.x.com",
+          "api.x.com",
+          "static.x.com",
+          "auth.x.com",
+          "login.x.com",
+          "help.x.com",
+          "support.x.com",
+          "cdn.x.com"
+        ]
+      },
+      {
+        "domain": "linkedin.com",
+        "provider_family": "linkedin.com",
+        "region": "global",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "linkedin.com",
+          "www.linkedin.com",
+          "m.linkedin.com",
+          "api.linkedin.com",
+          "static.linkedin.com",
+          "auth.linkedin.com",
+          "login.linkedin.com",
+          "media.linkedin.com",
+          "business.linkedin.com",
+          "support.linkedin.com"
+        ]
+      },
+      {
+        "domain": "netflix.com",
+        "provider_family": "netflix.com",
+        "region": "global",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "netflix.com",
+          "www.netflix.com",
+          "m.netflix.com",
+          "api.netflix.com",
+          "help.netflix.com",
+          "assets.netflix.com",
+          "auth.netflix.com",
+          "login.netflix.com",
+          "static.netflix.com",
+          "media.netflix.com"
+        ]
+      },
+      {
+        "domain": "spotify.com",
+        "provider_family": "spotify.com",
+        "region": "global",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "spotify.com",
+          "www.spotify.com",
+          "m.spotify.com",
+          "api.spotify.com",
+          "accounts.spotify.com",
+          "open.spotify.com",
+          "support.spotify.com",
+          "static.spotify.com",
+          "auth.spotify.com",
+          "login.spotify.com"
+        ]
+      },
+      {
+        "domain": "twitch.tv",
+        "provider_family": "twitch.tv",
+        "region": "global",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "twitch.tv",
+          "www.twitch.tv",
+          "m.twitch.tv",
+          "api.twitch.tv",
+          "static.twitch.tv",
+          "auth.twitch.tv",
+          "login.twitch.tv",
+          "help.twitch.tv",
+          "support.twitch.tv",
+          "clips.twitch.tv"
+        ]
+      },
+      {
+        "domain": "discord.com",
+        "provider_family": "discord.com",
+        "region": "global",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "discord.com",
+          "www.discord.com",
+          "m.discord.com",
+          "api.discord.com",
+          "cdn.discord.com",
+          "support.discord.com",
+          "status.discord.com",
+          "static.discord.com",
+          "auth.discord.com",
+          "login.discord.com"
+        ]
+      },
+      {
+        "domain": "slack.com",
+        "provider_family": "slack.com",
+        "region": "global",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "slack.com",
+          "www.slack.com",
+          "m.slack.com",
+          "api.slack.com",
+          "app.slack.com",
+          "static.slack.com",
+          "auth.slack.com",
+          "login.slack.com",
+          "support.slack.com",
+          "status.slack.com"
+        ]
+      },
+      {
+        "domain": "dropbox.com",
+        "provider_family": "dropbox.com",
+        "region": "global",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "dropbox.com",
+          "www.dropbox.com",
+          "m.dropbox.com",
+          "api.dropbox.com",
+          "static.dropbox.com",
+          "auth.dropbox.com",
+          "login.dropbox.com",
+          "support.dropbox.com",
+          "content.dropboxapi.com",
+          "paper.dropbox.com"
+        ]
+      },
+      {
+        "domain": "zoom.us",
+        "provider_family": "zoom.us",
+        "region": "global",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "zoom.us",
+          "www.zoom.us",
+          "m.zoom.us",
+          "api.zoom.us",
+          "support.zoom.us",
+          "static.zoom.us",
+          "auth.zoom.us",
+          "login.zoom.us",
+          "marketplace.zoom.us",
+          "status.zoom.us"
+        ]
+      },
+      {
+        "domain": "notion.so",
+        "provider_family": "notion.so",
+        "region": "global",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "notion.so",
+          "www.notion.so",
+          "m.notion.so",
+          "api.notion.so",
+          "static.notion.so",
+          "auth.notion.so",
+          "login.notion.so",
+          "support.notion.so",
+          "docs.notion.so",
+          "status.notion.so"
+        ]
+      },
+      {
+        "domain": "figma.com",
+        "provider_family": "figma.com",
+        "region": "global",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "figma.com",
+          "www.figma.com",
+          "m.figma.com",
+          "api.figma.com",
+          "static.figma.com",
+          "auth.figma.com",
+          "login.figma.com",
+          "help.figma.com",
+          "support.figma.com",
+          "status.figma.com"
+        ]
+      },
+      {
+        "domain": "yahoo.com",
+        "provider_family": "yahoo.com",
+        "region": "global",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "yahoo.com",
+          "www.yahoo.com",
+          "m.yahoo.com",
+          "api.yahoo.com",
+          "mail.yahoo.com",
+          "finance.yahoo.com",
+          "sports.yahoo.com",
+          "news.yahoo.com",
+          "static.yahoo.com",
+          "support.yahoo.com"
+        ]
+      },
+      {
+        "domain": "duckduckgo.com",
+        "provider_family": "duckduckgo.com",
+        "region": "global",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "duckduckgo.com",
+          "www.duckduckgo.com",
+          "m.duckduckgo.com",
+          "api.duckduckgo.com",
+          "static.duckduckgo.com",
+          "auth.duckduckgo.com",
+          "login.duckduckgo.com",
+          "help.duckduckgo.com",
+          "support.duckduckgo.com",
+          "spreadprivacy.com"
+        ]
+      },
+      {
+        "domain": "paypal.com",
+        "provider_family": "paypal.com",
+        "region": "global",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "paypal.com",
+          "www.paypal.com",
+          "m.paypal.com",
+          "api.paypal.com",
+          "static.paypal.com",
+          "auth.paypal.com",
+          "login.paypal.com",
+          "checkout.paypal.com",
+          "support.paypal.com",
+          "developer.paypal.com"
+        ]
+      },
+      {
+        "domain": "stripe.com",
+        "provider_family": "stripe.com",
+        "region": "global",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "stripe.com",
+          "www.stripe.com",
+          "m.stripe.com",
+          "api.stripe.com",
+          "dashboard.stripe.com",
+          "static.stripe.com",
+          "auth.stripe.com",
+          "login.stripe.com",
+          "support.stripe.com",
+          "docs.stripe.com"
+        ]
+      },
+      {
+        "domain": "adobe.com",
+        "provider_family": "adobe.com",
+        "region": "global",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "adobe.com",
+          "www.adobe.com",
+          "m.adobe.com",
+          "api.adobe.com",
+          "static.adobe.com",
+          "auth.adobe.com",
+          "login.adobe.com",
+          "support.adobe.com",
+          "creativecloud.adobe.com",
+          "developer.adobe.com"
+        ]
+      },
+      {
+        "domain": "canva.com",
+        "provider_family": "canva.com",
+        "region": "global",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "canva.com",
+          "www.canva.com",
+          "m.canva.com",
+          "api.canva.com",
+          "static.canva.com",
+          "auth.canva.com",
+          "login.canva.com",
+          "support.canva.com",
+          "status.canva.com",
+          "design.canva.com"
+        ]
+      },
+      {
+        "domain": "salesforce.com",
+        "provider_family": "salesforce.com",
+        "region": "global",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "salesforce.com",
+          "www.salesforce.com",
+          "m.salesforce.com",
+          "api.salesforce.com",
+          "login.salesforce.com",
+          "help.salesforce.com",
+          "static.salesforce.com",
+          "support.salesforce.com",
+          "developer.salesforce.com",
+          "trailhead.salesforce.com"
+        ]
+      },
+      {
+        "domain": "digitalocean.com",
+        "provider_family": "digitalocean.com",
+        "region": "global",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "digitalocean.com",
+          "www.digitalocean.com",
+          "m.digitalocean.com",
+          "api.digitalocean.com",
+          "cloud.digitalocean.com",
+          "docs.digitalocean.com",
+          "static.digitalocean.com",
+          "auth.digitalocean.com",
+          "login.digitalocean.com",
+          "support.digitalocean.com"
+        ]
+      },
+      {
+        "domain": "ubuntu.com",
+        "provider_family": "ubuntu.com",
+        "region": "global",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "ubuntu.com",
+          "www.ubuntu.com",
+          "m.ubuntu.com",
+          "api.ubuntu.com",
+          "help.ubuntu.com",
+          "static.ubuntu.com",
+          "auth.ubuntu.com",
+          "login.ubuntu.com",
+          "docs.ubuntu.com",
+          "discourse.ubuntu.com"
+        ]
+      },
+      {
+        "domain": "canonical.com",
+        "provider_family": "canonical.com",
+        "region": "global",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "canonical.com",
+          "www.canonical.com",
+          "m.canonical.com",
+          "api.canonical.com",
+          "static.canonical.com",
+          "auth.canonical.com",
+          "login.canonical.com",
+          "support.canonical.com",
+          "cloud.canonical.com",
+          "ubuntu.com"
+        ]
+      },
+      {
+        "domain": "oracle.com",
+        "provider_family": "oracle.com",
+        "region": "global",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "oracle.com",
+          "www.oracle.com",
+          "m.oracle.com",
+          "api.oracle.com",
+          "docs.oracle.com",
+          "static.oracle.com",
+          "auth.oracle.com",
+          "login.oracle.com",
+          "support.oracle.com",
+          "cloud.oracle.com"
+        ]
+      },
+      {
+        "domain": "stackoverflow.com",
+        "provider_family": "stackoverflow.com",
+        "region": "global",
+        "ports": [
+          443,
+          8443
+        ],
+        "priority": 0,
+        "risk": "normal",
+        "sni_pool": [
+          "stackoverflow.com",
+          "www.stackoverflow.com",
+          "m.stackoverflow.com",
+          "api.stackoverflow.com",
+          "static.stackoverflow.com",
+          "auth.stackoverflow.com",
+          "login.stackoverflow.com",
+          "support.stackoverflow.com",
+          "meta.stackoverflow.com",
+          "stackexchange.com"
+        ]
+      }
+    ]
+  }
+}

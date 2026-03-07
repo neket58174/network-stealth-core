@@ -1,40 +1,43 @@
-# Contributing
+# contributing
 
-Thanks for contributing to **Network Stealth Core**.
+thanks for contributing to **network stealth core**.
 
-This guide defines the expected workflow for safe and reviewable changes.
+this repository optimizes for a very strict product contract:
 
-## Core rules
+- minimal install questions
+- strongest safe anti-dpi default
+- rollback-first mutating actions
+- honest client exports and diagnostics
 
-- keep commits focused and small
-- preserve rollback and security behavior
-- update tests and docs with behavior changes
-- avoid silent compatibility breaks
+## current public baseline
 
-## Current product baseline
+before changing behavior, assume these contracts are public in `v7.1.0`:
 
-Before changing behavior, assume these contracts are public:
+- `install` = minimal strongest-direct path
+- `install --advanced` = explicit manual compatibility flow
+- default stack = `vless + reality + xhttp + vless encryption + xtls-rprx-vision`
+- `migrate-stealth` = only supported mutating bridge for managed legacy or pre-v7 installs
+- `clients.json` = schema v3 with per-config `variants[]`
+- `policy.json` = managed policy source of truth
+- `export/raw-xray/` = canonical per-variant xray artifacts
+- `export/canary/` = field-testing bundle, including `emergency`
+- `export/capabilities.json` = schema v2 capability matrix
+- `/var/lib/xray/self-check.json` and `/var/lib/xray/measurements/latest-summary.json` = operator verdict state
+- `scripts/measure-stealth.sh run|compare|summarize` = local measurement workflow
 
-- `install` = minimal xhttp-only strongest-default path
-- `install --advanced` = manual prompt-driven setup
-- `migrate-stealth` = only supported managed migration from legacy `grpc/http2`
-- `clients.json` = schema v2 with per-config `variants[]`
-- `export/raw-xray/` = canonical per-variant xray client json artifacts
-- `export/capabilities.json` = machine-readable capability matrix
-- `/var/lib/xray/self-check.json` = last transport-aware verdict
-- `scripts/measure-stealth.sh` = local measurement harness
+if your change touches any of these, update code, tests, docs, and release metadata in the same pass.
 
-## Local setup
+## local setup
 
-### Prerequisites
+### prerequisites
 
 - linux or wsl
 - bash 4.3+
 - git
 - `shellcheck`, `shfmt`, `bats`, `actionlint`
-- node.js (or `npx`) for markdown lint
+- node.js or `npx` for markdown lint
 
-### Clone and track upstream
+### clone and track upstream
 
 ```bash
 git clone https://github.com/YOUR_USERNAME/network-stealth-core.git
@@ -43,25 +46,26 @@ git remote add upstream https://github.com/neket371/network-stealth-core.git
 git fetch upstream
 ```
 
-## Repository layout
+## repository layout
 
-| Path | Purpose |
+| path | purpose |
 |---|---|
 | `xray-reality.sh` | bootstrap wrapper |
 | `lib.sh` | runtime core and dispatcher |
-| `install.sh` | dependency setup and lifecycle entrypoints |
-| `config.sh` | config generation and client artifacts |
-| `service.sh` | systemd, firewall, and runtime status |
-| `health.sh` | health monitor and diagnostics |
-| `export.sh` | client export templates |
+| `install.sh` | install, update, repair, rollback orchestration |
+| `config.sh` | config generation and client artifact model |
+| `service.sh` | systemd, firewall, and status surface |
+| `health.sh` | health monitor, self-check, and diagnostics |
+| `export.sh` | export generation and canary bundle |
 | `modules/` | extracted reusable modules |
+| `data/domains/catalog.json` | canonical domain metadata |
 | `tests/bats/` | shell unit and integration tests |
 | `tests/e2e/` | lifecycle and migration scenarios |
 | `docs/` | bilingual documentation |
 
-## Mandatory local checks
+## mandatory local checks
 
-Run before push:
+run before push:
 
 ```bash
 make lint
@@ -70,86 +74,46 @@ make release-check
 make ci
 ```
 
-Equivalent direct commands:
+for windows-assisted validation:
 
-```bash
-bash tests/lint.sh
-bats tests/bats
-bash scripts/check-release-consistency.sh
+```powershell
+pwsh ./scripts/windows/run-validation.ps1 -SkipRemote
 ```
 
-## Coding standards
+## coding standards
 
 1. keep scripts safe under `set -euo pipefail`
 2. quote variables consistently
-3. avoid `eval` for user-controlled input
-4. reuse shared validators
-5. use atomic writes for critical files
-6. keep mutating flows rollback-safe
-7. prefer canonical raw xray exports over partial regenerated client templates
+3. avoid `eval` on user-controlled input
+4. reuse shared validators and helpers
+5. keep mutating flows rollback-safe
+6. prefer canonical raw xray json over lossy client templates
+7. do not silently downgrade the strongest-direct contract
+8. keep english and russian docs aligned in the same pass
 
-## High-risk areas
+## release hygiene
 
-Changes in these areas require extra coverage:
+if behavior changed:
 
-- bootstrap and download verification
-- permission and path handling
-- systemd unit generation
-- firewall apply and rollback
-- backup stack and cleanup traps
-- migration between legacy transport and xhttp
-- generated client artifacts and export paths
-- self-check verdict and rollback interactions
-- measurement-harness reporting
+1. bump `SCRIPT_VERSION`
+2. update both readmes and both changelogs
+3. update the affected docs in `docs/en` and `docs/ru`
+4. ensure tests cover the new contract
+5. cut a tag only from a green `ubuntu` head
 
-## Testing expectations
+## support expectations for pull requests
 
-- every behavior change should include or update bats coverage
-- lifecycle-sensitive changes should include e2e checks
-- docs updates must pass markdown lint and command-contract checks
+good pull requests include:
 
-Useful targeted runs:
+- a short problem statement
+- the chosen contract change or non-change
+- test evidence
+- doc updates
+- migration notes when managed installs are affected
 
-```bash
-bats tests/bats/unit.bats
-bats tests/bats/integration.bats
-bats tests/bats/validation.bats
-bats tests/bats/health.bats
-```
+avoid:
 
-## Documentation update scope
-
-Behavior changes usually affect:
-
-- `README.md`
-- `README.ru.md`
-- `docs/en/*.md`
-- `docs/ru/*.md`
-- `.github/CONTRIBUTING.md`
-- `.github/SECURITY.md`
-
-If a change touches public install behavior, migration, self-check, or artifacts, update both languages in the same pass.
-
-## Release metadata expectations
-
-If you prepare a release:
-
-- bump `SCRIPT_VERSION`
-- update wrapper/readme release markers
-- add matching sections to both changelogs
-- do not tag until branch CI is green
-
-## Pull request checklist
-
-- [ ] local checks are green (`make ci`)
-- [ ] tests cover changed behavior
-- [ ] docs updated for user-visible changes
-- [ ] both changelogs updated when release metadata is involved
-- [ ] no secrets in commits
-- [ ] rollback and security behavior preserved
-
-## Security reporting
-
-Do not open public issues for vulnerabilities.
-
-Use GitHub private vulnerability reporting. See [SECURITY.md](SECURITY.md).
+- adding install prompts to the normal path without a very strong reason
+- reviving legacy transports as active product paths
+- emitting fake client templates for unsupported strongest-direct features
+- changing artifact schemas without updating every consumer

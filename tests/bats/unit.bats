@@ -232,9 +232,34 @@
     XRAY_KEYS="$tmp_dir/keys"
     mkdir -p "$XRAY_KEYS" "$tmp_dir/export"
     export_capabilities_json "$tmp_dir/export" "$tmp_dir/export/capabilities.json"
+    jq -e '\''.schema_version == 2'\'' "$tmp_dir/export/capabilities.json" > /dev/null
     jq -e '\''.transport == "xhttp"'\'' "$tmp_dir/export/capabilities.json" > /dev/null
     jq -e '\''any(.formats[]; .name == "raw-xray" and .status == "native")'\'' "$tmp_dir/export/capabilities.json" > /dev/null
+    jq -e '\''any(.formats[]; .name == "canary-bundle" and .status == "native")'\'' "$tmp_dir/export/capabilities.json" > /dev/null
     jq -e '\''any(.formats[]; .name == "sing-box" and .status == "unsupported")'\'' "$tmp_dir/export/capabilities.json" > /dev/null
+    echo ok
+  '
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"ok"* ]]
+}
+
+@test "save_policy_file writes strongest-direct policy" {
+    run bash -eo pipefail -c '
+    source ./lib.sh
+    tmp_dir=$(mktemp -d)
+    trap "rm -rf \"$tmp_dir\"" EXIT
+    XRAY_POLICY="$tmp_dir/policy.json"
+    DOMAIN_PROFILE="ru-auto"
+    DOMAIN_TIER="tier_ru"
+    NUM_CONFIGS=3
+    TRANSPORT="xhttp"
+    XRAY_DIRECT_FLOW="xtls-rprx-vision"
+    XRAY_CLIENT_MIN_VERSION="25.9.5"
+    save_policy_file
+    jq -e '\''.transport.name == "xhttp"'\'' "$XRAY_POLICY" > /dev/null
+    jq -e '\''.transport.flow == "xtls-rprx-vision"'\'' "$XRAY_POLICY" > /dev/null
+    jq -e '\''.measurement.variants == ["recommended","rescue","emergency"]'\'' "$XRAY_POLICY" > /dev/null
+    jq -e '\''.update.replan == false'\'' "$XRAY_POLICY" > /dev/null
     echo ok
   '
     [ "$status" -eq 0 ]
@@ -246,6 +271,30 @@
     [ "$status" -eq 0 ]
     [[ "$output" == *"usage: scripts/measure-stealth.sh"* ]]
     [[ "$output" == *"--variants <list>"* ]]
+}
+
+@test "measurement_compare_reports_json summarizes saved reports" {
+    run bash -eo pipefail -c '
+    source ./lib.sh
+    source ./health.sh
+    tmp_dir=$(mktemp -d)
+    trap "rm -rf \"$tmp_dir\"" EXIT
+    report_a="$tmp_dir/a.json"
+    report_b="$tmp_dir/b.json"
+    cat > "$report_a" <<EOF
+{"generated":"2026-03-07T10:00:00Z","network_tag":"home","provider":"isp-a","region":"msk","configs":[{"config_name":"Config 1","success":false},{"config_name":"Config 2","success":true}],"results":[{"config_name":"Config 1","variant_key":"recommended","success":false,"latency_ms":0,"reason":"blocked"},{"config_name":"Config 2","variant_key":"recommended","success":true,"latency_ms":120}]}
+EOF
+    cat > "$report_b" <<EOF
+{"generated":"2026-03-07T11:00:00Z","network_tag":"mobile","provider":"isp-b","region":"spb","configs":[{"config_name":"Config 1","success":false},{"config_name":"Config 2","success":true}],"results":[{"config_name":"Config 1","variant_key":"recommended","success":false,"latency_ms":0,"reason":"blocked"},{"config_name":"Config 2","variant_key":"recommended","success":true,"latency_ms":140}]}
+EOF
+    out=$(measurement_compare_reports_json "$report_a" "$report_b")
+    jq -e '\''.field_verdict == "warning"'\'' <<< "$out" > /dev/null
+    jq -e '\''.best_spare == "Config 2"'\'' <<< "$out" > /dev/null
+    jq -e '\''.promotion_candidate.config_name == "Config 2"'\'' <<< "$out" > /dev/null
+    echo ok
+  '
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"ok"* ]]
 }
 
 @test "resolve_mirror_base replaces version placeholders" {
@@ -1861,7 +1910,7 @@ EOF
     [ "$output" = "ok" ]
 }
 
-@test "save_client_configs keeps json entries when ipv6 is disabled" {
+@test "save_client_configs writes schema v3 strongest-direct variants when ipv6 is disabled" {
     run bash -eo pipefail -c '
     source ./lib.sh
     source ./config.sh
@@ -1907,8 +1956,10 @@ EOF
 
     count=$(jq -r ".configs | length" "$XRAY_KEYS/clients.json")
     [[ "$count" == "2" ]]
-    jq -e ".configs[] | .variants | select(type == \"array\" and length == 2)" "$XRAY_KEYS/clients.json" > /dev/null
+    jq -e ".schema_version == 3" "$XRAY_KEYS/clients.json" > /dev/null
+    jq -e ".configs[] | .variants | select(type == \"array\" and length == 3)" "$XRAY_KEYS/clients.json" > /dev/null
     jq -e ".configs[] | .recommended_variant | select(. == \"recommended\")" "$XRAY_KEYS/clients.json" > /dev/null
+    jq -e ".configs[] | .variants[] | select(.key == \"emergency\") | .requires.browser_dialer == true" "$XRAY_KEYS/clients.json" > /dev/null
     echo "ok"
   '
     [ "$status" -eq 0 ]

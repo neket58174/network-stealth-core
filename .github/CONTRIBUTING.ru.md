@@ -1,40 +1,43 @@
-# Contributing
+# contributing
 
-Спасибо за вклад в **Network Stealth Core**.
+спасибо за вклад в **network stealth core**.
 
-Этот гайд фиксирует ожидаемый workflow для безопасных и reviewable изменений.
+репозиторий оптимизирован под очень строгий продуктовый контракт:
 
-## Базовые правила
+- минимум вопросов при установке
+- самый сильный безопасный anti-dpi дефолт
+- rollback-first mutating-действия
+- честные клиентские экспорты и диагностика
 
-- держи коммиты сфокусированными и небольшими
-- сохраняй rollback и security-поведение
-- обновляй тесты и docs при изменении поведения
-- не допускай тихих compatibility-break
+## текущий публичный baseline
 
-## Текущий product baseline
+до изменения поведения считай публичными такие контракты `v7.1.0`:
 
-Перед изменением поведения считай публичными такие контракты:
+- `install` = минимальный strongest-direct путь
+- `install --advanced` = явный manual compatibility flow
+- дефолтный стек = `vless + reality + xhttp + vless encryption + xtls-rprx-vision`
+- `migrate-stealth` = единственный поддерживаемый mutating-мост для managed legacy или pre-v7 install
+- `clients.json` = schema v3 с `variants[]` для каждого конфига
+- `policy.json` = source of truth для managed policy
+- `export/raw-xray/` = canonical per-variant xray artifacts
+- `export/canary/` = bundle для полевых тестов, включая `emergency`
+- `export/capabilities.json` = capability matrix schema v2
+- `/var/lib/xray/self-check.json` и `/var/lib/xray/measurements/latest-summary.json` = операторский verdict state
+- `scripts/measure-stealth.sh run|compare|summarize` = локальный workflow измерений
 
-- `install` = минимальный xhttp-only strongest-default путь
-- `install --advanced` = ручной prompt-driven setup
-- `migrate-stealth` = единственная supported managed-миграция с legacy `grpc/http2`
-- `clients.json` = schema v2 с `variants[]` для каждого конфига
-- `export/raw-xray/` = canonical per-variant xray client json artifacts
-- `export/capabilities.json` = machine-readable capability matrix
-- `/var/lib/xray/self-check.json` = последний transport-aware verdict
-- `scripts/measure-stealth.sh` = local measurement harness
+если изменение затрагивает что-то из этого, обнови код, тесты, документацию и release metadata в одном проходе.
 
-## Локальная настройка
+## локальная подготовка
 
-### Prerequisites
+### зависимости
 
 - linux или wsl
 - bash 4.3+
 - git
 - `shellcheck`, `shfmt`, `bats`, `actionlint`
-- node.js (или `npx`) для markdown lint
+- node.js или `npx` для markdown lint
 
-### Клонирование и связь с upstream
+### clone и upstream
 
 ```bash
 git clone https://github.com/YOUR_USERNAME/network-stealth-core.git
@@ -43,25 +46,26 @@ git remote add upstream https://github.com/neket371/network-stealth-core.git
 git fetch upstream
 ```
 
-## Структура репозитория
+## структура репозитория
 
-| Путь | Назначение |
+| путь | назначение |
 |---|---|
 | `xray-reality.sh` | bootstrap wrapper |
 | `lib.sh` | runtime core и dispatcher |
-| `install.sh` | setup зависимостей и lifecycle entrypoints |
-| `config.sh` | генерация config и client artifacts |
-| `service.sh` | systemd, firewall и runtime status |
-| `health.sh` | health monitor и diagnostics |
-| `export.sh` | client export templates |
+| `install.sh` | orchestration для install, update, repair, rollback |
+| `config.sh` | генерация конфигов и клиентская модель артефактов |
+| `service.sh` | systemd, firewall и status-surface |
+| `health.sh` | health monitor, self-check и диагностика |
+| `export.sh` | генерация export’ов и canary bundle |
 | `modules/` | вынесенные reusable modules |
+| `data/domains/catalog.json` | canonical metadata доменов |
 | `tests/bats/` | shell unit и integration tests |
 | `tests/e2e/` | lifecycle и migration scenarios |
 | `docs/` | двуязычная документация |
 
-## Обязательные локальные проверки
+## обязательные локальные проверки
 
-Запусти перед push:
+перед push:
 
 ```bash
 make lint
@@ -70,86 +74,46 @@ make release-check
 make ci
 ```
 
-Эквивалентные прямые команды:
+для windows-assisted проверки:
 
-```bash
-bash tests/lint.sh
-bats tests/bats
-bash scripts/check-release-consistency.sh
+```powershell
+pwsh ./scripts/windows/run-validation.ps1 -SkipRemote
 ```
 
-## Coding standards
+## coding standards
 
 1. держи скрипты безопасными под `set -euo pipefail`
-2. последовательно квоть переменные
-3. не используй `eval` для user-controlled input
-4. переиспользуй общие validators
-5. используй atomic writes для критичных файлов
-6. держи mutating-flows rollback-safe
-7. предпочитай canonical raw xray exports вместо partial regenerated client templates
+2. последовательно экранируй переменные
+3. не используй `eval` на пользовательском вводе
+4. переиспользуй общие валидаторы и helper’ы
+5. сохраняй rollback-safe поведение mutating-flow
+6. предпочитай canonical raw xray json вместо lossy client templates
+7. не делай silent downgrade strongest-direct контракта
+8. держи english и russian docs синхронными в одном проходе
 
-## High-risk areas
+## release hygiene
 
-Изменения в этих зонах требуют дополнительного покрытия:
+если поведение изменилось:
 
-- bootstrap и download verification
-- обработка permissions и путей
-- генерация systemd units
-- firewall apply и rollback
-- backup stack и cleanup traps
-- миграция между legacy transport и xhttp
-- generated client artifacts и export paths
-- self-check verdict и взаимодействие с rollback
-- reporting в measurement harness
+1. подними `SCRIPT_VERSION`
+2. обнови оба readme и оба changelog
+3. обнови затронутые docs в `docs/en` и `docs/ru`
+4. убедись, что тесты покрывают новый контракт
+5. режь тег только с зелёного `ubuntu` head
 
-## Ожидания по тестам
+## чего ждём от pull request
 
-- любое изменение поведения должно добавлять или обновлять bats coverage
-- lifecycle-sensitive изменениям нужны e2e checks
-- обновления docs обязаны проходить markdown lint и command-contract checks
+хороший pr содержит:
 
-Полезные таргетированные прогоны:
+- короткое описание проблемы
+- выбранное изменение контракта или явное сохранение старого
+- test evidence
+- updates в документации
+- migration notes, если затронуты managed install
 
-```bash
-bats tests/bats/unit.bats
-bats tests/bats/integration.bats
-bats tests/bats/validation.bats
-bats tests/bats/health.bats
-```
+избегай:
 
-## Область обновления документации
-
-Изменения поведения обычно затрагивают:
-
-- `README.md`
-- `README.ru.md`
-- `docs/en/*.md`
-- `docs/ru/*.md`
-- `.github/CONTRIBUTING.md`
-- `.github/SECURITY.md`
-
-Если изменение касается публичного install-поведения, migration, self-check или артефактов, обновляй оба языка в одном проходе.
-
-## Ожидания по release metadata
-
-Если готовишь релиз:
-
-- подними `SCRIPT_VERSION`
-- обнови marker’ы релиза в wrapper/readme
-- добавь совпадающие секции в оба changelog
-- не ставь tag, пока branch CI не зелёный
-
-## Чеклист pull request
-
-- [ ] локальные проверки зеленые (`make ci`)
-- [ ] тесты покрывают измененное поведение
-- [ ] docs обновлены для user-visible изменений
-- [ ] оба changelog обновлены, если затронута release metadata
-- [ ] в коммитах нет секретов
-- [ ] rollback и security-поведение сохранены
-
-## Сообщение о security-проблемах
-
-Не открывай публичные issue для уязвимостей.
-
-Используй GitHub private vulnerability reporting. См. [SECURITY.ru.md](SECURITY.ru.md).
+- добавления prompt’ов в normal install path без очень сильной причины
+- возврата legacy transport как активного продуктового пути
+- генерации фейковых client templates для unsupported strongest-direct features
+- изменения artifact schema без обновления всех consumers

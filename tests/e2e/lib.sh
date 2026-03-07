@@ -80,16 +80,19 @@ assert_clients_json_xhttp_contract() {
 
     # shellcheck disable=SC2016
     if ! run_root jq -e --argjson expected "$expected_count" '
-        .schema_version == 2
+        .schema_version == 3
         and .transport == "xhttp"
         and ((.configs | length) == $expected)
         and ([.configs[] |
             (.transport == "xhttp")
             and (.recommended_variant == "recommended")
-            and ((.variants | length) == 2)
-            and (([.variants[].key] | sort) == ["recommended", "rescue"])
-            and (([.variants[].mode] | sort) == ["auto", "packet-up"])
-            and (([.variants[].xray_client_file_v4 // empty] | length) == 2)
+            and (.flow == "xtls-rprx-vision")
+            and (.vless_encryption != "none")
+            and ((.variants | length) == 3)
+            and (([.variants[].key] | sort) == ["emergency", "recommended", "rescue"])
+            and (([.variants[].mode] | sort) == ["auto", "packet-up", "stream-up"])
+            and (([.variants[].xray_client_file_v4 // empty] | length) == 3)
+            and (([.variants[] | select(.key == "emergency") | .requires.browser_dialer] | all) == true)
         ] | all)
     ' "$json_path" > /dev/null; then
         echo "xhttp clients.json contract check failed: ${json_path}" >&2

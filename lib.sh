@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Network Stealth Core 6.0.0 - Автоматизация установки и сопровождения Xray Reality (xhttp-only + transport-aware self-check)
+# Network Stealth Core 7.1.0 - Автоматизация strongest-direct Xray Reality (policy, schema v3, canary, adaptive repair)
 
 set -euo pipefail
 
 SCRIPT_DIR="${SCRIPT_DIR:-$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)}"
 
-readonly SCRIPT_VERSION="6.0.0"
+readonly SCRIPT_VERSION="7.1.0"
 readonly SCRIPT_NAME="Network Stealth Core"
 
 XRAY_USER="xray"
@@ -15,6 +15,7 @@ XRAY_BIN="${XRAY_BIN:-/usr/local/bin/xray}"
 XRAY_GEO_DIR="${XRAY_GEO_DIR:-}"
 XRAY_CONFIG="${XRAY_CONFIG:-/etc/xray/config.json}"
 XRAY_ENV="${XRAY_ENV:-/etc/xray-reality/config.env}"
+XRAY_POLICY="${XRAY_POLICY:-/etc/xray-reality/policy.json}"
 XRAY_KEYS="${XRAY_KEYS:-/etc/xray/private/keys}"
 XRAY_BACKUP="${XRAY_BACKUP:-/var/backups/xray}"
 XRAY_LOGS="${XRAY_LOGS:-/var/log/xray}"
@@ -76,6 +77,7 @@ XRAY_DATA_DIR="${XRAY_DATA_DIR:-}"
 XRAY_TIERS_FILE="${XRAY_TIERS_FILE:-}"
 XRAY_SNI_POOLS_FILE="${XRAY_SNI_POOLS_FILE:-}"
 XRAY_GRPC_SERVICES_FILE="${XRAY_GRPC_SERVICES_FILE:-}"
+XRAY_DOMAIN_CATALOG_FILE="${XRAY_DOMAIN_CATALOG_FILE:-}"
 XRAY_DOMAIN_TIER="${XRAY_DOMAIN_TIER:-}"
 XRAY_DOMAIN_PROFILE="${XRAY_DOMAIN_PROFILE:-}"
 XRAY_NUM_CONFIGS="${XRAY_NUM_CONFIGS:-}"
@@ -102,6 +104,14 @@ DOMAIN_QUARANTINE_COOLDOWN_MIN="${DOMAIN_QUARANTINE_COOLDOWN_MIN:-120}"
 PRIMARY_DOMAIN_MODE="${PRIMARY_DOMAIN_MODE:-adaptive}"
 PRIMARY_PIN_DOMAIN="${PRIMARY_PIN_DOMAIN:-}"
 PRIMARY_ADAPTIVE_TOP_N="${PRIMARY_ADAPTIVE_TOP_N:-5}"
+MEASUREMENTS_DIR="${MEASUREMENTS_DIR:-/var/lib/xray/measurements}"
+MEASUREMENTS_SUMMARY_FILE="${MEASUREMENTS_SUMMARY_FILE:-/var/lib/xray/measurements/latest-summary.json}"
+SELF_CHECK_HISTORY_FILE="${SELF_CHECK_HISTORY_FILE:-/var/lib/xray/self-check-history.ndjson}"
+STEALTH_CONTRACT_VERSION="${STEALTH_CONTRACT_VERSION:-7.1.0}"
+XRAY_CLIENT_MIN_VERSION="${XRAY_CLIENT_MIN_VERSION:-25.9.5}"
+XRAY_DIRECT_FLOW="${XRAY_DIRECT_FLOW:-xtls-rprx-vision}"
+BROWSER_DIALER_ENV_NAME="${BROWSER_DIALER_ENV_NAME:-xray.browser.dialer}"
+XRAY_BROWSER_DIALER_ADDRESS="${XRAY_BROWSER_DIALER_ADDRESS:-}"
 DOWNLOAD_HOST_ALLOWLIST="${DOWNLOAD_HOST_ALLOWLIST:-github.com,api.github.com,objects.githubusercontent.com,raw.githubusercontent.com,release-assets.githubusercontent.com,ghproxy.com}"
 GH_PROXY_BASE="${GH_PROXY_BASE:-https://ghproxy.com/https://github.com}"
 ACTION="install"
@@ -110,6 +120,7 @@ ASSUME_YES="${ASSUME_YES:-false}"
 DRY_RUN="${DRY_RUN:-false}"
 VERBOSE="${VERBOSE:-false}"
 AUTO_PROFILE_MODE="${AUTO_PROFILE_MODE:-false}"
+REPLAN="${REPLAN:-false}"
 ROLLBACK_DIR=""
 SYSTEMD_MANAGEMENT_DISABLED="${SYSTEMD_MANAGEMENT_DISABLED:-false}"
 SERVER_IP="${SERVER_IP:-}"
@@ -129,7 +140,16 @@ CONFIG_SNIS=()
 CONFIG_TRANSPORT_ENDPOINTS=()
 CONFIG_DESTS=()
 CONFIG_FPS=()
+CONFIG_PROVIDER_FAMILIES=()
+CONFIG_VLESS_ENCRYPTIONS=()
+CONFIG_VLESS_DECRYPTIONS=()
 AVAILABLE_DOMAINS=()
+declare -A DOMAIN_PROVIDER_FAMILIES=()
+declare -A DOMAIN_REGIONS=()
+declare -A DOMAIN_PRIORITY_MAP=()
+declare -A DOMAIN_RISK_MAP=()
+declare -A DOMAIN_PORT_HINTS=()
+declare -A DOMAIN_SNI_POOL_OVERRIDES=()
 REUSE_EXISTING_CONFIG=false
 # shellcheck disable=SC2034 # Used by logs/add-clients handlers in sourced modules.
 LOGS_TARGET=""
@@ -156,7 +176,7 @@ declare -A CREATED_PATH_SET=()
 : "${HEALTH_LOG}"
 : "${PORTS[@]}" "${PORTS_V6[@]}"
 : "${PRIVATE_KEYS[@]}" "${PUBLIC_KEYS[@]}" "${UUIDS[@]}" "${SHORT_IDS[@]}"
-: "${CONFIG_DOMAINS[@]}" "${CONFIG_SNIS[@]}" "${CONFIG_TRANSPORT_ENDPOINTS[@]}" "${CONFIG_DESTS[@]}" "${CONFIG_FPS[@]}" "${AVAILABLE_DOMAINS[@]}"
+: "${CONFIG_DOMAINS[@]}" "${CONFIG_SNIS[@]}" "${CONFIG_TRANSPORT_ENDPOINTS[@]}" "${CONFIG_DESTS[@]}" "${CONFIG_FPS[@]}" "${CONFIG_PROVIDER_FAMILIES[@]}" "${CONFIG_VLESS_ENCRYPTIONS[@]}" "${CONFIG_VLESS_DECRYPTIONS[@]}" "${AVAILABLE_DOMAINS[@]}"
 
 DEFAULT_DATA_DIR="/usr/local/share/xray-reality"
 if [[ -z "${XRAY_DATA_DIR:-}" ]]; then
@@ -166,6 +186,7 @@ export XRAY_DATA_DIR
 XRAY_TIERS_FILE="${XRAY_TIERS_FILE:-$XRAY_DATA_DIR/domains.tiers}"
 XRAY_SNI_POOLS_FILE="${XRAY_SNI_POOLS_FILE:-$XRAY_DATA_DIR/sni_pools.map}"
 XRAY_GRPC_SERVICES_FILE="${XRAY_GRPC_SERVICES_FILE:-$XRAY_DATA_DIR/grpc_services.map}"
+XRAY_DOMAIN_CATALOG_FILE="${XRAY_DOMAIN_CATALOG_FILE:-$XRAY_DATA_DIR/data/domains/catalog.json}"
 
 MODULE_DIR="$SCRIPT_DIR"
 if [[ ! -f "$MODULE_DIR/install.sh" || ! -f "$MODULE_DIR/config.sh" ]]; then
@@ -303,6 +324,10 @@ resolve_paths() {
         "/etc/xray-reality/config.env" "/opt/xray/etc/config.env"; then
         resolve_errors=$((resolve_errors + 1))
     fi
+    if ! _resolve_path XRAY_POLICY "Файл policy" \
+        "/etc/xray-reality/policy.json" "/opt/xray/etc/policy.json"; then
+        resolve_errors=$((resolve_errors + 1))
+    fi
     if ! _resolve_path XRAY_LOGS "Директория логов" \
         "/var/log/xray" "/opt/xray/log"; then
         resolve_errors=$((resolve_errors + 1))
@@ -317,6 +342,10 @@ resolve_paths() {
         "/var/lib/xray" "/opt/xray/data"; then
         resolve_errors=$((resolve_errors + 1))
     fi
+    if ! _resolve_path MEASUREMENTS_DIR "Директория measurements" \
+        "/var/lib/xray/measurements" "/opt/xray/data/measurements"; then
+        resolve_errors=$((resolve_errors + 1))
+    fi
     if ! _resolve_path XRAY_BACKUP "Директория бэкапов" \
         "/var/backups/xray" "/opt/xray/backups"; then
         resolve_errors=$((resolve_errors + 1))
@@ -329,6 +358,9 @@ resolve_paths() {
     XRAY_TIERS_FILE="$XRAY_DATA_DIR/domains.tiers"
     XRAY_SNI_POOLS_FILE="$XRAY_DATA_DIR/sni_pools.map"
     XRAY_GRPC_SERVICES_FILE="$XRAY_DATA_DIR/grpc_services.map"
+    XRAY_DOMAIN_CATALOG_FILE="$XRAY_DATA_DIR/data/domains/catalog.json"
+    SELF_CHECK_HISTORY_FILE="${XRAY_HOME%/}/self-check-history.ndjson"
+    MEASUREMENTS_SUMMARY_FILE="${MEASUREMENTS_DIR%/}/latest-summary.json"
 
     local bin_dir
     bin_dir=$(dirname "$XRAY_BIN")
@@ -776,7 +808,7 @@ setup_logging() {
 
     local inner_width
     local title="${SCRIPT_NAME} v${SCRIPT_VERSION}"
-    local subtitle="Автоматизация установки и сопровождения Xray Reality (xhttp-first + Reality)"
+    local subtitle="Автоматизация strongest-direct Xray Reality (xhttp + vless encryption + vision)"
     inner_width=$(ui_box_width_for_lines 60 92 "$title" "$subtitle")
     local box_top box_bottom
     box_top=$(ui_box_border_string top "$inner_width")
@@ -1643,6 +1675,17 @@ fi
 # shellcheck source=/dev/null
 source "$LIB_CLI_MODULE"
 
+LIB_POLICY_MODULE="$MODULE_DIR/modules/lib/policy.sh"
+if [[ ! -f "$LIB_POLICY_MODULE" && -n "${XRAY_DATA_DIR:-}" ]]; then
+    LIB_POLICY_MODULE="$XRAY_DATA_DIR/modules/lib/policy.sh"
+fi
+if [[ ! -f "$LIB_POLICY_MODULE" ]]; then
+    log ERROR "Не найден модуль policy: $LIB_POLICY_MODULE"
+    exit 1
+fi
+# shellcheck source=/dev/null
+source "$LIB_POLICY_MODULE"
+
 require_cmd() {
     local cmd="$1"
     if ! command -v "$cmd" > /dev/null 2>&1; then
@@ -1704,7 +1747,7 @@ Commands:
   add-keys [N]                   Alias of add-clients [N]
   update                         Update Xray-core
   repair                         Re-apply units/firewall/monitoring and recover artifacts
-  migrate-stealth                Convert managed legacy transport (gRPC/HTTP2) to xhttp
+  migrate-stealth                Convert managed legacy or pre-v7 xhttp installs to strongest direct stack
   status                         Show current configuration and status
   logs [xray|health|all]         View service logs (default: all)
   diagnose                       Collect diagnostics
@@ -1720,9 +1763,10 @@ Options:
   --advanced                     Enable legacy interactive prompt flow
   --num-configs <N>              Number of configs (tier-aware limit)
   --domain-profile <ru|ru-auto|global-50|global-50-auto|custom>
-                                  Domain profile for install/add (default install path: ru-auto)
+                                   Domain profile for install/add (default install path: ru-auto)
   --start-port <1-65535>         Starting port (default: 443)
-  --transport <xhttp>            Transport mode (fixed to xhttp in v6)
+  --transport <xhttp>            Transport mode (fixed to xhttp in v7)
+  --replan                       Rebuild client priority from latest self-check + field measurements
   --progress-mode <mode>         Progress output: auto|bar|plain|none
   --require-minisign             Fail when minisign is unavailable or signature is missing
   --allow-no-systemd             Allow install/update/repair without systemd (compat mode)
@@ -1741,7 +1785,7 @@ Options:
 
 Environment variables:
   XRAY_DOMAIN_PROFILE            Domain profile (ru|ru-auto|global-50|global-50-auto|custom; legacy aliases global-ms10*)
-  TRANSPORT                      Transport mode (xhttp only in v6)
+  TRANSPORT                      Transport mode (xhttp only in v7)
   SELF_CHECK_ENABLED             Enable transport-aware post-action self-check (default: true)
   SELF_CHECK_URLS                Comma-separated probe URLs for xhttp self-check
   SELF_CHECK_TIMEOUT_SEC         Curl timeout per self-check probe (default: 8)
@@ -1866,6 +1910,11 @@ load_config_file() {
         log WARN "Конфиг не найден: $file"
         return 0
     fi
+    if [[ "$file" == *.json ]]; then
+        log INFO "Загружаем policy: $file"
+        load_policy_file "$file"
+        return 0
+    fi
     log INFO "Загружаем конфиг: $file"
     local line key value
     while IFS= read -r line || [[ -n "$line" ]]; do
@@ -1884,7 +1933,7 @@ load_config_file() {
             fi
         fi
         case "$key" in
-            XRAY_DOMAIN_TIER | XRAY_DOMAIN_PROFILE | XRAY_NUM_CONFIGS | XRAY_SPIDER_MODE | XRAY_START_PORT | XRAY_PROGRESS_MODE | XRAY_ADVANCED | DOMAIN_PROFILE | DOMAIN_TIER | NUM_CONFIGS | SPIDER_MODE | START_PORT | PROGRESS_MODE | ADVANCED_MODE | XRAY_TRANSPORT | TRANSPORT | MUX_MODE | MUX_CONCURRENCY_MIN | MUX_CONCURRENCY_MAX | GRPC_IDLE_TIMEOUT_MIN | GRPC_IDLE_TIMEOUT_MAX | GRPC_HEALTH_TIMEOUT_MIN | GRPC_HEALTH_TIMEOUT_MAX | TCP_KEEPALIVE_MIN | TCP_KEEPALIVE_MAX | SHORT_ID_BYTES_MIN | SHORT_ID_BYTES_MAX | KEEP_LOCAL_BACKUPS | MAX_BACKUPS | REUSE_EXISTING | AUTO_ROLLBACK | XRAY_VERSION | XRAY_MIRRORS | MINISIGN_MIRRORS | QR_ENABLED | AUTO_UPDATE | AUTO_UPDATE_ONCALENDAR | AUTO_UPDATE_RANDOM_DELAY | ALLOW_INSECURE_SHA256 | ALLOW_UNVERIFIED_MINISIGN_BOOTSTRAP | REQUIRE_MINISIGN | ALLOW_NO_SYSTEMD | GEO_VERIFY_HASH | GEO_VERIFY_STRICT | XRAY_CUSTOM_DOMAINS | XRAY_DOMAINS_FILE | XRAY_SNI_POOLS_FILE | XRAY_GRPC_SERVICES_FILE | XRAY_TIERS_FILE | XRAY_DATA_DIR | XRAY_GEO_DIR | XRAY_SCRIPT_PATH | XRAY_UPDATE_SCRIPT | DOMAIN_CHECK | DOMAIN_CHECK_TIMEOUT | DOMAIN_CHECK_PARALLELISM | REALITY_TEST_PORTS | SKIP_REALITY_CHECK | DOMAIN_HEALTH_FILE | DOMAIN_HEALTH_PROBE_TIMEOUT | DOMAIN_HEALTH_RATE_LIMIT_MS | DOMAIN_HEALTH_MAX_PROBES | DOMAIN_HEALTH_RANKING | DOMAIN_QUARANTINE_FAIL_STREAK | DOMAIN_QUARANTINE_COOLDOWN_MIN | PRIMARY_DOMAIN_MODE | PRIMARY_PIN_DOMAIN | PRIMARY_ADAPTIVE_TOP_N | DOWNLOAD_HOST_ALLOWLIST | GH_PROXY_BASE | DOWNLOAD_TIMEOUT | DOWNLOAD_RETRIES | DOWNLOAD_RETRY_DELAY | SERVER_IP | SERVER_IP6 | DRY_RUN | VERBOSE | HEALTH_CHECK_INTERVAL | SELF_CHECK_ENABLED | SELF_CHECK_URLS | SELF_CHECK_TIMEOUT_SEC | SELF_CHECK_STATE_FILE | LOG_RETENTION_DAYS | LOG_MAX_SIZE_MB | HEALTH_LOG)
+            XRAY_DOMAIN_TIER | XRAY_DOMAIN_PROFILE | XRAY_NUM_CONFIGS | XRAY_SPIDER_MODE | XRAY_START_PORT | XRAY_PROGRESS_MODE | XRAY_ADVANCED | DOMAIN_PROFILE | DOMAIN_TIER | NUM_CONFIGS | SPIDER_MODE | START_PORT | PROGRESS_MODE | ADVANCED_MODE | XRAY_TRANSPORT | TRANSPORT | MUX_MODE | MUX_CONCURRENCY_MIN | MUX_CONCURRENCY_MAX | GRPC_IDLE_TIMEOUT_MIN | GRPC_IDLE_TIMEOUT_MAX | GRPC_HEALTH_TIMEOUT_MIN | GRPC_HEALTH_TIMEOUT_MAX | TCP_KEEPALIVE_MIN | TCP_KEEPALIVE_MAX | SHORT_ID_BYTES_MIN | SHORT_ID_BYTES_MAX | KEEP_LOCAL_BACKUPS | MAX_BACKUPS | REUSE_EXISTING | AUTO_ROLLBACK | XRAY_VERSION | XRAY_MIRRORS | MINISIGN_MIRRORS | QR_ENABLED | AUTO_UPDATE | AUTO_UPDATE_ONCALENDAR | AUTO_UPDATE_RANDOM_DELAY | ALLOW_INSECURE_SHA256 | ALLOW_UNVERIFIED_MINISIGN_BOOTSTRAP | REQUIRE_MINISIGN | ALLOW_NO_SYSTEMD | GEO_VERIFY_HASH | GEO_VERIFY_STRICT | XRAY_CUSTOM_DOMAINS | XRAY_DOMAINS_FILE | XRAY_SNI_POOLS_FILE | XRAY_GRPC_SERVICES_FILE | XRAY_TIERS_FILE | XRAY_DATA_DIR | XRAY_GEO_DIR | XRAY_SCRIPT_PATH | XRAY_UPDATE_SCRIPT | DOMAIN_CHECK | DOMAIN_CHECK_TIMEOUT | DOMAIN_CHECK_PARALLELISM | REALITY_TEST_PORTS | SKIP_REALITY_CHECK | DOMAIN_HEALTH_FILE | DOMAIN_HEALTH_PROBE_TIMEOUT | DOMAIN_HEALTH_RATE_LIMIT_MS | DOMAIN_HEALTH_MAX_PROBES | DOMAIN_HEALTH_RANKING | DOMAIN_QUARANTINE_FAIL_STREAK | DOMAIN_QUARANTINE_COOLDOWN_MIN | PRIMARY_DOMAIN_MODE | PRIMARY_PIN_DOMAIN | PRIMARY_ADAPTIVE_TOP_N | DOWNLOAD_HOST_ALLOWLIST | GH_PROXY_BASE | DOWNLOAD_TIMEOUT | DOWNLOAD_RETRIES | DOWNLOAD_RETRY_DELAY | SERVER_IP | SERVER_IP6 | DRY_RUN | VERBOSE | HEALTH_CHECK_INTERVAL | SELF_CHECK_ENABLED | SELF_CHECK_URLS | SELF_CHECK_TIMEOUT_SEC | SELF_CHECK_STATE_FILE | SELF_CHECK_HISTORY_FILE | LOG_RETENTION_DAYS | LOG_MAX_SIZE_MB | HEALTH_LOG | XRAY_POLICY | XRAY_DOMAIN_CATALOG_FILE | MEASUREMENTS_DIR | MEASUREMENTS_SUMMARY_FILE | XRAY_CLIENT_MIN_VERSION | XRAY_DIRECT_FLOW | BROWSER_DIALER_ENV_NAME | XRAY_BROWSER_DIALER_ADDRESS | REPLAN)
                 printf -v "$key" '%s' "$value"
                 ;;
             *) ;;
@@ -2248,6 +2297,13 @@ validate_destructive_path_scope() {
                 return 1
             fi
             ;;
+        XRAY_POLICY)
+            base=$(basename "$resolved")
+            if [[ "$base" != "policy.json" ]]; then
+                log ERROR "XRAY_POLICY должен указывать на policy.json (получено: ${resolved})"
+                return 1
+            fi
+            ;;
         MINISIGN_KEY)
             base=$(basename "$resolved")
             if [[ "$base" != "minisign.pub" ]]; then
@@ -2269,10 +2325,10 @@ validate_destructive_path_scope() {
 validate_destructive_runtime_paths() {
     local var value dir
     local -a destructive_dirs=(
-        XRAY_KEYS XRAY_BACKUP XRAY_LOGS XRAY_HOME XRAY_DATA_DIR XRAY_GEO_DIR
+        XRAY_KEYS XRAY_BACKUP XRAY_LOGS XRAY_HOME XRAY_DATA_DIR XRAY_GEO_DIR MEASUREMENTS_DIR
     )
     local -a destructive_files=(
-        XRAY_BIN XRAY_CONFIG XRAY_ENV XRAY_SCRIPT_PATH XRAY_UPDATE_SCRIPT MINISIGN_KEY SELF_CHECK_STATE_FILE
+        XRAY_BIN XRAY_CONFIG XRAY_ENV XRAY_POLICY XRAY_SCRIPT_PATH XRAY_UPDATE_SCRIPT MINISIGN_KEY SELF_CHECK_STATE_FILE SELF_CHECK_HISTORY_FILE MEASUREMENTS_SUMMARY_FILE
     )
 
     for var in "${destructive_dirs[@]}"; do
@@ -2321,10 +2377,12 @@ strict_validate_runtime_inputs() {
         XRAY_CONFIG_FILE DOWNLOAD_HOST_ALLOWLIST XRAY_MIRRORS MINISIGN_MIRRORS
         GH_PROXY_BASE
         XRAY_GEOIP_URL XRAY_GEOSITE_URL XRAY_GEOIP_SHA256_URL XRAY_GEOSITE_SHA256_URL
-        DOMAIN_HEALTH_FILE HEALTH_LOG SELF_CHECK_URLS SELF_CHECK_STATE_FILE
+        DOMAIN_HEALTH_FILE HEALTH_LOG SELF_CHECK_URLS SELF_CHECK_STATE_FILE SELF_CHECK_HISTORY_FILE
         AUTO_UPDATE_ONCALENDAR AUTO_UPDATE_RANDOM_DELAY
         HEALTH_CHECK_INTERVAL SELF_CHECK_TIMEOUT_SEC LOG_RETENTION_DAYS LOG_MAX_SIZE_MB
-        PROGRESS_MODE XRAY_PROGRESS_MODE
+        PROGRESS_MODE XRAY_PROGRESS_MODE XRAY_POLICY XRAY_DOMAIN_CATALOG_FILE
+        MEASUREMENTS_DIR MEASUREMENTS_SUMMARY_FILE XRAY_CLIENT_MIN_VERSION
+        XRAY_DIRECT_FLOW BROWSER_DIALER_ENV_NAME XRAY_BROWSER_DIALER_ADDRESS
     )
 
     for var in "${safe_vars[@]}"; do
@@ -2351,6 +2409,24 @@ strict_validate_runtime_inputs() {
     if [[ -n "$SELF_CHECK_STATE_FILE" ]]; then
         if [[ "$SELF_CHECK_STATE_FILE" != /* ]] || [[ ! "$SELF_CHECK_STATE_FILE" =~ ^/[A-Za-z0-9._/+:-]+$ ]]; then
             log ERROR "SELF_CHECK_STATE_FILE содержит небезопасные символы: ${SELF_CHECK_STATE_FILE}"
+            return 1
+        fi
+    fi
+    if [[ -n "$SELF_CHECK_HISTORY_FILE" ]]; then
+        if [[ "$SELF_CHECK_HISTORY_FILE" != /* ]] || [[ ! "$SELF_CHECK_HISTORY_FILE" =~ ^/[A-Za-z0-9._/+:-]+$ ]]; then
+            log ERROR "SELF_CHECK_HISTORY_FILE содержит небезопасные символы: ${SELF_CHECK_HISTORY_FILE}"
+            return 1
+        fi
+    fi
+    if [[ -n "$MEASUREMENTS_SUMMARY_FILE" ]]; then
+        if [[ "$MEASUREMENTS_SUMMARY_FILE" != /* ]] || [[ ! "$MEASUREMENTS_SUMMARY_FILE" =~ ^/[A-Za-z0-9._/+:-]+$ ]]; then
+            log ERROR "MEASUREMENTS_SUMMARY_FILE содержит небезопасные символы: ${MEASUREMENTS_SUMMARY_FILE}"
+            return 1
+        fi
+    fi
+    if [[ -n "$MEASUREMENTS_DIR" ]]; then
+        if [[ "$MEASUREMENTS_DIR" != /* ]] || [[ ! "$MEASUREMENTS_DIR" =~ ^/[A-Za-z0-9._/+:-]+$ ]]; then
+            log ERROR "MEASUREMENTS_DIR содержит небезопасные символы: ${MEASUREMENTS_DIR}"
             return 1
         fi
     fi
@@ -2431,6 +2507,10 @@ strict_validate_runtime_inputs() {
             fi
         fi
     fi
+    if [[ -n "$XRAY_CLIENT_MIN_VERSION" ]] && ! [[ "$XRAY_CLIENT_MIN_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9._-]+)?$ ]]; then
+        log ERROR "Некорректный XRAY_CLIENT_MIN_VERSION: ${XRAY_CLIENT_MIN_VERSION}"
+        return 1
+    fi
     if [[ -n "${XRAY_DOMAIN_PROFILE:-}" ]] && ! normalize_domain_tier "$XRAY_DOMAIN_PROFILE" > /dev/null 2>&1; then
         log ERROR "Некорректный XRAY_DOMAIN_PROFILE: ${XRAY_DOMAIN_PROFILE} (ожидается ru|ru-auto|global-50|global-50-auto|custom)"
         return 1
@@ -2496,11 +2576,11 @@ validate_install_config() {
             TRANSPORT="xhttp"
             ;;
         grpc | http2)
-            log ERROR "TRANSPORT=${TRANSPORT} больше не поддерживается в v6; используйте xhttp или migrate-stealth для legacy install"
+            log ERROR "TRANSPORT=${TRANSPORT} больше не поддерживается в v7; используйте xhttp или migrate-stealth для legacy install"
             return 1
             ;;
         *)
-            log ERROR "Неверный TRANSPORT: $TRANSPORT (в v6 поддерживается только xhttp)"
+            log ERROR "Неверный TRANSPORT: $TRANSPORT (в v7 поддерживается только xhttp)"
             return 1
             ;;
     esac
@@ -2573,12 +2653,33 @@ detect_current_managed_transport() {
     printf '%s\n' "${TRANSPORT:-xhttp}"
 }
 
+managed_install_needs_migrate_stealth() {
+    local current_transport
+    current_transport=$(detect_current_managed_transport)
+    if transport_is_legacy "$current_transport"; then
+        return 0
+    fi
+    if [[ -f "$XRAY_CONFIG" ]] && command -v jq > /dev/null 2>&1; then
+        if jq -e --arg flow "${XRAY_DIRECT_FLOW:-xtls-rprx-vision}" '
+            [ .inbounds[]
+              | select(.streamSettings.realitySettings != null)
+              | select((.listen // "0.0.0.0") | test(":") | not)
+              | ((.settings.decryption // "none") != "none")
+                and ((.settings.clients[0].flow // "") == $flow)
+            ] | all
+        ' "$XRAY_CONFIG" > /dev/null 2>&1; then
+            return 1
+        fi
+    fi
+    return 0
+}
+
 require_xhttp_transport_contract_for_action() {
     local action="${1:-$ACTION}"
     case "$action" in
         install)
             if transport_is_legacy "${TRANSPORT:-xhttp}"; then
-                log ERROR "v6 больше не устанавливает grpc/http2 профили"
+                log ERROR "v7 больше не устанавливает grpc/http2 профили"
                 log ERROR "используйте xhttp по умолчанию"
                 return 1
             fi
@@ -2587,8 +2688,8 @@ require_xhttp_transport_contract_for_action() {
         update | repair | add-clients | add-keys)
             local current_transport
             current_transport=$(detect_current_managed_transport)
-            if transport_is_legacy "$current_transport"; then
-                log ERROR "обнаружен legacy transport (${current_transport}); действие '${action}' заблокировано в v6"
+            if managed_install_needs_migrate_stealth; then
+                log ERROR "обнаружен managed install без strongest direct contract (${current_transport}); действие '${action}' заблокировано в v7"
                 log ERROR "сначала выполните: xray-reality.sh migrate-stealth --non-interactive --yes"
                 return 1
             fi
@@ -2707,6 +2808,9 @@ main() {
         XRAY_CONFIG_FILE="$XRAY_ENV"
     fi
     load_config_file "$XRAY_CONFIG_FILE"
+    if [[ -f "$XRAY_POLICY" ]]; then
+        load_policy_file "$XRAY_POLICY"
+    fi
     apply_runtime_overrides
 
     if [[ "$DRY_RUN" == "true" ]]; then

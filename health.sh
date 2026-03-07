@@ -22,6 +22,17 @@ fi
 # shellcheck source=modules/health/self_check.sh
 source "$SELF_CHECK_MODULE"
 
+MEASUREMENTS_MODULE="${SCRIPT_DIR:-$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)}/modules/health/measurements.sh"
+if [[ ! -f "$MEASUREMENTS_MODULE" && -n "${XRAY_DATA_DIR:-}" ]]; then
+    MEASUREMENTS_MODULE="$XRAY_DATA_DIR/modules/health/measurements.sh"
+fi
+if [[ ! -f "$MEASUREMENTS_MODULE" ]]; then
+    echo "ERROR: не найден модуль measurements: $MEASUREMENTS_MODULE" >&2
+    exit 1
+fi
+# shellcheck source=modules/health/measurements.sh
+source "$MEASUREMENTS_MODULE"
+
 health_monitoring_collect_port_lines() {
     # shellcheck disable=SC2034 # nameref writes caller variables.
     local -n out_v4_ref="$1"
@@ -596,6 +607,21 @@ diagnose() {
             echo ""
             echo "===== SELF-CHECK ====="
             jq '.' "${SELF_CHECK_STATE_FILE:-/var/lib/xray/self-check.json}" 2> /dev/null || cat "${SELF_CHECK_STATE_FILE:-/var/lib/xray/self-check.json}" 2> /dev/null || true
+        fi
+        if [[ -f "${SELF_CHECK_HISTORY_FILE:-/var/lib/xray/self-check-history.ndjson}" ]]; then
+            echo ""
+            echo "===== SELF-CHECK HISTORY (tail 10) ====="
+            tail -n 10 "${SELF_CHECK_HISTORY_FILE:-/var/lib/xray/self-check-history.ndjson}" 2> /dev/null || true
+        fi
+        if [[ -f "${XRAY_POLICY:-/etc/xray-reality/policy.json}" ]]; then
+            echo ""
+            echo "===== POLICY ====="
+            jq '.' "${XRAY_POLICY:-/etc/xray-reality/policy.json}" 2> /dev/null || cat "${XRAY_POLICY:-/etc/xray-reality/policy.json}" 2> /dev/null || true
+        fi
+        if [[ -f "${MEASUREMENTS_SUMMARY_FILE:-/var/lib/xray/measurements/latest-summary.json}" ]]; then
+            echo ""
+            echo "===== FIELD MEASUREMENTS ====="
+            jq '.' "${MEASUREMENTS_SUMMARY_FILE:-/var/lib/xray/measurements/latest-summary.json}" 2> /dev/null || cat "${MEASUREMENTS_SUMMARY_FILE:-/var/lib/xray/measurements/latest-summary.json}" 2> /dev/null || true
         fi
         echo ""
 

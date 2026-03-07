@@ -1,188 +1,152 @@
-# Архитектура
+# архитектура
 
-Этот документ описывает runtime-архитектуру и контракты модулей **Network Stealth Core**.
+## strongest-direct runtime контракт
 
-## Цели дизайна
+`v7.1.0` задаёт один managed direct baseline:
 
-- детерминированный lifecycle: `install`, `update`, `repair`, `rollback`, `uninstall`
-- xhttp-only strongest-default путь установки
-- строгая runtime-валидация перед destructive-действиями
-- transport-aware post-change проверка по сгенерированным клиентским артефактам
-- транзакционные записи с поддержкой rollback
-- модульный shell-код с явными границами ответственности
+- protocol: `vless`
+- security: `reality`
+- transport: `xhttp`
+- direct flow: `xtls-rprx-vision`
+- для каждого конфига генерируется `vless encryption` и парный inbound `decryption`
 
-## Runtime topology
+managed client variants:
 
-```mermaid
-flowchart TD
-    W[xray-reality.sh\nbootstrap wrapper]
-    L[lib.sh\nruntime core + dispatcher]
-    I[install.sh\ninstall/update flow]
-    C[config.sh\nconfig generation]
-    S[service.sh\nservice + firewall]
-    H[health.sh\nmonitoring + diagnose]
-    E[export.sh\nclient exports]
+- `recommended` = `xhttp mode=auto`
+- `rescue` = `xhttp mode=packet-up`
+- `emergency` = `xhttp mode=stream-up + browser dialer`
 
-    MCLI[modules/lib/cli.sh]
-    MGLOB[modules/lib/globals_contract.sh]
-    MVAL[modules/lib/validation.sh]
-    MFW[modules/lib/firewall.sh]
-    MLIFE[modules/lib/lifecycle.sh]
-    MCFG[modules/config/domain_planner.sh]
-    MADD[modules/config/add_clients.sh]
-    MBOOT[modules/install/bootstrap.sh]
-    MSELF[modules/health/self_check.sh]
-    MCAP[modules/export/capabilities.sh]
+`recommended` и `rescue` входят в post-action validation.
+`emergency` — field-only вариант, который экспортируется как raw xray json плюс canary metadata.
 
-    W --> L
-    L --> I
-    L --> C
-    L --> S
-    L --> H
-    L --> E
+## модель state
 
-    L --> MCLI
-    L --> MGLOB
-    L --> MVAL
-    L --> MFW
-    L --> MLIFE
+проект теперь разделяет managed policy и generated runtime-state.
 
-    C --> MCFG
-    C --> MADD
-    I --> MBOOT
-    H --> MSELF
-    E --> MCAP
-```
+| файл или путь | роль |
+|---|---|
+| `/etc/xray-reality/policy.json` | операторский source of truth для policy |
+| `data/domains/catalog.json` | canonical metadata доменов и provider family |
+| `/etc/xray/config.json` | живой server config xray |
+| `/etc/xray-reality/config.env` | compatibility snapshot generated state |
+| `/etc/xray/private/keys/clients.json` | инвентарь артефактов schema v3 |
+| `/etc/xray/private/keys/export/raw-xray/` | canonical per-variant client configs |
+| `/etc/xray/private/keys/export/canary/` | bundle для полевых тестов |
+| `/var/lib/xray/self-check.json` | последний post-action verdict |
+| `/var/lib/xray/self-check-history.ndjson` | недавняя история self-check |
+| `/var/lib/xray/measurements/*.json` | сохранённые field reports |
+| `/var/lib/xray/measurements/latest-summary.json` | aggregate field verdict и promotion hints |
 
-## Bootstrap stage (`xray-reality.sh`)
+## входы planner’а
 
-Wrapper отвечает за:
+решения planner’а строятся из трёх слоёв:
 
-1. разбор wrapper-level controls (`XRAY_REPO_REF`, `XRAY_REPO_COMMIT`, pin policy)
-2. выбор source (local scripts, installed data dir или git clone)
-3. bootstrap pin checks, если они включены
-4. `source` для `lib.sh` и передачу action arguments дальше
+1. запрошенный domain profile из `policy.json`
+2. canonical metadata в `data/domains/catalog.json`
+3. runtime health и история измерений
 
-## Runtime control plane (`lib.sh`)
+`catalog.json` даёт planner’у структурированные поля:
 
-`lib.sh` централизует:
+- `tier`
+- `provider_family`
+- `region`
+- candidate `ports`
+- `priority`
+- `risk`
+- `sni_pool`
 
-- defaults и cross-module globals
-- разбор аргументов и загрузку config
-- strict validation runtime-входов
-- xhttp-only контракт mutating-flow
-- logging, download, backup и rollback helpers
-- dispatch в install/config/service/health/export layers
+это позволяет не выжигать одну provider family и держать более сильные spare-конфиги.
 
-### Dispatch graph
+## модель mutating-flow
 
-```mermaid
-flowchart TD
-    M[main] --> P[parse_args + load_config_file]
-    P --> O[apply_runtime_overrides]
-    O --> V[strict_validate_runtime_inputs]
-    V --> X[require_xhttp_transport_contract_for_action]
-    X --> A{ACTION}
+все mutating-действия сохраняют одну общую форму:
 
-    A --> I[install_flow]
-    A --> AC[add_clients_flow]
-    A --> U[update_flow]
-    A --> R[repair_flow]
-    A --> MS[migrate_stealth_flow]
-    A --> D[diagnose_flow]
-    A --> RB[rollback_flow]
-    A --> UN[uninstall_flow]
-    A --> ST[status_flow]
-    A --> LG[logs_flow]
-    A --> CU[check_update_flow]
-```
+1. загрузка policy, config и текущих артефактов
+2. валидация входов и feature contract
+3. backup managed state
+4. сборка candidate config и артефактов
+5. проверка через `xray -test`
+6. атомарное применение
+7. post-action self-check через canonical raw xray clients
+8. запись verdict’ов и либо сохранение state, либо rollback
 
-## Контракты модулей
+## граница миграции
 
-| Модуль | Ответственность | Контракт |
-|---|---|---|
-| `modules/lib/globals_contract.sh` | shared defaults и объявления массивов | стабильное `set -u` поведение между sourced-модулями |
-| `modules/lib/cli.sh` | разбор аргументов и нормализация CLI/env | валидные action и runtime overrides |
-| `modules/lib/validation.sh` | валидаторы доменов, портов, IP, диапазонов, URL | переиспользуемые security checks |
-| `modules/lib/firewall.sh` | firewall apply и rollback helpers | детерминированный lifecycle сетевых правил |
-| `modules/lib/lifecycle.sh` | backup stack и rollback orchestration | единая семантика rollback |
-| `modules/install/bootstrap.sh` | distro-aware bootstrap helpers | предсказуемый dependency/install path |
-| `modules/config/domain_planner.sh` | ranking, quarantine, selection planning | bounded no-repeat allocation доменов |
-| `modules/config/add_clients.sh` | логика `add-clients` | синхронные client artifacts и валидированное post-change состояние |
-| `modules/health/self_check.sh` | transport-aware validation engine | canonical post-action verdict по raw xray artifacts |
-| `modules/export/capabilities.sh` | capability matrix экспортов | явная machine-readable поверхность поддержки форматов |
+`migrate-stealth` — единственный mutating-мост со старых managed-контрактов.
+он обновляет и:
 
-## Транзакционная модель
+- legacy `grpc/http2` install
+- pre-v7 xhttp install, который ещё не соответствует strongest-direct контракту
 
-Каждое mutating-действие следует одному шаблону:
+пока такая миграция не выполнена, `update`, `repair`, `add-clients` и `add-keys` fail-closed.
 
-1. захват backup snapshot критичного состояния
-2. сборка candidate changes в staged files
-3. валидация candidate (`xray -test` и runtime guards)
-4. atomic apply
-5. transport-aware self-check по сгенерированным raw client artifacts
-6. автоматический rollback при broken verdict или non-zero failure path
+## модель клиентских артефактов
 
-## Transport-aware self-check
+`clients.json` schema v3 хранит managed contract в machine-readable виде.
 
-Self-check engine использует canonical exported client artifacts, а не ad hoc regenerated probes.
+каждый config содержит:
 
-Входы:
+- identity material вроде `uuid`, `short_id` и `public_key`
+- selection metadata вроде `provider_family`, `primary_rank` и `recommended_variant`
+- direct-contract поля вроде `transport`, `flow`, `vless_encryption` и `vless_decryption`
+- per-variant outputs: raw xray files, ссылки там, где это честно, и browser-dialer requirements
 
-- `/etc/xray/private/keys/clients.json`
-- `export/raw-xray/*.json`
-- `SELF_CHECK_URLS`
-- `SELF_CHECK_TIMEOUT_SEC`
+raw xray json остаётся canonical artifact, потому что он без потерь выражает strongest-direct контракт.
 
-Выходы:
+## модель validation и promotion
 
-- `/var/lib/xray/self-check.json`
-- summary в verbose status
-- блок в diagnose
+есть два observation loop’а.
 
-Политика verdict:
+### post-action self-check
 
-- `recommended` проходит → `ok`
-- `recommended` падает, но `rescue` проходит → `warning`
-- оба падают → `broken`, и mutating-flow делает rollback
+- использует generated raw xray client json
+- сначала проверяет `recommended`, потом `rescue`
+- пишет `/var/lib/xray/self-check.json`
+- дописывает `/var/lib/xray/self-check-history.ndjson`
+- запускает rollback, если оба direct-варианта не проходят
 
-## Генерируемые артефакты
+### field measurement
 
-| Путь | Кто создает | Ожидаемые права |
-|---|---|---|
-| `/etc/xray/config.json` | `config.sh` | `0640`, `root:xray` |
-| `/etc/xray-reality/config.env` | `config.sh` | `0600`, только root |
-| `/etc/xray/private/keys/keys.txt` | `config.sh` | `0400`, `root:root` |
-| `/etc/xray/private/keys/clients.txt` | `config.sh` | `0640`, `root:xray` |
-| `/etc/xray/private/keys/clients.json` | `config.sh` | `0640`, `root:xray`, schema v2 с `variants[]` |
-| `/etc/xray/private/keys/export/raw-xray/*` | `config.sh` / `export.sh` | `0640`, `root:xray` |
-| `/etc/xray/private/keys/export/capabilities.json` | `export.sh` | `0640`, `root:xray` |
-| `/etc/xray/private/keys/export/compatibility-notes.txt` | `export.sh` | `0640`, `root:xray` |
-| `/var/lib/xray/self-check.json` | `self_check.sh` | `0640`, `root:xray` |
-| `/var/lib/xray/domain-health.json` | `health.sh` | runtime-state файл |
-| `/etc/systemd/system/xray.service` | `service.sh` | hardened service unit |
+- использует `scripts/measure-stealth.sh run|compare|summarize`
+- сохраняет reports в `/var/lib/xray/measurements/`
+- агрегирует latest summary для операторов и promotion logic
+- может рекомендовать `emergency`, когда direct-варианты слишком слабы на реальных сетях
 
-## Модель export capability
+`repair` и `update --replan` могут продвинуть более сильный spare-config, если недавние self-check или field data это оправдывают.
 
-xhttp-артефакты намеренно разделены по уровню честности:
+## export layer
 
-- `native`: `clients.txt`, `clients.json`, `raw-xray`
-- `link-only`: `v2rayn-links.json`, `nekoray-template.json`
-- `unsupported`: `sing-box`, `clash-meta`
+экспорты capability-driven:
 
-Machine-readable source of truth — `export/capabilities.json`.
+- raw xray json: native
+- `clients.txt` и `clients.json`: native
+- v2rayn и nekoray: link-only там, где это честно
+- sing-box и clash-meta: явно unsupported для strongest-direct контракта
+- canary bundle: native field-testing surface
 
-## Measurement harness
+эта карта поддержки записывается в `export/capabilities.json`.
 
-`scripts/measure-stealth.sh` использует тот же probe-engine, что и runtime self-check.
-Он читает `clients.json`, тестирует requested variants и пишет JSON-report для полевых сравнений.
+## карта модулей
 
-## Quality и release gates
+| модуль | роль |
+|---|---|
+| `lib.sh` | dispatcher, validation, path safety и command contracts |
+| `install.sh` | orchestration для install/update/repair/migrate |
+| `config.sh` | сборка конфигов, артефакты schema v3 и генерация vless encryption |
+| `service.sh` | systemd, firewall, status, uninstall и cleanup |
+| `health.sh` | входные точки диагностики и health |
+| `modules/health/self_check.sh` | canonical engine post-action self-check |
+| `modules/health/measurements.sh` | агрегация field reports и promotion hints |
+| `modules/lib/policy.sh` | сериализация и загрузка managed policy |
+| `modules/config/domain_planner.sh` | выбор доменов и diversity-aware planning |
+| `export.sh` | генерация export’ов, capability matrix и canary bundle |
 
-Три слоя контроля:
+## дизайн-идея
 
-- local: `make lint`, `make test`, `make release-check`
-- CI: lint + tests + audits + Ubuntu smoke
-- release: consistency checks, tag policy и GitHub release assets
+проект намеренно предпочитает:
 
-Это сохраняет скорость ежедневной разработки без потери release-integrity.
+- меньше вопросов при установке
+- один strongest safe default
+- честные экспорты вместо фейковой совместимости
+- fail-closed mutation на слабых контрактах
+- operator visibility через сохранённые verdict’ы вместо догадок

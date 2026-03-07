@@ -250,6 +250,9 @@ build_add_clients_inbounds() {
     local out_snis_name="${10}"
     local out_transport_endpoint_name="${11}"
     local out_fps_name="${12}"
+    local out_provider_families_name="${13}"
+    local out_vless_encryptions_name="${14}"
+    local out_vless_decryptions_name="${15}"
 
     local -n _new_ports="$new_ports_name"
     local -n _new_ports_v6="$new_ports_v6_name"
@@ -260,10 +263,16 @@ build_add_clients_inbounds() {
     local -n _out_snis="$out_snis_name"
     local -n _out_transport_endpoints="$out_transport_endpoint_name"
     local -n _out_fps="$out_fps_name"
+    local -n _out_provider_families="$out_provider_families_name"
+    local -n _out_vless_encryptions="$out_vless_encryptions_name"
+    local -n _out_vless_decryptions="$out_vless_decryptions_name"
     _out_domains=()
     _out_snis=()
     _out_transport_endpoints=()
     _out_fps=()
+    _out_provider_families=()
+    _out_vless_encryptions=()
+    _out_vless_decryptions=()
 
     if ! build_domain_plan "$add_count" "false"; then
         log ERROR "Не удалось сформировать доменный план для add-clients"
@@ -282,10 +291,22 @@ build_add_clients_inbounds() {
     for ((i = 0; i < add_count; i++)); do
         local domain="${DOMAIN_SELECTION_PLAN[$i]:-${AVAILABLE_DOMAINS[0]}}"
         build_inbound_profile_for_domain "$domain" fp_pool
+        local provider_family
+        provider_family=$(domain_provider_family_for "$domain" 2> /dev/null || printf '%s' "$domain")
+        local vless_pair="" vless_decryption="none" vless_encryption="none"
+        vless_pair=$(generate_vless_encryption_pair) || {
+            rm -f "$tmp_inbounds"
+            log ERROR "Не удалось сгенерировать VLESS encryption pair для add-clients"
+            return 1
+        }
+        IFS=$'\t' read -r vless_decryption vless_encryption <<< "$vless_pair"
         _out_domains+=("$domain")
         _out_snis+=("$PROFILE_SNI")
         _out_transport_endpoints+=("$PROFILE_TRANSPORT_ENDPOINT")
         _out_fps+=("$PROFILE_FP")
+        _out_provider_families+=("$provider_family")
+        _out_vless_encryptions+=("$vless_encryption")
+        _out_vless_decryptions+=("$vless_decryption")
 
         local config_num=$((existing_count + i + 1))
         local sni_count
@@ -294,7 +315,7 @@ build_add_clients_inbounds() {
 
         local inbound_v4
         if ! inbound_v4=$(generate_profile_inbound_json \
-            "${_new_ports[$i]}" "${_new_uuids[$i]}" "${_new_private_keys[$i]}" "${_new_short_ids[$i]}"); then
+            "${_new_ports[$i]}" "${_new_uuids[$i]}" "${_new_private_keys[$i]}" "${_new_short_ids[$i]}" "$vless_decryption"); then
             rm -f "$tmp_inbounds"
             log ERROR "Ошибка генерации IPv4 inbound для add-clients config #${config_num}"
             return 1
@@ -334,6 +355,10 @@ append_add_clients_keys_file() {
     local new_short_ids_name="$7"
     local new_ports_name="$8"
     local new_ports_v6_name="$9"
+    local new_domains_name="${10}"
+    local new_provider_families_name="${11}"
+    local new_vless_encryptions_name="${12}"
+    local new_vless_decryptions_name="${13}"
 
     local -n _new_private_keys="$new_private_keys_name"
     local -n _new_public_keys="$new_public_keys_name"
@@ -341,6 +366,10 @@ append_add_clients_keys_file() {
     local -n _new_short_ids="$new_short_ids_name"
     local -n _new_ports="$new_ports_name"
     local -n _new_ports_v6="$new_ports_v6_name"
+    local -n _new_domains="$new_domains_name"
+    local -n _new_provider_families="$new_provider_families_name"
+    local -n _new_vless_encryptions="$new_vless_encryptions_name"
+    local -n _new_vless_decryptions="$new_vless_decryptions_name"
 
     local keys_file="${XRAY_KEYS}/keys.txt"
     [[ -f "$keys_file" ]] || return 0
@@ -357,12 +386,17 @@ append_add_clients_keys_file() {
 ${rule58}
 Config ${config_num}:
 ${rule58}
+Domain:      ${_new_domains[$i]:-unknown}
+Provider:    ${_new_provider_families[$i]:-unknown}
 Private Key: ${_new_private_keys[$i]}
 Public Key:  ${_new_public_keys[$i]}
 UUID:        ${_new_uuids[$i]}
 ShortID:     ${_new_short_ids[$i]}
 Port IPv4:   ${_new_ports[$i]}
 Port IPv6:   ${_new_ports_v6[$i]:-N/A}
+Flow:        ${XRAY_DIRECT_FLOW:-xtls-rprx-vision}
+VLESS Decryption: ${_new_vless_decryptions[$i]:-none}
+VLESS Encryption: ${_new_vless_encryptions[$i]:-none}
 
 EOF
     done
@@ -482,6 +516,12 @@ add_clients_flow() {
     local -a add_transport_endpoints=()
     # shellcheck disable=SC2034 # Passed to helper functions via nameref.
     local -a add_fps=()
+    # shellcheck disable=SC2034 # Passed to helper functions via nameref.
+    local -a add_provider_families=()
+    # shellcheck disable=SC2034 # Passed to helper functions via nameref.
+    local -a add_vless_encryptions=()
+    # shellcheck disable=SC2034 # Passed to helper functions via nameref.
+    local -a add_vless_decryptions=()
     local new_inbounds='[]'
     build_add_clients_inbounds \
         "$add_count" \
@@ -495,7 +535,10 @@ add_clients_flow() {
         add_domains \
         add_snis \
         add_transport_endpoints \
-        add_fps || exit 1
+        add_fps \
+        add_provider_families \
+        add_vless_encryptions \
+        add_vless_decryptions || exit 1
 
     backup_file "$XRAY_CONFIG"
     local tmp_config
@@ -530,7 +573,11 @@ add_clients_flow() {
         new_uuids \
         new_short_ids \
         new_ports \
-        new_ports_v6
+        new_ports_v6 \
+        add_domains \
+        add_provider_families \
+        add_vless_encryptions \
+        add_vless_decryptions
 
     local client_file="${XRAY_KEYS}/clients.txt"
     if [[ -f "$XRAY_ENV" ]]; then
@@ -543,6 +590,7 @@ add_clients_flow() {
         log ERROR "Не удалось пересобрать клиентские артефакты"
         exit 1
     }
+    save_policy_file || log WARN "Не удалось обновить policy.json после add-clients"
     ensure_self_check_artifacts_ready || {
         log ERROR "Не удалось подготовить self-check артефакты"
         exit 1

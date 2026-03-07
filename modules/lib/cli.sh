@@ -218,6 +218,12 @@ cli_handle_long_option() {
         no-auto-update)
             AUTO_UPDATE="false"
             ;;
+        replan)
+            REPLAN="true"
+            ;;
+        no-replan)
+            REPLAN="false"
+            ;;
         auto-update-oncalendar | auto-update-oncalendar=*)
             AUTO_UPDATE_ONCALENDAR="$(cli_read_long_option_value "$optarg")"
             ;;

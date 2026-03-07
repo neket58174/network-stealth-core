@@ -1,240 +1,214 @@
-# Operations runbook
+# operations
 
-This runbook is the operations reference for **Network Stealth Core**.
+## default operator model
 
-## Installation entry points
+default operations assume one managed node on `ubuntu-24.04`.
+normal install stays opinionated and minimal.
 
-### Universal install (recommended)
+strongest-direct defaults:
 
-```bash
-curl -fL https://raw.githubusercontent.com/neket371/network-stealth-core/ubuntu/xray-reality.sh -o /tmp/xray-reality.sh
-sudo bash /tmp/xray-reality.sh install
-```
+- profile: `ru-auto`
+- transport: `xhttp`
+- stack: `vless + reality + xhttp + vless encryption + xtls-rprx-vision`
+- variants: `recommended`, `rescue`, `emergency`
+- self-check: enabled by default
+- measurement storage: enabled by default when you save reports
 
-### One-line install
+## install
 
-```bash
-sudo bash <(curl -fsSL https://raw.githubusercontent.com/neket371/network-stealth-core/ubuntu/xray-reality.sh) install
-```
-
-If `/dev/fd` is unavailable, use universal install.
-
-Migration note: legacy `main` is supported as a temporary alias for one release cycle; canonical branch is `ubuntu`.
-
-Install contract note:
-
-- `install` uses the minimal xhttp-only path (`ru-auto`, auto count, strongest default)
-- `install --advanced` enables manual profile/count prompts
-- `--transport grpc|http2` is rejected in v6
-
-## Runtime assumptions
-
-- default `install`, `update`, and `repair` expect working `systemd`
-- for constrained environments, use `--allow-no-systemd`
-- for fail-closed signature policy, use `--require-minisign`
-- custom wrapper source path requires explicit opt-in:
-  `XRAY_ALLOW_CUSTOM_DATA_DIR=true XRAY_DATA_DIR=/secure/path`
-
-## Public release sanity checklist (Ubuntu 24.04 LTS)
-
-Supported and validated target for this checklist: **Ubuntu 24.04 LTS**.
-
-### Local quality gate (must pass)
+### normal path
 
 ```bash
-make ci
+sudo xray-reality.sh install --non-interactive --yes
 ```
 
-### Fresh host smoke (must pass)
+what this should do:
 
-On clean Ubuntu 24.04:
+- build the strongest-direct stack without transport questions
+- write `policy.json`
+- generate schema v3 client artifacts
+- run post-action self-check with `recommended`, then `rescue` if needed
+- export raw xray configs, capability matrix, and canary bundle
+
+### manual compatibility path
 
 ```bash
-curl -fL https://raw.githubusercontent.com/neket371/network-stealth-core/ubuntu/xray-reality.sh -o /tmp/xray-reality.sh
-sudo bash /tmp/xray-reality.sh install
-sudo xray-reality.sh status --verbose
-sudo xray -test -c /etc/xray/config.json
-sudo xray-reality.sh add-clients 1 --non-interactive --yes
-sudo xray-reality.sh repair --non-interactive --yes
-sudo xray-reality.sh update --non-interactive --yes
-sudo xray-reality.sh uninstall --non-interactive --yes
+sudo xray-reality.sh install --advanced
 ```
 
-Expected:
+use this only when you intentionally want manual profile and count prompts.
 
-- service is `active` after install/update/repair
-- `xray -test` exits `0`
-- self-check verdict is `ok` or `warning`, never `broken`
-- `clients.json`, `export/raw-xray/`, and `export/capabilities.json` are present
-- uninstall removes managed files and systemd units
+## migration
 
-## Daily health check
+run this on:
+
+- managed legacy `grpc/http2` installs
+- managed xhttp installs created before the strongest-direct contract
+
+```bash
+sudo xray-reality.sh migrate-stealth --non-interactive --yes
+```
+
+after migration, re-check:
 
 ```bash
 sudo xray-reality.sh status --verbose
-sudo systemctl status xray --no-pager
-sudo journalctl -u xray -n 200 --no-pager
 sudo xray-reality.sh diagnose
 ```
 
-Review in verbose status:
+## day-2 actions
 
-- transport
+### add clients
+
+```bash
+sudo xray-reality.sh add-clients 2 --non-interactive --yes
+```
+
+this rebuilds managed artifacts from the live config and preserves the strongest-direct contract.
+
+### repair
+
+```bash
+sudo xray-reality.sh repair --non-interactive --yes
+```
+
+`repair` now also:
+
+- rebuilds `clients.txt`, `clients.json`, raw xray exports, capability matrix, and canary bundle
+- refreshes `policy.json`
+- may promote a better spare config when recent verdicts show the current primary is weak
+
+### update
+
+```bash
+sudo xray-reality.sh update --non-interactive --yes
+```
+
+force a priority rebuild from recent verdicts:
+
+```bash
+sudo xray-reality.sh update --replan --non-interactive --yes
+```
+
+use `--replan` after you save fresh real-network reports.
+
+## status and diagnosis
+
+### concise status
+
+```bash
+sudo xray-reality.sh status
+```
+
+### verbose status
+
+```bash
+sudo xray-reality.sh status --verbose
+```
+
+verbose status should show:
+
+- strongest-direct contract details
 - last self-check verdict
-- selected variant and latency
-- export capability summary
+- latest field measurement verdict
+- current primary config
+- best spare config
+- whether `emergency` is recommended
 
-## Safe maintenance cycle
-
-### Update
-
-```bash
-sudo xray-reality.sh check-update
-sudo xray-reality.sh update
-sudo xray-reality.sh status --verbose
-```
-
-### Add client configurations
+### full diagnosis
 
 ```bash
-sudo xray-reality.sh add-clients 2
-sudo xray-reality.sh status --verbose
+sudo xray-reality.sh diagnose
 ```
 
-Expected artifact set:
+`diagnose` now includes policy, self-check history, and measurement summary.
 
-- `/etc/xray/private/keys/keys.txt`
-- `/etc/xray/private/keys/clients.txt`
-- `/etc/xray/private/keys/clients.json` (`schema_version: 2`, per-config `variants[]`)
-- `/etc/xray/private/keys/export/raw-xray/*`
-- `/etc/xray/private/keys/export/capabilities.json`
-- `/etc/xray/private/keys/export/compatibility-notes.txt`
-- `/var/lib/xray/self-check.json`
+## measurement workflow
 
-### Migrate managed legacy transport
+### run a local measurement and save it
 
 ```bash
-sudo xray-reality.sh status --verbose
-sudo xray-reality.sh migrate-stealth --non-interactive --yes
-sudo xray-reality.sh status --verbose
+sudo bash scripts/measure-stealth.sh run \
+  --save \
+  --network-tag home \
+  --provider rostelecom \
+  --region moscow \
+  --output /tmp/measure-home.json
 ```
 
-Expected:
-
-- pre-migration status may show `legacy transport`
-- post-migration status shows `Transport: xhttp`
-- `clients.json`, `export/raw-xray/`, and `export/capabilities.json` are rebuilt for xhttp variants
-- blocked mutating actions (`update`, `repair`, `add-clients`) become available again
-
-## Capability-driven exports
-
-Read the machine-readable export matrix:
+### compare saved reports
 
 ```bash
-sudo jq . /etc/xray/private/keys/export/capabilities.json
+sudo bash scripts/measure-stealth.sh compare \
+  --dir /var/lib/xray/measurements \
+  --output /tmp/measure-compare.json
 ```
 
-Expected baseline:
-
-- `raw-xray` = `native`
-- `clients.txt` / `clients.json` = `native`
-- `v2rayn-links` / `nekoray-template` = `link-only`
-- `sing-box` / `clash-meta` = `unsupported`
-
-## Measurement harness
-
-Run the local probe harness against managed artifacts:
+### summarize the latest picture
 
 ```bash
-sudo bash scripts/measure-stealth.sh --output /tmp/measure-stealth.json
+sudo bash scripts/measure-stealth.sh summarize \
+  --dir /var/lib/xray/measurements \
+  --output /tmp/measure-summary.json
 ```
 
-Optional variant selection:
+plain invocation without a subcommand behaves like `run`.
+
+## canary bundle
+
+managed exports now include:
+
+- `export/canary/manifest.json`
+- `export/canary/raw-xray/*.json`
+- `export/canary/measure-linux.sh`
+- `export/canary/measure-windows.ps1`
+
+use the canary bundle when you need field testing from another machine or network.
+for the `emergency` variant, set the browser dialer env on the client side:
 
 ```bash
-sudo bash scripts/measure-stealth.sh --variants recommended,rescue
+export xray.browser.dialer=127.0.0.1:11050
 ```
 
-Use the report to compare reachability and latency for real networks.
+## important files
 
-## Incident matrix
+| path | meaning |
+|---|---|
+| `/etc/xray-reality/policy.json` | managed policy |
+| `/etc/xray-reality/config.env` | generated env snapshot |
+| `/etc/xray/config.json` | live xray config |
+| `/etc/xray/private/keys/clients.json` | schema v3 client inventory |
+| `/etc/xray/private/keys/export/capabilities.json` | export support map |
+| `/var/lib/xray/self-check.json` | last self-check verdict |
+| `/var/lib/xray/self-check-history.ndjson` | recent self-check history |
+| `/var/lib/xray/measurements/latest-summary.json` | latest field summary |
 
-| Incident | Immediate action | Verify |
-|---|---|---|
-| `xray` not active | `sudo systemctl restart xray` | `systemctl is-active xray` |
-| config test fails | `xray -test -c /etc/xray/config.json`, then rollback | config test exits `0` |
-| self-check `warning` | inspect selected variant and probe results | `status --verbose` / state file |
-| self-check `broken` | `sudo xray-reality.sh rollback` | service active + verdict recovers |
-| failed update | `sudo xray-reality.sh rollback` | service active + artifacts consistent |
-| domain instability | inspect `/var/lib/xray/domain-health.json` | fail trend improves |
-| firewall drift | `sudo xray-reality.sh repair` | expected ports are open/listening |
+## rollback and uninstall
 
-## Rollback playbook
-
-### Latest backup
+### rollback
 
 ```bash
 sudo xray-reality.sh rollback
 ```
 
-### Specific backup
+or restore a specific session:
 
 ```bash
 sudo xray-reality.sh rollback /var/backups/xray/<session-dir>
 ```
 
-### Post-rollback verification
+### uninstall
 
 ```bash
-sudo xray-reality.sh status --verbose
-sudo journalctl -u xray -n 100 --no-pager
+sudo xray-reality.sh uninstall --non-interactive --yes
 ```
 
-## Runtime tuning knobs
+managed uninstall removes policy, self-check history, measurement summaries, and generated export artifacts together.
 
-| Variable | Effect |
-|---|---|
-| `DOMAIN_HEALTH_PROBE_TIMEOUT` | probe timeout per domain |
-| `DOMAIN_HEALTH_RATE_LIMIT_MS` | delay between probes |
-| `DOMAIN_HEALTH_MAX_PROBES` | maximum probes per cycle |
-| `DOMAIN_QUARANTINE_FAIL_STREAK` | quarantine trigger |
-| `DOMAIN_QUARANTINE_COOLDOWN_MIN` | quarantine duration |
-| `PRIMARY_DOMAIN_MODE` | first-domain strategy |
-| `PROGRESS_MODE` | `auto`, `bar`, `plain`, `none` |
-| `SELF_CHECK_ENABLED` | enable or disable transport-aware self-check |
-| `SELF_CHECK_URLS` | comma-separated HTTPS probe URLs |
-| `SELF_CHECK_TIMEOUT_SEC` | curl timeout per self-check probe |
+## practical operator loop
 
-Example:
-
-```bash
-sudo env DOMAIN_HEALTH_PROBE_TIMEOUT=3 \
-  DOMAIN_HEALTH_MAX_PROBES=12 \
-  SELF_CHECK_TIMEOUT_SEC=10 \
-  PROGRESS_MODE=plain \
-  xray-reality.sh repair
-```
-
-## Uninstall procedure
-
-```bash
-sudo xray-reality.sh uninstall --yes --non-interactive
-```
-
-Post-uninstall checks:
-
-- `id xray` should fail
-- `/etc/xray`, `/etc/xray-reality`, `/usr/local/bin/xray` should be removed
-- `/var/lib/xray/self-check.json` should be removed
-- previously used service ports should not listen
-
-## Escalation package
-
-Collect before opening an issue:
-
-- `sudo xray-reality.sh diagnose`
-- `sudo journalctl -u xray -n 500 --no-pager`
-- `/etc/xray/config.json` with secrets redacted
-- `/etc/xray/private/keys/clients.json` if artifact mismatch is involved
-- `/var/lib/xray/self-check.json` if verdict/debug context is relevant
-- `scripts/measure-stealth.sh` output when comparing real-network behavior
+1. install or migrate to the strongest-direct contract
+2. verify `status --verbose`
+3. save a few real-network measurements
+4. run `update --replan` or `repair` if the field summary points to a better spare
+5. use `emergency` only when direct variants are not enough on the tested network

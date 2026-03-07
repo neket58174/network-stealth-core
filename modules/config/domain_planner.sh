@@ -33,14 +33,31 @@ setup_domains() {
     fi
     DOMAIN_TIER="$selected_tier"
 
+    declare -gA DOMAIN_PROVIDER_FAMILIES=()
+    declare -gA DOMAIN_REGIONS=()
+    declare -gA DOMAIN_PRIORITY_MAP=()
+    declare -gA DOMAIN_RISK_MAP=()
+    declare -gA DOMAIN_PORT_HINTS=()
+    declare -gA DOMAIN_SNI_POOL_OVERRIDES=()
+
     local -a tier_domains=()
     if [[ "$selected_tier" != "custom" ]]; then
-        mapfile -t tier_domains < <(load_tier_domains_from_file "$tiers_file" "$selected_tier")
+        if catalog_supports_tier "${XRAY_DOMAIN_CATALOG_FILE:-}" "$selected_tier"; then
+            mapfile -t tier_domains < <(load_tier_domains_from_catalog "$XRAY_DOMAIN_CATALOG_FILE" "$selected_tier")
+            populate_domain_metadata_from_catalog "$XRAY_DOMAIN_CATALOG_FILE" "$selected_tier" || true
+        else
+            mapfile -t tier_domains < <(load_tier_domains_from_file "$tiers_file" "$selected_tier")
+        fi
         if [[ ${#tier_domains[@]} -eq 0 && "$selected_tier" != "tier_ru" ]]; then
             log WARN "Тир ${selected_tier} пустой; используем tier_ru"
             selected_tier="tier_ru"
             DOMAIN_TIER="tier_ru"
-            mapfile -t tier_domains < <(load_tier_domains_from_file "$tiers_file" "tier_ru")
+            if catalog_supports_tier "${XRAY_DOMAIN_CATALOG_FILE:-}" "tier_ru"; then
+                mapfile -t tier_domains < <(load_tier_domains_from_catalog "$XRAY_DOMAIN_CATALOG_FILE" "tier_ru")
+                populate_domain_metadata_from_catalog "$XRAY_DOMAIN_CATALOG_FILE" "tier_ru" || true
+            else
+                mapfile -t tier_domains < <(load_tier_domains_from_file "$tiers_file" "tier_ru")
+            fi
         fi
     fi
 
@@ -57,6 +74,7 @@ setup_domains() {
     else
         AVAILABLE_DOMAINS=("${tier_domains[@]}")
     fi
+    seed_domain_metadata_from_list "${AVAILABLE_DOMAINS[@]}"
 
     if [[ ${#AVAILABLE_DOMAINS[@]} -eq 0 ]]; then
         log ERROR "Список доменов пуст. Проверьте XRAY_CUSTOM_DOMAINS/XRAY_DOMAINS_FILE."
@@ -78,6 +96,10 @@ setup_domains() {
     else
         log WARN "SNI pools file не найден: $XRAY_SNI_POOLS_FILE"
     fi
+    local sni_domain
+    for sni_domain in "${!DOMAIN_SNI_POOL_OVERRIDES[@]}"; do
+        SNI_POOLS["$sni_domain"]="${DOMAIN_SNI_POOL_OVERRIDES[$sni_domain]}"
+    done
     if transport_is_legacy "$TRANSPORT"; then
         if [[ -n "$XRAY_GRPC_SERVICES_FILE" && -f "$XRAY_GRPC_SERVICES_FILE" ]]; then
             load_map_file "$XRAY_GRPC_SERVICES_FILE" GRPC_SERVICES || return 1
@@ -232,8 +254,22 @@ validate_domain_map_coverage() {
 
 load_priority_domains() {
     local -a priority=()
+    if catalog_supports_tier "${XRAY_DOMAIN_CATALOG_FILE:-}" "priority"; then
+        mapfile -t priority < <(load_priority_domains_from_catalog "$XRAY_DOMAIN_CATALOG_FILE")
+    fi
+    if [[ ${#priority[@]} -eq 0 ]] && [[ -n "${XRAY_DOMAIN_CATALOG_FILE:-}" && -f "${XRAY_DOMAIN_CATALOG_FILE:-}" ]] && command -v jq > /dev/null 2>&1; then
+        mapfile -t priority < <(jq -r '
+            [.tiers.tier_ru[]?, .tiers.tier_global_ms10[]?]
+            | flatten
+            | map(select((.priority // 0) > 0))
+            | sort_by(-(.priority // 0), .domain)
+            | .[].domain
+        ' "$XRAY_DOMAIN_CATALOG_FILE" 2> /dev/null || true)
+    fi
     if [[ -n "$XRAY_TIERS_FILE" && -f "$XRAY_TIERS_FILE" ]]; then
-        mapfile -t priority < <(load_tier_domains_from_file "$XRAY_TIERS_FILE" "priority")
+        if [[ ${#priority[@]} -eq 0 ]]; then
+            mapfile -t priority < <(load_tier_domains_from_file "$XRAY_TIERS_FILE" "priority")
+        fi
     fi
     printf '%s\n' "${priority[@]}"
 }
@@ -263,6 +299,48 @@ domain_exists_in_array() {
         fi
     done
     return 1
+}
+
+build_diverse_cycle_from_pool() {
+    local pool_name="$1"
+    local out_name="$2"
+    local previous_domain="${3:-}"
+    local previous_family=""
+    if [[ -n "$previous_domain" ]]; then
+        previous_family=$(domain_provider_family_for "$previous_domain" 2> /dev/null || true)
+    fi
+
+    # shellcheck disable=SC2034 # nameref writes caller variable.
+    local -n _pool="$pool_name"
+    # shellcheck disable=SC2034 # nameref writes caller variable.
+    local -n _out="$out_name"
+
+    local -A seen_families=()
+    local -a preferred=()
+    local -a deferred=()
+    local domain family
+
+    for domain in "${_pool[@]}"; do
+        [[ -n "$domain" ]] || continue
+        family=$(domain_provider_family_for "$domain" 2> /dev/null || true)
+        if [[ -z "$family" ]]; then
+            family="$domain"
+        fi
+
+        if [[ ${#preferred[@]} -eq 0 && -n "$previous_domain" && "$domain" == "$previous_domain" && ${#_pool[@]} -gt 1 ]]; then
+            deferred+=("$domain")
+            continue
+        fi
+
+        if [[ -z "${seen_families[$family]:-}" && ! (${#preferred[@]} -eq 0 && -n "$previous_family" && "$family" == "$previous_family" && ${#_pool[@]} -gt 1) ]]; then
+            preferred+=("$domain")
+            seen_families["$family"]=1
+        else
+            deferred+=("$domain")
+        fi
+    done
+
+    _out=("${preferred[@]}" "${deferred[@]}")
 }
 
 select_primary_domain() {
@@ -369,23 +447,14 @@ build_domain_plan() {
             cycle=("${AVAILABLE_DOMAINS[@]}")
         fi
         shuffle_array_inplace cycle
-
-        if [[ ${#DOMAIN_SELECTION_PLAN[@]} -gt 0 && ${#cycle[@]} -gt 1 ]]; then
-            local prev_domain="${DOMAIN_SELECTION_PLAN[$((${#DOMAIN_SELECTION_PLAN[@]} - 1))]}"
-            if [[ "${cycle[0]}" == "$prev_domain" ]]; then
-                local pivot=-1
-                local idx candidate
-                for idx in "${!cycle[@]}"; do
-                    candidate="${cycle[$idx]}"
-                    if [[ "$candidate" != "$prev_domain" ]]; then
-                        pivot=$idx
-                        break
-                    fi
-                done
-                if ((pivot > 0)); then
-                    cycle=("${cycle[@]:$pivot}" "${cycle[@]:0:$pivot}")
-                fi
-            fi
+        local prev_domain=""
+        if [[ ${#DOMAIN_SELECTION_PLAN[@]} -gt 0 ]]; then
+            prev_domain="${DOMAIN_SELECTION_PLAN[$((${#DOMAIN_SELECTION_PLAN[@]} - 1))]}"
+        fi
+        local -a diverse_cycle=()
+        build_diverse_cycle_from_pool cycle diverse_cycle "$prev_domain"
+        if [[ ${#diverse_cycle[@]} -gt 0 ]]; then
+            cycle=("${diverse_cycle[@]}")
         fi
 
         local domain
@@ -810,11 +879,12 @@ generate_profile_inbound_json() {
     local uuid="$2"
     local private_key="$3"
     local short_id="$4"
+    local decryption_value="${5:-none}"
 
     generate_inbound_json \
         "$port" "$uuid" "$PROFILE_DEST" "$PROFILE_SNI_JSON" "$private_key" "$short_id" \
         "$PROFILE_FP" "$PROFILE_TRANSPORT_ENDPOINT" "$PROFILE_KEEPALIVE" "$PROFILE_GRPC_IDLE" "$PROFILE_GRPC_HEALTH" \
-        "$TRANSPORT" "$PROFILE_TRANSPORT_PAYLOAD"
+        "$TRANSPORT" "$PROFILE_TRANSPORT_PAYLOAD" "$decryption_value" "${XRAY_DIRECT_FLOW:-xtls-rprx-vision}"
 }
 
 generate_keys() {

@@ -153,37 +153,46 @@ install_self() {
     log STEP "Устанавливаем скрипт управления..."
 
     if [[ -n "$XRAY_DATA_DIR" ]]; then
-        mkdir -p "$XRAY_DATA_DIR"
-        if [[ -d "$SCRIPT_DIR/modules" ]]; then
-            local modules_tmp modules_backup
-            modules_tmp=$(mktemp -d "${XRAY_DATA_DIR}/.modules.new.XXXXXX")
-            if ! cp -a "$SCRIPT_DIR/modules/." "$modules_tmp/"; then
-                rm -rf "$modules_tmp"
-                log ERROR "Не удалось скопировать modules в временную директорию"
+        install_self_sync_tree() {
+            local src_dir="$1"
+            local dest_root="$2"
+            local tree_name="$3"
+            [[ -d "$src_dir" ]] || return 0
+
+            local tree_tmp tree_backup
+            tree_tmp=$(mktemp -d "${dest_root}/.${tree_name}.new.XXXXXX")
+            if ! cp -a "$src_dir/." "$tree_tmp/"; then
+                rm -rf "$tree_tmp"
+                log ERROR "Не удалось скопировать ${tree_name} во временную директорию"
                 exit 1
             fi
 
-            modules_backup=""
-            if [[ -d "$XRAY_DATA_DIR/modules" ]]; then
-                modules_backup=$(mktemp -d "${XRAY_DATA_DIR}/.modules.backup.XXXXXX")
-                if ! mv "$XRAY_DATA_DIR/modules" "$modules_backup/modules"; then
-                    rm -rf "$modules_tmp" "$modules_backup"
-                    log ERROR "Не удалось подготовить backup текущих modules"
+            tree_backup=""
+            if [[ -d "${dest_root}/${tree_name}" ]]; then
+                tree_backup=$(mktemp -d "${dest_root}/.${tree_name}.backup.XXXXXX")
+                if ! mv "${dest_root}/${tree_name}" "${tree_backup}/${tree_name}"; then
+                    rm -rf "$tree_tmp" "$tree_backup"
+                    log ERROR "Не удалось подготовить backup текущего ${tree_name}"
                     exit 1
                 fi
             fi
 
-            if ! mv "$modules_tmp" "$XRAY_DATA_DIR/modules"; then
-                rm -rf "$XRAY_DATA_DIR/modules" "$modules_tmp"
-                if [[ -n "$modules_backup" && -d "$modules_backup/modules" ]]; then
-                    mv "$modules_backup/modules" "$XRAY_DATA_DIR/modules" || true
+            if ! mv "$tree_tmp" "${dest_root}/${tree_name}"; then
+                rm -rf "${dest_root:?}/${tree_name}" "$tree_tmp"
+                if [[ -n "$tree_backup" && -d "${tree_backup}/${tree_name}" ]]; then
+                    mv "${tree_backup}/${tree_name}" "${dest_root}/${tree_name}" || true
                 fi
-                rm -rf "$modules_backup"
-                log ERROR "Не удалось обновить modules в $XRAY_DATA_DIR"
+                rm -rf "$tree_backup"
+                log ERROR "Не удалось обновить ${tree_name} в ${dest_root}"
                 exit 1
             fi
-            rm -rf "$modules_backup"
-        fi
+            rm -rf "$tree_backup"
+        }
+
+        mkdir -p "$XRAY_DATA_DIR"
+        install_self_sync_tree "$SCRIPT_DIR/modules" "$XRAY_DATA_DIR" "modules"
+        install_self_sync_tree "$SCRIPT_DIR/data" "$XRAY_DATA_DIR" "data"
+        install_self_sync_tree "$SCRIPT_DIR/scripts" "$XRAY_DATA_DIR" "scripts"
         local f
         for f in domains.tiers sni_pools.map grpc_services.map lib.sh install.sh config.sh service.sh health.sh export.sh; do
             local src_path="$SCRIPT_DIR/$f"

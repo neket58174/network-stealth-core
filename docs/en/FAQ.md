@@ -1,84 +1,88 @@
-# FAQ
+# faq
 
-## Is this project production-ready?
+## why is install so opinionated?
 
-The project is a public automation toolkit with CI and release gates.
-Use it with your own operational responsibility and host hardening standards.
+the project is optimized for two things at once:
 
-## Which OS is officially supported?
+- almost no install questions
+- the strongest safe default for rf anti-dpi use
 
-Current validated platform:
+that is why the normal path avoids transport and profile prompts.
 
-- Ubuntu 24.04 LTS
+## when should i use `install --advanced`?
 
-Other Linux distributions may work but are not under the active CI contract.
+only when you explicitly want manual profile and config-count prompts.
+it is not the recommended path for ordinary installs.
 
-## Why does install ask fewer questions now?
+## why are some mutating actions blocked on older installs?
 
-v6 keeps the default path opinionated on purpose.
-`install` chooses xhttp, `ru-auto`, and the default config count automatically.
-Use `install --advanced` only when you need manual prompts.
-
-## Can I still choose `grpc` or `http2` during install?
-
-No.
-v6 is xhttp-only for mutating product paths.
-If you already manage a legacy install, run:
+because `update`, `repair`, `add-clients`, and `add-keys` must not silently keep a weaker managed contract alive.
+run:
 
 ```bash
 sudo xray-reality.sh migrate-stealth --non-interactive --yes
 ```
 
-## What does `legacy transport` mean in status?
+## what does `migrate-stealth` upgrade?
 
-It means the managed server config still uses `grpc` or `http2`.
-`status`, `logs`, `diagnose`, `rollback`, and `uninstall` still work, but mutating actions such as `update`, `repair`, and `add-clients` require migration first.
+it upgrades both:
 
-## What is the difference between `recommended` and `rescue`?
+- managed legacy `grpc/http2` installs
+- managed xhttp installs that do not yet have the v7 strongest-direct contract
 
-- `recommended` = xhttp `mode=auto`
-- `rescue` = xhttp `mode=packet-up`
+## why is raw xray json the canonical client artifact?
 
-Mutating flows test `recommended` first and fall back to `rescue` if needed.
+because it can express the full strongest-direct contract without loss:
 
-## What is `capabilities.json` for?
+- xhttp modes
+- generated vless encryption
+- `xtls-rprx-vision`
+- browser-dialer requirements for `emergency`
 
-It is the machine-readable export capability matrix.
-It tells you which output formats are:
+links are still emitted only where they stay honest.
 
-- `native`
-- `link-only`
-- `unsupported`
+## what is the `emergency` variant for?
 
-For xhttp, raw xray json remains the canonical client artifact.
+`emergency` is the last-resort field tier:
 
-## What is stored in `self-check.json`?
+- `xhttp mode=stream-up`
+- requires browser dialer
+- exported as raw xray only
+- not used by post-action server self-check
 
-The last transport-aware verdict:
+## why are sing-box and clash-meta marked unsupported?
 
-- action name
-- verdict (`ok`, `warning`, `broken`)
-- selected variant
-- attempted probe results
-- operator-facing reasons
+because the project does not want to generate degraded templates that misrepresent the strongest-direct contract.
+use raw xray json when you need the exact managed behavior.
 
-## What does a self-check `warning` mean?
+## what is `policy.json` for?
 
-The server stayed usable, but `recommended` failed and `rescue` passed.
-That is degraded, not broken.
-Review `status --verbose`, `diagnose`, and the saved state file.
+`/etc/xray-reality/policy.json` stores the operator-facing policy separately from generated runtime state.
+it keeps:
 
-## What is `scripts/measure-stealth.sh` for?
+- domain profile and tier
+- self-check settings
+- measurement settings
+- update and replan settings
+- direct contract metadata
 
-It is a local measurement harness.
-It reuses the same probe engine as the runtime self-check and writes a JSON report for `recommended` / `rescue` comparisons.
+## what does `scripts/measure-stealth.sh` do?
 
-## Is this tied to one person or one server?
+it reuses the same probe engine as runtime self-check and adds report workflows:
 
-No. Repository content, docs, and defaults are intended for public generic usage.
+- `run`
+- `compare`
+- `summarize`
 
-## Where can I ask questions?
+saved reports feed the measurement summary used by `status --verbose`, `diagnose`, `repair`, and `update --replan`.
 
-- GitHub Discussions
-- GitHub Issues (for actionable bugs)
-- X contact: [x.com/neket371](https://x.com/neket371)
+## what is the canary bundle for?
+
+it is the portable field-testing surface under `export/canary/`.
+use it when another machine or another network needs to test the generated variants, especially `emergency`.
+
+## what xray version is expected?
+
+the strongest-direct client contract declares a minimum xray version.
+managed artifacts currently record `25.9.5` as the minimum client/core baseline.
+if the local xray binary cannot satisfy required features, the action fails closed.

@@ -1,208 +1,202 @@
 <h1 align="center">Network Stealth Core</h1>
 
 <p align="center">
-  Набор скриптов для установки и эксплуатации Xray Reality на Linux-серверах.
+  набор скриптов для установки и эксплуатации strongest-direct xray reality на linux-серверах.
 </p>
 
 <p align="center">
-  <a href="https://github.com/neket371/network-stealth-core/releases"><img alt="release" src="https://img.shields.io/badge/release-v6.0.0-0f766e"></a>
+  <a href="https://github.com/neket371/network-stealth-core/releases"><img alt="release" src="https://img.shields.io/badge/release-v7.1.0-0f766e"></a>
   <a href="LICENSE"><img alt="license" src="https://img.shields.io/badge/license-MIT-97ca00"></a>
   <a href="docs/ru/OPERATIONS.md"><img alt="platform" src="https://img.shields.io/badge/platform-ubuntu%2024.04-1d4ed8"></a>
   <a href="Makefile"><img alt="qa" src="https://img.shields.io/badge/qa-make%20ci-334155"></a>
 </p>
 
 <p align="center">
-  <a href="README.md">English version</a> • <a href="docs/ru/INDEX.md">Документация (RU)</a> • <a href="docs/en/INDEX.md">Docs (EN)</a>
+  <a href="README.md">english version</a> • <a href="docs/ru/INDEX.md">документация (ru)</a> • <a href="docs/en/INDEX.md">docs (en)</a>
 </p>
 
-## Что это за проект
+## что это за проект
 
-`Network Stealth Core` автоматизирует:
+`network stealth core` — bash-first проект автоматизации для managed xray reality узлов.
+цель простая:
 
-- развёртывание Xray Reality
-- генерацию и сопровождение конфигурации
-- операционные сценарии (`install`, `update`, `repair`, `rollback`, `uninstall`)
-- экспорт клиентских артефактов
+- задавать минимум вопросов при установке
+- выбирать самый сильный безопасный дефолт для обхода dpi в рф
+- держать все mutating-действия транзакционными и rollback-safe
+- экспортировать честные клиентские артефакты, а не misleading degraded templates
 
-Проект публичный и предназначен для общего использования, без привязки к конкретному серверу.
+## официальный источник
 
-## Официальный источник
-
-Используйте только официальный репозиторий:
+используйте только официальный репозиторий:
 
 - `https://github.com/neket371/network-stealth-core`
 
-Если команда взята из форка или зеркала, проверьте источник перед запуском.
+## быстрый старт
 
-## Быстрый старт
+### рекомендуемая установка
 
-### Рекомендуемый способ: universal install
+обычный `install` opinionated и минимальный.
+он автоматически выбирает strongest-direct контракт:
 
-обычная установка теперь xhttp-only и задаёт минимум вопросов (`ru-auto`, strongest default path).
-используйте `install --advanced` только если нужен ручной выбор профиля и числа конфигов.
-
-```bash
-curl -fL https://raw.githubusercontent.com/neket371/network-stealth-core/ubuntu/xray-reality.sh -o /tmp/xray-reality.sh
-sudo bash /tmp/xray-reality.sh install
-```
-
-### Альтернатива: one-line install
-
-```bash
-sudo bash <(curl -fsSL https://raw.githubusercontent.com/neket371/network-stealth-core/ubuntu/xray-reality.sh) install
-```
-
-Если появляется `/dev/fd/...: no such file or directory`, используйте universal install.
-
-### Bootstrap с pin по commit
-
-```bash
-curl -fL https://raw.githubusercontent.com/neket371/network-stealth-core/ubuntu/xray-reality.sh -o /tmp/xray-reality.sh
-sudo XRAY_REPO_COMMIT=<full_commit_sha> bash /tmp/xray-reality.sh install
-```
-
-### Выбор источника bootstrap
-
-По умолчанию используется `ubuntu`:
+- `ru-auto`
+- `vless + reality + xhttp + vless encryption + xtls-rprx-vision`
+- клиентские варианты `recommended`, `rescue` и `emergency`
 
 ```bash
 curl -fL https://raw.githubusercontent.com/neket371/network-stealth-core/ubuntu/xray-reality.sh -o /tmp/xray-reality.sh
 sudo bash /tmp/xray-reality.sh install
 ```
 
-Чтобы брать последний релизный тег:
+### полностью unattended установка
 
 ```bash
 curl -fL https://raw.githubusercontent.com/neket371/network-stealth-core/ubuntu/xray-reality.sh -o /tmp/xray-reality.sh
-sudo XRAY_BOOTSTRAP_DEFAULT_REF=release bash /tmp/xray-reality.sh install
+sudo bash /tmp/xray-reality.sh install --non-interactive --yes
 ```
 
-Заметка по совместимости:
+### bootstrap с pin по commit
 
-- `main` пока принимается как временный alias на один релизный цикл.
-- Во всех скриптах и автоматизации используйте `ubuntu`.
+```bash
+curl -fL https://raw.githubusercontent.com/neket371/network-stealth-core/ubuntu/xray-reality.sh -o /tmp/xray-reality.sh
+sudo XRAY_REPO_COMMIT=<full_commit_sha> bash /tmp/xray-reality.sh install --non-interactive --yes
+```
 
-## Карта команд
+### ручные prompt’ы только когда они действительно нужны
 
-| Команда | Назначение |
+```bash
+sudo xray-reality.sh install --advanced
+```
+
+## карта команд
+
+| команда | назначение |
 |---|---|
-| `install` | Минимальная xhttp-only установка |
-| `migrate-stealth` | Миграция managed legacy `grpc/http2` установки на `xhttp` |
-| `add-clients [N]` | Добавляет `N` клиентских конфигов |
-| `add-keys [N]` | Алиас `add-clients` |
-| `update` | Обновление Xray core |
-| `repair` | Сверка и восстановление service/firewall/artifacts |
-| `status` | Сводка состояния |
-| `logs [xray\|health\|all]` | Просмотр логов |
-| `diagnose` | Диагностический снимок |
-| `rollback [dir]` | Откат из бэкапа |
-| `uninstall` | Полное удаление |
-| `check-update` | Проверка обновлений |
+| `install` | минимальная strongest-direct установка |
+| `migrate-stealth` | переводит managed legacy или pre-v7 install на strongest-direct контракт v7 |
+| `add-clients [n]` | добавляет `n` клиентских конфигов |
+| `add-keys [n]` | алиас `add-clients [n]` |
+| `update` | обновляет xray-core и пересобирает managed state |
+| `repair` | сверяет service, firewall, policy и клиентские артефакты |
+| `status` | сводка состояния |
+| `logs [xray\|health\|all]` | просмотр логов |
+| `diagnose` | сбор диагностики |
+| `rollback [dir]` | откат из backup session |
+| `uninstall` | полное удаление |
+| `check-update` | проверка обновлений |
 
-## Профили и лимиты
+## публичный strongest-direct контракт
 
-| Профиль | Внутренний tier | Лимит конфигов | Примечание |
-|---|---|---:|---|
-| `ru` | `tier_ru` | 100 | Основной RU-пул |
-| `ru-auto` | `tier_ru` | auto 5 | Быстрый RU-старт |
-| `global-50` | `tier_global_ms10` | 10 | Глобальный пул (50 доменов) |
-| `global-50-auto` | `tier_global_ms10` | auto 10 | Быстрый global-старт |
-| `custom` | `custom` | 100 | Пользовательский набор |
+- `install` = минимальный strongest-direct путь без вопросов про transport и profile на основном пути
+- `install --advanced` = явный manual compatibility flow для тех, кому нужны prompt’ы
+- `migrate-stealth` = единственный mutating-мост для managed legacy `grpc/http2` install и pre-v7 xhttp install
+- `update`, `repair`, `add-clients` и `add-keys` блокируются на старом managed-контракте, пока не выполнен `migrate-stealth`
+- `clients.json` = `schema_version: 3`
+- каждый конфиг экспортирует три варианта:
+  - `recommended` = `xhttp mode=auto`
+  - `rescue` = `xhttp mode=packet-up`
+  - `emergency` = `xhttp mode=stream-up + browser dialer`
+- `recommended` и `rescue` валидируются post-action self-check
+- `emergency` экспортируется честно только как raw xray и предназначен для полевых проверок, а не для фейковых ссылок
+- `update --replan` и `repair` могут повышать более сильный spare-config на основе self-check history и сохранённых field measurements
 
-Legacy-алиасы `global-ms10` и `global-ms10-auto` пока поддерживаются для обратной совместимости.
+## поверхность state и артефактов
 
-## Ключевые флаги
+managed install держит синхронными такие файлы:
+
+- `/etc/xray-reality/policy.json` — source of truth для strongest-direct policy
+- `data/domains/catalog.json` — canonical metadata доменов для planner
+- `/etc/xray/private/keys/clients.json` — клиентский инвентарь schema v3
+- `/etc/xray/private/keys/export/raw-xray/` — canonical per-variant xray client json
+- `/etc/xray/private/keys/export/canary/` — bundle для полевых тестов `recommended`, `rescue` и `emergency`
+- `/etc/xray/private/keys/export/capabilities.json` — честная capability matrix по export-target
+- `/var/lib/xray/self-check.json` — последний post-action verdict
+- `/var/lib/xray/self-check-history.ndjson` — недавняя история self-check
+- `/var/lib/xray/measurements/` — сохранённые field reports из `scripts/measure-stealth.sh`
+- `/var/lib/xray/measurements/latest-summary.json` — агрегированный field verdict для `status --verbose`, `diagnose`, `repair` и `update --replan`
+
+## workflow measurement и canary
+
+локальные measurement-запуски используют тот же probe-engine, что и runtime self-check:
+
+```bash
+sudo bash scripts/measure-stealth.sh run \
+  --save \
+  --network-tag home \
+  --provider rostelecom \
+  --region moscow \
+  --output /tmp/measure-home.json
+
+sudo bash scripts/measure-stealth.sh compare \
+  --dir /var/lib/xray/measurements \
+  --output /tmp/measure-compare.json
+
+sudo bash scripts/measure-stealth.sh summarize \
+  --dir /var/lib/xray/measurements \
+  --output /tmp/measure-summary.json
+```
+
+для удалённых тестов на сетях рф используй bundle из `export/canary/` и raw xray-конфиги оттуда.
+если проверяешь `emergency`, на стороне клиента нужно выставить `xray.browser.dialer`.
+
+## ключевые флаги
 
 ```bash
 --domain-profile ru|ru-auto|global-50|global-50-auto|custom
 --transport xhttp
 --advanced
+--replan
 --progress-mode auto|bar|plain|none
 --require-minisign
 --allow-no-systemd
---num-configs N
---start-port N
---server-ip IPV4 --server-ip6 IPV6
+--num-configs n
+--start-port n
+--server-ip ipv4 --server-ip6 ipv6
 --yes --non-interactive
 --verbose
 ```
 
-заметки по контракту:
+заметки:
 
-- `install` = минимальный xhttp-only путь (`ru-auto`, strongest default)
-- `install --advanced` = ручные prompt’ы для выбора профиля и числа конфигов
-- `migrate-stealth` = единственный штатный путь перевода managed legacy `grpc/http2` инсталлов
-- `--transport grpc|http2` в v6 отклоняется
+- `--transport` в v7 зафиксирован на `xhttp` и оставлен только как compatibility no-op для поддерживаемого значения
+- legacy-алиасы `global-ms10` и `global-ms10-auto` всё ещё мапятся на `global-50` и `global-50-auto`
+- `XRAY_DATA_DIR` в wrapper-режиме не является свободным trusted source; `XRAY_ALLOW_CUSTOM_DATA_DIR=true` используй только для trusted non-world-writable директорий
 
-контракт артефактов:
+## карта документации
 
-- `clients.json` теперь использует `schema_version: 2`
-- каждый конфиг хранит `variants[]`
-- xhttp-install создает варианты `recommended (auto)` и `rescue (packet-up)`
-- raw xray json по вариантам экспортируются в `export/raw-xray/`
-- `export/capabilities.json` описывает, какие export-target являются native, link-only или unsupported
-- `/var/lib/xray/self-check.json` хранит последний transport-aware verdict
-
-операторские инструменты проверки:
-
-- mutating-действия запускают transport-aware self-check по canonical raw xray client configs
-- `scripts/measure-stealth.sh` использует тот же probe-engine для локальных measurement-запусков
-
-`XRAY_DATA_DIR` в wrapper-режиме не является произвольным доверенным источником кода.  
-По умолчанию загрузка кода wrapper ограничена только путями:
-
-- текущая директория скрипта (`SCRIPT_DIR`)
-- `/usr/local/share/xray-reality`
-
-Для пользовательского каталога модулей нужен явный opt-in:
-
-```bash
-XRAY_ALLOW_CUSTOM_DATA_DIR=true XRAY_DATA_DIR=/secure/path bash /tmp/xray-reality.sh install
-```
-
-Требование безопасности для custom-пути:
-
-- директория не должна быть writable для group/other
-
-## Карта документации
-
-| Путь | Назначение |
+| путь | назначение |
 |---|---|
-| `docs/ru/INDEX.md` | Точка входа в документацию (RU) |
-| `docs/en/INDEX.md` | Documentation entrypoint (EN) |
-| `docs/ru/ARCHITECTURE.md` | Архитектура и контракты модулей |
-| `docs/ru/OPERATIONS.md` | Runbook по install, migration, measurement и инцидентам |
-| `docs/ru/FAQ.md` | Частые вопросы |
-| `docs/ru/TROUBLESHOOTING.md` | Диагностика по симптомам |
-| `docs/ru/COMMUNITY.md` | Комьюнити и правила общения |
-| `docs/ru/ROADMAP.md` | Текущий вектор развития |
-| `docs/ru/GLOSSARY.md` | Термины проекта |
-| `docs/ru/CHANGELOG.md` | История релизов |
-| `.github/CONTRIBUTING.ru.md` | Гайд для контрибьюторов (RU) |
-| `.github/SECURITY.ru.md` | Политика безопасности (RU) |
+| `docs/ru/INDEX.md` | точка входа в документацию |
+| `docs/ru/ARCHITECTURE.md` | runtime-модель, state split и границы модулей |
+| `docs/ru/OPERATIONS.md` | runbook по install, migration, repair, measurement и инцидентам |
+| `docs/ru/FAQ.md` | практические вопросы |
+| `docs/ru/TROUBLESHOOTING.md` | диагностика по симптомам |
+| `docs/ru/COMMUNITY.md` | правила взаимодействия и поддержки |
+| `docs/ru/ROADMAP.md` | направление после v7.1.0 |
+| `docs/ru/GLOSSARY.md` | общие термины |
+| `docs/ru/CHANGELOG.md` | история релизов |
+| `.github/CONTRIBUTING.ru.md` | правила контрибьюта |
+| `.github/SECURITY.ru.md` | политика безопасности |
 
-## Безопасность
+## безопасность
 
-Основные меры:
+основные меры:
 
-- строгая валидация runtime-параметров, путей, портов, доменов и self-check URL
-- allowlist для критичных загрузок
-- проверка целостности артефактов (`sha256` и optional strict `minisign`)
-- транзакционные записи и rollback
-- ограниченный профиль `systemd` и непривилегированный runtime-пользователь
-- post-change transport-aware проверка по canonical raw xray client exports
+- строгая runtime-валидация путей, доменов, портов, адресов, расписаний и probe-url
+- контролируемая поверхность загрузок с allowlist
+- optional strict minisign и pinned trust anchor
+- транзакционные записи с rollback при ошибке конфига, service или self-check
+- ограниченный systemd unit и non-root runtime user
+- canonical raw xray exports как source of truth для self-check и field measurement
 
-Подробности: [.github/SECURITY.ru.md](.github/SECURITY.ru.md).
+подробности: [.github/SECURITY.ru.md](.github/SECURITY.ru.md).
 
-## Поддерживаемая платформа
+## поддерживаемая платформа
 
-Основная и CI-валидируемая платформа:
+основная и ci-валидируемая платформа:
 
-- `ubuntu-24.04` (LTS)
+- `ubuntu-24.04` (lts)
 
-Другие Linux-дистрибутивы могут работать, но не входят в текущий CI-контур.
-
-## Проверки качества
+## проверки качества
 
 ```bash
 make lint
@@ -211,19 +205,9 @@ make release-check
 make ci
 ```
 
-Windows-утилиты:
+windows-помощники:
 
 ```powershell
 pwsh ./scripts/markdownlint.ps1
 pwsh ./scripts/windows/run-validation.ps1
 ```
-
-## Комьюнити
-
-- Обсуждения: вкладка `GitHub Discussions`
-- Баг-репорты и фичи: `GitHub Issues`
-- Контакт: X (Twitter) [x.com/neket371](https://x.com/neket371)
-
-## Лицензия
-
-MIT License. См. [LICENSE](LICENSE).

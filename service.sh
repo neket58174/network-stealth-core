@@ -604,18 +604,18 @@ uninstall_is_allowed_file_path() {
     [[ "$resolved_file" == /* ]] || return 1
 
     case "$resolved_file" in
-        /etc/systemd/system/xray.service | /etc/systemd/system/xray-health.service | /etc/systemd/system/xray-health.timer | /etc/systemd/system/xray-auto-update.service | /etc/systemd/system/xray-auto-update.timer | /etc/systemd/system/xray-diagnose@.service | /usr/lib/systemd/system/xray.service | /usr/lib/systemd/system/xray-health.service | /usr/lib/systemd/system/xray-health.timer | /usr/lib/systemd/system/xray-auto-update.service | /usr/lib/systemd/system/xray-auto-update.timer | /usr/lib/systemd/system/xray-diagnose@.service | /lib/systemd/system/xray.service | /lib/systemd/system/xray-health.service | /lib/systemd/system/xray-health.timer | /lib/systemd/system/xray-auto-update.service | /lib/systemd/system/xray-auto-update.timer | /lib/systemd/system/xray-diagnose@.service | /usr/local/bin/xray-health.sh | /etc/cron.d/xray-health | /etc/logrotate.d/xray | /etc/sysctl.d/99-xray.conf | /etc/security/limits.d/99-xray.conf | /var/log/xray-install.log | /var/log/xray-update.log | /var/log/xray-diagnose.log | /var/log/xray-repair.log | /var/log/xray-health.log | /var/log/xray.log | /var/lib/xray/self-check.json)
+        /etc/systemd/system/xray.service | /etc/systemd/system/xray-health.service | /etc/systemd/system/xray-health.timer | /etc/systemd/system/xray-auto-update.service | /etc/systemd/system/xray-auto-update.timer | /etc/systemd/system/xray-diagnose@.service | /usr/lib/systemd/system/xray.service | /usr/lib/systemd/system/xray-health.service | /usr/lib/systemd/system/xray-health.timer | /usr/lib/systemd/system/xray-auto-update.service | /usr/lib/systemd/system/xray-auto-update.timer | /usr/lib/systemd/system/xray-diagnose@.service | /lib/systemd/system/xray.service | /lib/systemd/system/xray-health.service | /lib/systemd/system/xray-health.timer | /lib/systemd/system/xray-auto-update.service | /lib/systemd/system/xray-auto-update.timer | /lib/systemd/system/xray-diagnose@.service | /usr/local/bin/xray-health.sh | /etc/cron.d/xray-health | /etc/logrotate.d/xray | /etc/sysctl.d/99-xray.conf | /etc/security/limits.d/99-xray.conf | /var/log/xray-install.log | /var/log/xray-update.log | /var/log/xray-diagnose.log | /var/log/xray-repair.log | /var/log/xray-health.log | /var/log/xray.log | /var/lib/xray/self-check.json | /var/lib/xray/self-check-history.ndjson | /var/lib/xray/measurements/latest-summary.json | /etc/xray-reality/policy.json)
             return 0
             ;;
         *) ;;
     esac
 
-    for candidate in "$XRAY_BIN" "$XRAY_SCRIPT_PATH" "$XRAY_UPDATE_SCRIPT" "$INSTALL_LOG" "$UPDATE_LOG" "$DIAG_LOG" "$HEALTH_LOG" "$SELF_CHECK_STATE_FILE"; do
+    for candidate in "$XRAY_BIN" "$XRAY_SCRIPT_PATH" "$XRAY_UPDATE_SCRIPT" "$INSTALL_LOG" "$UPDATE_LOG" "$DIAG_LOG" "$HEALTH_LOG" "$SELF_CHECK_STATE_FILE" "$SELF_CHECK_HISTORY_FILE" "$MEASUREMENTS_SUMMARY_FILE" "$XRAY_POLICY"; do
         [[ -n "$candidate" ]] || continue
         resolved_candidate=$(realpath -m "$candidate" 2> /dev/null || echo "$candidate")
         if [[ "$resolved_file" == "$resolved_candidate" ]]; then
             case "$(basename "$resolved_file")" in
-                xray | xray-reality.sh | xray-reality-update.sh | xray-install.log | xray-update.log | xray-diagnose.log | xray-health.log | self-check.json)
+                xray | xray-reality.sh | xray-reality-update.sh | xray-install.log | xray-update.log | xray-diagnose.log | xray-health.log | self-check.json | self-check-history.ndjson | latest-summary.json | policy.json)
                     return 0
                     ;;
                 *) ;;
@@ -898,6 +898,7 @@ uninstall_all() {
     uninstall_remove_dir /etc/xray
     uninstall_remove_dir /etc/xray-reality
     uninstall_remove_dir "$XRAY_DATA_DIR"
+    uninstall_remove_file "$XRAY_POLICY"
 
     log STEP "Удаляем логи и бэкапы..."
     uninstall_remove_dir "$XRAY_LOGS"
@@ -907,6 +908,9 @@ uninstall_all() {
     uninstall_remove_file "$DIAG_LOG"
     uninstall_remove_file "$HEALTH_LOG"
     uninstall_remove_file "$SELF_CHECK_STATE_FILE"
+    uninstall_remove_file "$SELF_CHECK_HISTORY_FILE"
+    uninstall_remove_file "$MEASUREMENTS_SUMMARY_FILE"
+    uninstall_remove_dir "$MEASUREMENTS_DIR"
 
     log STEP "Удаляем cron и logrotate..."
     uninstall_remove_file /etc/cron.d/xray-health
@@ -975,7 +979,11 @@ uninstall_has_managed_artifacts() {
         "$XRAY_UPDATE_SCRIPT"
         "$XRAY_CONFIG"
         "$XRAY_ENV"
+        "$XRAY_POLICY"
         "$SELF_CHECK_STATE_FILE"
+        "$SELF_CHECK_HISTORY_FILE"
+        "$MEASUREMENTS_SUMMARY_FILE"
+        "$MEASUREMENTS_DIR"
         "/etc/xray"
         "/etc/xray-reality"
         "$XRAY_DATA_DIR"
@@ -1092,8 +1100,8 @@ status_flow() {
         if [[ -f "$XRAY_CONFIG" ]]; then
             echo -e "${BOLD}Детали конфигураций:${NC}"
             local i=0
-            local port dest domain sni fp net service
-            while IFS=$'\t' read -r port dest sni fp net service; do
+            local port dest domain sni fp net service decryption flow
+            while IFS=$'\t' read -r port dest sni fp net service decryption flow; do
                 [[ -z "$port" ]] && continue
                 i=$((i + 1))
                 domain="${dest%%:*}"
@@ -1113,6 +1121,8 @@ status_flow() {
                 echo -e "    Fingerprint: ${fp:-?}"
                 echo -e "    Transport:   $(transport_display_name "${net:-xhttp}")"
                 echo -e "    ${transport_label}: ${service:-?}"
+                echo -e "    Flow:        ${flow:-${XRAY_DIRECT_FLOW:-xtls-rprx-vision}}"
+                echo -e "    Decryption:  ${decryption:-none}"
                 echo ""
             done < <(jq -r '
                 .inbounds[]
@@ -1123,7 +1133,9 @@ status_flow() {
                     (.streamSettings.realitySettings.serverNames[0] // "?"),
                     (.streamSettings.realitySettings.fingerprint // "?"),
                     (.streamSettings.network // "xhttp"),
-                    (.streamSettings.xhttpSettings.path // .streamSettings.grpcSettings.serviceName // .streamSettings.httpSettings.path // "?")
+                    (.streamSettings.xhttpSettings.path // .streamSettings.grpcSettings.serviceName // .streamSettings.httpSettings.path // "?"),
+                    (.settings.decryption // "none"),
+                    (.settings.clients[0].flow // "xtls-rprx-vision")
                   ] | @tsv
             ' "$XRAY_CONFIG" 2> /dev/null)
         fi
@@ -1158,6 +1170,25 @@ status_flow() {
                 echo -e "  Checked: ${checked_at}"
                 echo -e "  Config: ${config_name}"
                 echo -e "  Variant: ${variant_key} (${variant_mode}, ${variant_family}, ${latency_ms}ms)"
+            else
+                echo -e "  Verdict: ${YELLOW}нет данных${NC}"
+            fi
+            echo ""
+        fi
+
+        if declare -F measurement_status_summary_tsv > /dev/null 2>&1; then
+            local measurement_summary
+            measurement_summary=$(measurement_status_summary_tsv 2> /dev/null || true)
+            echo -e "${BOLD}Field measurements:${NC}"
+            if [[ -n "$measurement_summary" ]]; then
+                local field_verdict report_count current_primary best_spare recommend_emergency latest_generated
+                IFS=$'\t' read -r field_verdict report_count current_primary best_spare recommend_emergency latest_generated <<< "$measurement_summary"
+                echo -e "  Verdict: ${field_verdict}"
+                echo -e "  Reports: ${report_count}"
+                echo -e "  Current primary: ${current_primary}"
+                echo -e "  Best spare: ${best_spare}"
+                echo -e "  Recommend emergency: ${recommend_emergency}"
+                echo -e "  Latest report: ${latest_generated}"
             else
                 echo -e "  Verdict: ${YELLOW}нет данных${NC}"
             fi

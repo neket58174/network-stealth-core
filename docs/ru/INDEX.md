@@ -1,50 +1,54 @@
-# Индекс документации (RU)
+# индекс документации
 
-Добро пожаловать в документационный хаб **Network Stealth Core**.
+это точка входа в русскоязычный набор docs.
 
-## Начать отсюда
+## текущий продуктовый контракт
 
-- [../../README.ru.md](../../README.ru.md) — быстрый старт и карта команд
-- [OPERATIONS.md](OPERATIONS.md) — install, maintenance, migration, measurement и rollback
-- [TROUBLESHOOTING.md](TROUBLESHOOTING.md) — диагностика по симптомам
+`v7.1.0` держит normal install path opinionated и минимальным.
+managed install теперь целится в strongest-direct baseline:
 
-## Текущий baseline
+- `vless + reality + xhttp + vless encryption + xtls-rprx-vision`
+- клиентские варианты `recommended`, `rescue` и `emergency`
+- `policy.json` как source of truth для managed policy
+- `clients.json` schema v3
+- transport-aware self-check и сохранённые field measurements
+- adaptive repair и `update --replan` на основе недавних verdict’ов
 
-- `install` = минимальный xhttp-only strongest-default путь
-- `install --advanced` = ручные prompt’ы выбора профиля и числа конфигов
-- `migrate-stealth` = единственный managed-мост с legacy `grpc/http2`
-- `clients.json` = schema v2 с `variants[]` для каждого конфига
-- `export/raw-xray/` = canonical raw xray client json по вариантам
-- `export/capabilities.json` = machine-readable capability matrix экспортов
-- `/var/lib/xray/self-check.json` = последний transport-aware verdict
-- `scripts/measure-stealth.sh` = локальный measurement harness
+## что читать первым
 
-## Основные документы
-
-| Документ | Назначение |
+| файл | зачем нужен |
 |---|---|
-| [ARCHITECTURE.md](ARCHITECTURE.md) | архитектура runtime, контракты модулей, генерируемые артефакты |
-| [OPERATIONS.md](OPERATIONS.md) | эксплуатационный runbook, миграция, measurement, maintenance |
-| [CHANGELOG.md](CHANGELOG.md) | история релизов и заметки по версиям |
+| [OPERATIONS.md](OPERATIONS.md) | install, migration, repair, measurement и recovery |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | runtime-модель, state split и границы модулей |
+| [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | исправление проблем по симптомам |
+| [FAQ.md](FAQ.md) | короткие ответы на практические вопросы |
 
-## Документы оператора
+## полная карта
 
-| Документ | Назначение |
+| файл | назначение |
 |---|---|
-| [FAQ.md](FAQ.md) | частые вопросы про профили, prompt’ы и runtime-поведение |
-| [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | install, self-check, migration и восстановление артефактов |
-| [GLOSSARY.md](GLOSSARY.md) | термины проекта из логов, документации и скриптов |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | strongest-direct контракт, state files и модульная структура |
+| [OPERATIONS.md](OPERATIONS.md) | runbook для install и day-2 операций |
+| [FAQ.md](FAQ.md) | продуктовый и операторский faq |
+| [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | анализ сбоев и точные next-step команды |
+| [COMMUNITY.md](COMMUNITY.md) | как просить помощь и контрибьютить |
+| [ROADMAP.md](ROADMAP.md) | направление после v7.1.0 |
+| [GLOSSARY.md](GLOSSARY.md) | общие термины |
+| [CHANGELOG.md](CHANGELOG.md) | история релизов |
 
-## Документы проекта
+## быстрые operator-ссылки
 
-| Документ | Назначение |
-|---|---|
-| [COMMUNITY.md](COMMUNITY.md) | обсуждения, качество issue и полезные field-репорты |
-| [ROADMAP.md](ROADMAP.md) | направление после v6 и ближайшие приоритеты |
-| [../../.github/CONTRIBUTING.ru.md](../../.github/CONTRIBUTING.ru.md) | workflow для контрибьюторов и quality gates |
-| [../../.github/SECURITY.ru.md](../../.github/SECURITY.ru.md) | поддерживаемые версии, threat model и disclosure process |
+- дефолтная установка: `sudo xray-reality.sh install --non-interactive --yes`
+- managed-миграция: `sudo xray-reality.sh migrate-stealth --non-interactive --yes`
+- подробный статус: `sudo xray-reality.sh status --verbose`
+- локальное measurement: `sudo bash scripts/measure-stealth.sh run --save`
+- replan после новых field data: `sudo xray-reality.sh update --replan --non-interactive --yes`
 
-## Навигация по языкам
+## важные файлы
 
-- английская документация: [../en/INDEX.md](../en/INDEX.md)
-- английский readme: [../../README.md](../../README.md)
+- `/etc/xray-reality/policy.json`
+- `/etc/xray/private/keys/clients.json`
+- `/etc/xray/private/keys/export/raw-xray/`
+- `/etc/xray/private/keys/export/canary/`
+- `/var/lib/xray/self-check.json`
+- `/var/lib/xray/measurements/latest-summary.json`

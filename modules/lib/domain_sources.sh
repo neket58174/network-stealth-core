@@ -58,6 +58,134 @@ load_tier_domains_from_file() {
     printf '%s\n' "${result[@]}"
 }
 
+catalog_supports_tier() {
+    local file="$1"
+    local tier="$2"
+    [[ -n "$file" && -f "$file" ]] || return 1
+    command -v jq > /dev/null 2>&1 || return 1
+    jq -e --arg tier "$tier" '.tiers[$tier] != null' "$file" > /dev/null 2>&1
+}
+
+derive_provider_family_from_domain() {
+    local domain="${1:-}"
+    local -a labels=()
+    local label_count
+    [[ -n "$domain" ]] || return 1
+
+    IFS='.' read -r -a labels <<< "$domain"
+    label_count=${#labels[@]}
+    if ((label_count < 2)); then
+        printf '%s\n' "$domain"
+        return 0
+    fi
+
+    local suffix="${labels[$((label_count - 2))]}.${labels[$((label_count - 1))]}"
+    case "$suffix" in
+        gov.ru | edu.ru | org.ru | com.ru | net.ru)
+            if ((label_count >= 3)); then
+                printf '%s.%s.%s\n' "${labels[$((label_count - 3))]}" "${labels[$((label_count - 2))]}" "${labels[$((label_count - 1))]}"
+                return 0
+            fi
+            ;;
+        *) ;;
+    esac
+
+    printf '%s.%s\n' "${labels[$((label_count - 2))]}" "${labels[$((label_count - 1))]}"
+}
+
+load_tier_domains_from_catalog() {
+    local file="$1"
+    local tier="$2"
+    [[ -n "$file" && -f "$file" ]] || return 0
+    command -v jq > /dev/null 2>&1 || return 0
+
+    jq -r --arg tier "$tier" '.tiers[$tier][]?.domain // empty' "$file" 2> /dev/null
+}
+
+load_priority_domains_from_catalog() {
+    local file="$1"
+    [[ -n "$file" && -f "$file" ]] || return 0
+    command -v jq > /dev/null 2>&1 || return 0
+
+    jq -r '.tiers.priority[]? // empty' "$file" 2> /dev/null
+}
+
+populate_domain_metadata_from_catalog() {
+    local file="$1"
+    local tier="$2"
+    [[ -n "$file" && -f "$file" ]] || return 1
+    command -v jq > /dev/null 2>&1 || return 1
+    jq empty "$file" > /dev/null 2>&1 || return 1
+
+    declare -gA DOMAIN_PROVIDER_FAMILIES=()
+    declare -gA DOMAIN_REGIONS=()
+    declare -gA DOMAIN_PRIORITY_MAP=()
+    declare -gA DOMAIN_RISK_MAP=()
+    declare -gA DOMAIN_PORT_HINTS=()
+    declare -gA DOMAIN_SNI_POOL_OVERRIDES=()
+
+    local entry_json domain provider_family region priority risk port_csv sni_pool_csv
+    while IFS= read -r entry_json; do
+        [[ -n "$entry_json" ]] || continue
+        domain=$(jq -r '.domain // empty' <<< "$entry_json" 2> /dev/null || true)
+        [[ -n "$domain" ]] || continue
+
+        provider_family=$(jq -r '.provider_family // empty' <<< "$entry_json" 2> /dev/null || true)
+        if [[ -z "$provider_family" || "$provider_family" == "null" ]]; then
+            provider_family=$(derive_provider_family_from_domain "$domain")
+        fi
+
+        region=$(jq -r '.region // "ru"' <<< "$entry_json" 2> /dev/null || true)
+        priority=$(jq -r '.priority // 0' <<< "$entry_json" 2> /dev/null || echo 0)
+        risk=$(jq -r '.risk // "normal"' <<< "$entry_json" 2> /dev/null || echo "normal")
+        port_csv=$(jq -r '(.ports // [443,8443]) | map(tostring) | join(",")' <<< "$entry_json" 2> /dev/null || echo "443,8443")
+        sni_pool_csv=$(jq -r '(.sni_pool // []) | join(" ")' <<< "$entry_json" 2> /dev/null || true)
+
+        DOMAIN_PROVIDER_FAMILIES["$domain"]="$provider_family"
+        DOMAIN_REGIONS["$domain"]="$region"
+        DOMAIN_PRIORITY_MAP["$domain"]="$priority"
+        DOMAIN_RISK_MAP["$domain"]="$risk"
+        DOMAIN_PORT_HINTS["$domain"]="$port_csv"
+        if [[ -n "$sni_pool_csv" && "$sni_pool_csv" != "null" ]]; then
+            DOMAIN_SNI_POOL_OVERRIDES["$domain"]="$sni_pool_csv"
+        fi
+    done < <(jq -c --arg tier "$tier" '.tiers[$tier][]? // empty' "$file" 2> /dev/null)
+
+    return 0
+}
+
+seed_domain_metadata_from_list() {
+    local domain
+    for domain in "$@"; do
+        [[ -n "$domain" ]] || continue
+        if [[ -z "${DOMAIN_PROVIDER_FAMILIES[$domain]:-}" ]]; then
+            DOMAIN_PROVIDER_FAMILIES["$domain"]="$(derive_provider_family_from_domain "$domain")"
+        fi
+        if [[ -z "${DOMAIN_REGIONS[$domain]:-}" ]]; then
+            DOMAIN_REGIONS["$domain"]="custom"
+        fi
+        if [[ -z "${DOMAIN_PRIORITY_MAP[$domain]:-}" ]]; then
+            DOMAIN_PRIORITY_MAP["$domain"]="0"
+        fi
+        if [[ -z "${DOMAIN_RISK_MAP[$domain]:-}" ]]; then
+            DOMAIN_RISK_MAP["$domain"]="custom"
+        fi
+        if [[ -z "${DOMAIN_PORT_HINTS[$domain]:-}" ]]; then
+            DOMAIN_PORT_HINTS["$domain"]="443,8443"
+        fi
+    done
+}
+
+domain_provider_family_for() {
+    local domain="${1:-}"
+    [[ -n "$domain" ]] || return 1
+    if [[ -n "${DOMAIN_PROVIDER_FAMILIES[$domain]:-}" ]]; then
+        printf '%s\n' "${DOMAIN_PROVIDER_FAMILIES[$domain]}"
+        return 0
+    fi
+    derive_provider_family_from_domain "$domain"
+}
+
 check_domain_alive() {
     local domain="$1"
     local timeout_sec="${DOMAIN_CHECK_TIMEOUT:-3}"

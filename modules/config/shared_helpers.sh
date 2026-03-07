@@ -64,6 +64,7 @@ build_vless_query_params() {
     local params=(
         "encryption=none"
         "security=reality"
+        "flow=$(url_encode_component "${XRAY_DIRECT_FLOW:-xtls-rprx-vision}")"
         "sni=$(url_encode_component "$sni")"
         "fp=$(url_encode_component "$fp")"
         "pbk=$(url_encode_component "$pbk")"
@@ -97,6 +98,24 @@ build_vless_query_params() {
 
     local IFS='&'
     printf '%s' "${params[*]}"
+}
+
+client_variant_import_hint() {
+    local key="${1:-standard}"
+    case "$key" in
+        recommended)
+            printf '%s' "import raw xray json when possible; vless link is secondary"
+            ;;
+        rescue)
+            printf '%s' "use raw xray json if the normal variant is unstable"
+            ;;
+        emergency)
+            printf '%s' "raw xray json only; requires browser dialer on the client"
+            ;;
+        *)
+            printf '%s' "import raw xray json"
+            ;;
+    esac
 }
 
 transport_display_name() {

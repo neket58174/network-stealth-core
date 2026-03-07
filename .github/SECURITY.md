@@ -1,62 +1,63 @@
-# Security policy
+# security policy
 
-This document defines the security posture and disclosure process for **Network Stealth Core**.
+this document defines the security posture and disclosure process for **network stealth core**.
 
-## Supported versions
+## supported versions
 
-| Version line | Status |
+| version line | status |
 |---|---|
-| `6.0.x` | supported |
-| `<6.0` | unsupported in this repository |
+| `7.1.x` | supported |
+| `<7.1` | unsupported in this repository |
 
-## Reporting vulnerabilities
+## reporting vulnerabilities
 
-Use responsible disclosure:
+use responsible disclosure:
 
 1. do not open public issues for security bugs
-2. use GitHub private vulnerability reporting
+2. use github private vulnerability reporting
 3. include impact, reproduction steps, affected version or commit, and an optional patch proposal
 
-Target response windows:
+response targets:
 
 - initial triage: up to 48 hours
 - critical patch target: up to 7 days
 
-## Practical threat model
+## practical threat model
 
-| Threat | Mitigation |
+| threat | mitigation |
 |---|---|
-| bootstrap and download tampering | pinned bootstrap support, SHA256 checks, optional strict minisign mode |
-| command or path injection | strict validators and safe path guards |
-| partial write corruption | atomic writes and staged validation |
-| failed update, repair, or migration | rollback stack and runtime reconciliation |
-| service over-privilege | dedicated `xray` user and restrictive `systemd` settings |
-| stale or misleading client exports | capability matrix plus canonical raw xray artifacts |
-| silent transport degradation | transport-aware self-check and persisted verdict state |
+| bootstrap or download tampering | pinned bootstrap support, sha256 checks, optional strict minisign mode |
+| command or path injection | strict validators, safe path guards, and trusted wrapper sourcing |
+| partial write corruption | atomic writes, staged validation, and rollback |
+| failed update, repair, or migration | backup sessions, runtime reconciliation, and fail-closed mutating gates |
+| service over-privilege | dedicated `xray` user and restrictive `systemd` unit settings |
+| stale or misleading client exports | canonical raw xray artifacts plus capability matrix |
+| silent direct-path degradation | transport-aware self-check, self-check history, and saved field measurements |
+| weak primary config staying active too long | promotion logic driven by self-check and measurement summaries |
 
-## Security controls
+## security controls
 
-### Integrity and download surface
+### integrity and download surface
 
 - https-only download flows with strict validation
-- allowlisted critical hosts (`DOWNLOAD_HOST_ALLOWLIST`)
-- artifact integrity checks (`sha256`, optional strict `REQUIRE_MINISIGN=true`)
-- pinned minisign trust anchor with fingerprint check (`MINISIGN_KEY`)
-- bootstrap pin control via `XRAY_REPO_COMMIT`
-- wrapper code-source trust boundary for `XRAY_DATA_DIR` with explicit opt-in (`XRAY_ALLOW_CUSTOM_DATA_DIR=true`)
+- allowlisted critical hosts via `DOWNLOAD_HOST_ALLOWLIST`
+- artifact integrity checks with `sha256` and optional strict `REQUIRE_MINISIGN=true`
+- pinned minisign trust anchor with fingerprint check via `MINISIGN_KEY`
+- bootstrap pin control through `XRAY_REPO_COMMIT`
+- wrapper code-source trust boundary for `XRAY_DATA_DIR`, enabled only with `XRAY_ALLOW_CUSTOM_DATA_DIR=true`
 
-Current pinned minisign key fingerprint (`sha256` of `MINISIGN_KEY` content):
+current pinned minisign key fingerprint (`sha256` of `MINISIGN_KEY` content):
 
 - `294701ab7f6e18646e45b5093033d9e64f3ca181f74c0cf232627628f3d8293e`
 
-### Privilege separation
+### privilege separation
 
-- service runs under dedicated non-root account (`xray`)
-- minimal capability set for low-port binding
+- service runs under dedicated non-root account `xray`
+- only the minimum runtime privileges needed for low-port binding are granted
 
-### Systemd hardening
+### systemd hardening
 
-Project unit applies controls such as:
+project units apply controls such as:
 
 - `NoNewPrivileges=true`
 - `ProtectSystem=strict`
@@ -67,76 +68,85 @@ Project unit applies controls such as:
 - `ProtectControlGroups=true`
 - syscall filtering and restricted address families
 
-### Input and runtime validation
+### input and runtime validation
 
-Validation coverage includes:
+validation coverage includes:
 
-- domain, port, IPv4, IPv6 formats
+- domains, ports, ipv4, and ipv6 formats
 - xhttp path normalization
 - destructive operation path safety
-- URL and schedule format checks
-- self-check URL validation and timeout bounds
-- runtime range constraints
+- url and schedule validation
+- self-check url validation and timeout bounds
+- transport contract checks for legacy and pre-v7 installs
+- minimum xray feature contract for strongest-direct generation
 
-### Artifact safety
+### artifact safety
 
-- `clients.json` is schema v2 and remains permission-restricted
-- raw xray exports are the canonical xhttp client artifacts
+- `clients.json` is schema v3 and remains permission-restricted
+- raw xray exports are the canonical client artifacts
 - `export/capabilities.json` makes unsupported targets explicit
-- `self-check.json` records the last transport-aware verdict for operators
+- `export/canary/` separates field-only `emergency` artifacts from normal operator paths
+- `self-check.json`, `self-check-history.ndjson`, and measurement summaries persist operator-visible verdicts
+- `policy.json` stores managed policy separately from generated runtime state
 
-### Rollback safety
+### rollback safety
 
 - pre-change backup snapshot
 - automatic rollback on failure paths
-- rollback on broken transport-aware verdicts
+- rollback on broken post-action self-check verdicts
 - firewall rollback records
 - runtime reconciliation after restore
 
-## Sensitive paths and intended permissions
+## sensitive paths and intended permissions
 
-| Path | Owner | Mode | Purpose |
+| path | owner | mode | purpose |
 |---|---|---:|---|
-| `/usr/local/bin/xray` | `root:root` | `0755` | Xray binary |
+| `/usr/local/bin/xray` | `root:root` | `0755` | xray binary |
 | `/etc/xray/config.json` | `root:xray` | `0640` | server config |
 | `/etc/xray-reality/config.env` | `root:root` | `0600` | runtime snapshot |
+| `/etc/xray-reality/policy.json` | `root:root` | `0600` | managed strongest-direct policy |
 | `/etc/xray/private` | `root:xray` | `0750` | sensitive root directory |
 | `/etc/xray/private/keys/keys.txt` | `root:root` | `0400` | private key material |
 | `/etc/xray/private/keys/clients.txt` | `root:xray` | `0640` | human-readable client summary |
-| `/etc/xray/private/keys/clients.json` | `root:xray` | `0640` | structured client metadata (`schema_version: 2`) |
-| `/etc/xray/private/keys/export/raw-xray/*.json` | `root:xray` | `0640` | raw xray client artifacts |
+| `/etc/xray/private/keys/clients.json` | `root:xray` | `0640` | structured client metadata (`schema_version: 3`) |
+| `/etc/xray/private/keys/export/raw-xray/*.json` | `root:xray` | `0640` | canonical raw xray client artifacts |
 | `/etc/xray/private/keys/export/capabilities.json` | `root:xray` | `0640` | export capability matrix |
+| `/etc/xray/private/keys/export/canary/manifest.json` | `root:xray` | `0640` | field-testing bundle manifest |
 | `/var/lib/xray/self-check.json` | `root:xray` | `0640` | last self-check verdict |
+| `/var/lib/xray/self-check-history.ndjson` | `root:xray` | `0640` | recent self-check history |
+| `/var/lib/xray/measurements` | `root:xray` | `0750` | saved field reports |
+| `/var/lib/xray/measurements/latest-summary.json` | `root:xray` | `0640` | aggregated field verdict |
 | `/var/backups/xray` | `root:root` | `0700` | rollback sessions |
 
-## Risky overrides
+## risky overrides
 
-These flags weaken default guarantees and should be temporary:
+these flags weaken default guarantees and should stay temporary:
 
 - `ALLOW_INSECURE_SHA256=true`
 - `ALLOW_UNVERIFIED_MINISIGN_BOOTSTRAP=true`
 - `ALLOW_NO_SYSTEMD=true`
 - `GEO_VERIFY_HASH=false`
 - `SELF_CHECK_ENABLED=false`
-- `XRAY_ALLOW_CUSTOM_DATA_DIR=true` (only for trusted, non-world-writable module source paths)
+- `XRAY_ALLOW_CUSTOM_DATA_DIR=true`
 
-## Operational recommendations
+## operational recommendations
 
 1. prefer tagged releases for production-like deployments
-2. migrate managed legacy `grpc/http2` installs promptly with `migrate-stealth`
-3. monitor `journalctl -u xray`, health logs, and self-check verdicts
-4. use `scripts/measure-stealth.sh` when comparing real-network behavior
-5. rotate or redeploy when compromise or burn is suspected
+2. migrate managed legacy or pre-v7 installs promptly with `migrate-stealth`
+3. monitor `status --verbose`, `diagnose`, and self-check history after every change
+4. use `scripts/measure-stealth.sh run|compare|summarize` when comparing real-network behavior
+5. treat `emergency` as a field-only tier and test it through raw xray plus browser dialer, not through improvised links
+6. rotate or redeploy when compromise or burn is suspected
 
-## Security testing signals
+## security testing signals
 
-Security-sensitive behavior is covered by:
+security-sensitive behavior is covered by:
 
 - validator tests
 - path safety tests
 - rollback and lifecycle tests
 - export schema validation
 - self-check and measurement coverage
-- CI audit gates and docs command contract checks
+- ci audit gates and docs contract checks
 
-For operations-side incident response, see [../docs/en/OPERATIONS.md](../docs/en/OPERATIONS.md).
+for operations-side incident response, see [../docs/en/OPERATIONS.md](../docs/en/OPERATIONS.md).

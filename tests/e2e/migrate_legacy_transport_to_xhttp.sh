@@ -91,6 +91,8 @@ fi
 
 assert_clients_json_xhttp_contract "$CLIENTS_JSON" "$INITIAL_CONFIGS"
 assert_raw_xray_exports_exist "$CLIENTS_JSON"
+run_root test -f /etc/xray-reality/policy.json
+run_root test -f /etc/xray/private/keys/export/canary/manifest.json
 
 echo "==> repair migrated xhttp install"
 run_root env \

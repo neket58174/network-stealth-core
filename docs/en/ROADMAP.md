@@ -1,46 +1,35 @@
-# Roadmap
+# roadmap
 
-This roadmap is a directional public plan, not a strict delivery promise.
+this roadmap is a directional public plan, not a strict delivery promise.
 
-## Current baseline
+## current baseline
 
-v6.0.0 establishes:
+`v7.1.0` establishes:
 
-- xhttp-only strongest-default install
-- explicit blocking of mutating actions on managed legacy transports until `migrate-stealth`
-- transport-aware self-check backed by canonical raw xray client artifacts
-- capability-driven export matrix
-- local measurement harness for real-network comparison
+- minimal strongest-direct install
+- policy-driven managed state via `policy.json`
+- schema v3 client inventory with `recommended`, `rescue`, and `emergency`
+- canonical raw xray exports plus canary bundle
+- saved self-check history and field measurement summaries
+- adaptive repair and `update --replan`
 
-## Near-term priorities
+## next priorities
 
-1. strengthen self-check observability and probe diagnostics
-2. improve domain-health feedback and operator summaries
-3. expand measurement reports and comparison tooling
+1. simplify field-report ingestion for remote canary operators
+2. improve catalog maintenance and provider-family diversity quality
+3. enrich compare and summarize output with clearer operator recommendations
 4. keep bilingual docs and release metadata perfectly aligned
 
-## Next improvements
+## medium-term direction
 
-- richer summarize-and-compare output for `scripts/measure-stealth.sh`
-- more precise capability notes for external clients
-- stronger e2e coverage around degraded `warning` paths
-- more visible field-data guidance for RF network validation
+- stronger operator tooling around field-data import and long-term trend review
+- safer automation for retiring or rotating repeatedly weak configs
+- richer capability notes for external clients that eventually gain honest support
 
-## Mid-term direction
+## out of scope for now
 
-- optional experimental stealth tiers without weakening the default path
-- clearer separation between policy inputs and generated runtime artifacts
-- better operator tooling for rotating or retiring degraded nodes
-
-## Out of scope for now
-
-- broad multi-os promises without CI validation
-- misleading partial client templates for unsupported xhttp targets
-- silent behavior changes without changelog and migration notes
-
-## How to influence the roadmap
-
-- open a Discussion with a concrete use case
-- attach reproducible diagnostics for reliability gaps
-- include self-check or measurement output where possible
-- submit PRs with tests and bilingual docs updates
+- adding more questions to the normal install path
+- reviving legacy transports as active product paths
+- fake compatibility templates for unsupported strongest-direct features
+- broad multi-os promises without ci coverage
+- mandatory cdn or fleet-management layers in the core path

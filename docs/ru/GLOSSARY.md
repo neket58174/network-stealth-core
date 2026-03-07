@@ -1,77 +1,82 @@
-# Глоссарий
+# глоссарий
 
-## xhttp-only install
+## strongest-direct install
 
-Дефолтный install-контракт. `install` выбирает минимальный strongest-default путь с xhttp и сокращенным количеством вопросов.
+default install-контракт: минимум prompt’ов, strongest safe direct stack и canonical raw exports.
 
-## Advanced mode
+## advanced mode
 
-`install --advanced`. Включает ручные prompt’ы выбора профиля и числа конфигов.
+`install --advanced` — явный manual compatibility flow с prompt’ами профиля и числа конфигов.
 
-## Migrate-stealth
+## stealth contract version
 
-Managed-действие, которое переводит legacy `grpc/http2` install на xhttp и пересобирает артефакты.
+версия managed runtime-контракта, которая записывается в policy и client artifacts.
+в `v7.1.0` она обозначает strongest-direct baseline.
 
-## Tier
+## policy.json
 
-Предопределенный пул доменов для генерации destination и SNI-комбинаций.
+`/etc/xray-reality/policy.json` — source of truth для managed policy.
 
-## Profile
+## domain catalog
 
-Пользовательский выбор, который мапится на внутренний tier и лимиты конфигов: `ru`, `ru-auto`, `global-50` и т.д.
+`data/domains/catalog.json` — canonical набор metadata, который использует domain planner.
 
-## Legacy transport
+## provider family
 
-Managed-config, который всё ещё использует `grpc` или `http2`. `status` помечает его как legacy, а mutating-действия сначала требуют миграции.
+label planner’а, который помогает держать конфиги диверсифицированными по разным domain cohorts.
 
-## Client variant
+## client variant
 
-Профиль клиента внутри `clients.json` `variants[]`.
+client-профиль внутри `clients.json` `variants[]` для конкретного конфига.
 
-## Recommended variant
+## recommended variant
 
-Основной xhttp client artifact с `mode=auto`.
+основной xhttp client artifact с `mode=auto`.
 
-## Rescue variant
+## rescue variant
 
-Fallback xhttp client artifact с `mode=packet-up`.
+compatibility fallback xhttp artifact с `mode=packet-up`.
 
-## Raw xray export
+## emergency variant
 
-Per-variant client json files в `export/raw-xray/`.
+browser-assisted field tier с `mode=stream-up`; экспортируется только как raw xray.
 
-## Capability matrix
+## raw xray export
 
-`export/capabilities.json` — machine-readable карта поддержки native, link-only и unsupported export targets.
+canonical per-variant client json в `export/raw-xray/`.
 
-## Self-check state
+## capability matrix
 
-`/var/lib/xray/self-check.json` — последний transport-aware verdict после mutating-действия.
+`export/capabilities.json` — machine-readable карта поддержки generated export-target.
 
-## Measurement harness
+## canary bundle
 
-`scripts/measure-stealth.sh` — локальный probe-tool, использующий тот же engine, что и runtime self-check.
+`export/canary/` — переносимый bundle для полевых тестов с других машин или сетей.
 
-## SNI fallback
+## self-check state
 
-Автоматический выбор другого валидного server name, когда preferred SNI недоступен.
+`/var/lib/xray/self-check.json` — последний post-action verdict.
 
-## Domain planner
+## self-check history
 
-Модуль, который выбирает домены через ranking, quarantine и no-repeat sequencing.
+`/var/lib/xray/self-check-history.ndjson` — недавняя история post-action verdict’ов.
 
-## Health file
+## measurement harness
 
-`DOMAIN_HEALTH_FILE` — runtime-state для ranking и quarantine решений.
+`scripts/measure-stealth.sh` — локальный инструмент для field measurements `run`, `compare` и `summarize`.
 
-## Strict minisign mode
+## measurement summary
 
-Поведение `--require-minisign`, при котором отсутствие verifier или signature ломает install/update.
+`/var/lib/xray/measurements/latest-summary.json` — агрегированный field verdict для operator surface и promotion logic.
 
-## Compatibility mode (no systemd)
+## replan
 
-Режим `--allow-no-systemd` для ограниченных окружений, где полный service-management недоступен.
+`update --replan` — пересборка, которая позволяет recent self-check и field data влиять на приоритет конфигов.
 
-## Artifact consistency
+## xtls-rprx-vision
 
-Состояние, в котором `config.json`, `keys.txt`, `clients.txt`, `clients.json`, export files и self-check state отражают один согласованный конфиг.
+direct flow, который использует strongest-direct контракт.
+
+## vless encryption
+
+generated outbound-side encryption metadata, парная inbound `decryption` в strongest-direct контракте.

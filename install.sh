@@ -887,6 +887,7 @@ install_flow() {
     setup_diagnose_service
     configure_firewall
     save_environment
+    save_policy_file || log WARN "Не удалось сохранить policy.json"
     setup_health_monitoring
     setup_auto_update
     save_client_configs
@@ -956,6 +957,103 @@ show_install_result() {
 
 }
 
+move_runtime_array_index_to_front() {
+    local index="$1"
+    local array_name="$2"
+    # shellcheck disable=SC2034 # nameref target is the point of the helper.
+    local -n array_ref="$array_name"
+    if [[ ! "$index" =~ ^[0-9]+$ ]] || ((index < 0 || index >= ${#array_ref[@]})); then
+        return 1
+    fi
+    if ((${#array_ref[@]} < 2 || index == 0)); then
+        return 0
+    fi
+
+    local -a reordered=("${array_ref[$index]}")
+    local i
+    for ((i = 0; i < ${#array_ref[@]}; i++)); do
+        ((i == index)) && continue
+        reordered+=("${array_ref[$i]}")
+    done
+    array_ref=("${reordered[@]}")
+}
+
+reorder_runtime_arrays_to_primary_index() {
+    local index="$1"
+    local name
+    for name in PORTS PORTS_V6 UUIDS SHORT_IDS PRIVATE_KEYS PUBLIC_KEYS CONFIG_DOMAINS CONFIG_DESTS CONFIG_SNIS CONFIG_FPS CONFIG_TRANSPORT_ENDPOINTS CONFIG_PROVIDER_FAMILIES CONFIG_VLESS_ENCRYPTIONS CONFIG_VLESS_DECRYPTIONS; do
+        if declare -p "$name" > /dev/null 2>&1; then
+            move_runtime_array_index_to_front "$index" "$name" || return 1
+        fi
+    done
+    return 0
+}
+
+runtime_config_name_at_index() {
+    local index="${1:-0}"
+    local json_file="${XRAY_KEYS}/clients.json"
+    if [[ -f "$json_file" ]]; then
+        jq -r --argjson idx "$index" '.configs[$idx].name // empty' "$json_file" 2> /dev/null || true
+        return 0
+    fi
+    printf 'Config %s\n' "$((index + 1))"
+}
+
+runtime_config_index_by_name() {
+    local config_name="$1"
+    local json_file="${XRAY_KEYS}/clients.json"
+    if [[ -f "$json_file" ]]; then
+        jq -r --arg name "$config_name" '.configs | map(.name) | index($name) // empty' "$json_file" 2> /dev/null || true
+        return 0
+    fi
+    if [[ "$config_name" =~ ^Config[[:space:]]+([0-9]+)$ ]]; then
+        printf '%s\n' "$((BASH_REMATCH[1] - 1))"
+    fi
+}
+
+maybe_promote_runtime_primary_from_observations() {
+    if ((NUM_CONFIGS < 2)); then
+        return 1
+    fi
+
+    local current_primary candidate_name candidate_reason
+    current_primary=$(runtime_config_name_at_index 0)
+    candidate_name=""
+    candidate_reason=""
+
+    local last_verdict warning_streak
+    last_verdict=$(self_check_last_verdict 2> /dev/null || echo "unknown")
+    warning_streak=$(self_check_warning_streak_count 2> /dev/null || echo 0)
+
+    if [[ "$last_verdict" == "broken" ]]; then
+        candidate_name=$(measurement_read_summary_json 2> /dev/null | jq -r '.best_spare // empty' 2> /dev/null || true)
+        [[ -n "$candidate_name" ]] || candidate_name=$(runtime_config_name_at_index 1)
+        candidate_reason="last self-check verdict is broken"
+    elif [[ "$warning_streak" =~ ^[0-9]+$ ]] && ((warning_streak >= 2)); then
+        candidate_name=$(measurement_read_summary_json 2> /dev/null | jq -r '.best_spare // empty' 2> /dev/null || true)
+        [[ -n "$candidate_name" ]] || candidate_name=$(runtime_config_name_at_index 1)
+        candidate_reason="last two self-check verdicts are warning"
+    else
+        local promotion_json
+        promotion_json=$(measurement_promotion_candidate_json 2> /dev/null || true)
+        if [[ -n "$promotion_json" && "$promotion_json" != "null" ]]; then
+            candidate_name=$(jq -r '.config_name // empty' <<< "$promotion_json" 2> /dev/null || true)
+            candidate_reason=$(jq -r '.reason // empty' <<< "$promotion_json" 2> /dev/null || true)
+        fi
+    fi
+
+    [[ -n "$candidate_name" ]] || return 1
+    [[ "$candidate_name" != "$current_primary" ]] || return 1
+
+    local candidate_index
+    candidate_index=$(runtime_config_index_by_name "$candidate_name")
+    [[ "$candidate_index" =~ ^[0-9]+$ ]] || return 1
+    reorder_runtime_arrays_to_primary_index "$candidate_index" || return 1
+    log INFO "Primary client order обновлён: ${candidate_name}"
+    [[ -n "$candidate_reason" ]] && log INFO "Причина promotion: ${candidate_reason}"
+    return 0
+}
+
 update_flow() {
     LOG_CONTEXT="обновления"
     : "${LOG_CONTEXT}"
@@ -973,6 +1071,20 @@ update_flow() {
     install_self
     setup_logrotate
     update_xray
+    if [[ -f "$XRAY_CONFIG" ]]; then
+        load_existing_ports_from_config
+        load_existing_metadata_from_config
+        load_keys_from_config
+        NUM_CONFIGS=${#PORTS[@]}
+        if ((NUM_CONFIGS > 0)) && build_public_keys_for_current_config; then
+            if [[ "${REPLAN:-false}" == "true" ]]; then
+                maybe_promote_runtime_primary_from_observations || true
+            fi
+            rebuild_client_artifacts_from_loaded_state || exit 1
+            save_environment || log WARN "Не удалось обновить окружение после update"
+            save_policy_file || log WARN "Не удалось обновить policy.json после update"
+        fi
+    fi
     ensure_self_check_artifacts_ready
     setup_diagnose_service
     setup_auto_update
@@ -1029,6 +1141,8 @@ repair_flow() {
         load_existing_ports_from_config
         load_existing_metadata_from_config
         load_keys_from_config
+        build_public_keys_for_current_config || exit 1
+        maybe_promote_runtime_primary_from_observations || true
         if ((${#PORTS[@]} > 0)); then
             configure_firewall
         else
@@ -1047,10 +1161,8 @@ repair_flow() {
             fi
             test_reality_connectivity || true
         fi
-        if client_artifacts_missing || client_artifacts_inconsistent "${#PORTS[@]}"; then
-            if ! rebuild_client_artifacts_from_config; then
-                log WARN "Не удалось полностью восстановить клиентские артефакты"
-            fi
+        if ! rebuild_client_artifacts_from_loaded_state; then
+            log WARN "Не удалось полностью восстановить клиентские артефакты"
         fi
         ensure_self_check_artifacts_ready || log WARN "Не удалось полностью подготовить self-check артефакты"
 
@@ -1065,6 +1177,7 @@ repair_flow() {
             SERVER_IP6=$(fetch_ip 6 || true)
         fi
         save_environment || log WARN "Не удалось обновить окружение после repair"
+        save_policy_file || log WARN "Не удалось обновить policy.json после repair"
     fi
 
     if ! post_action_verdict "repair"; then
@@ -1130,10 +1243,28 @@ migrate_stealth_flow() {
     fi
 
     MUX_MODE="off"
-    if [[ "${TRANSPORT:-xhttp}" == "xhttp" ]]; then
-        log INFO "Managed transport уже использует xhttp; обновляем только артефакты и окружение"
+    local needs_contract_refresh=false
+    if jq -e --arg flow "${XRAY_DIRECT_FLOW:-xtls-rprx-vision}" '
+        [ .inbounds[]
+          | select(.streamSettings.realitySettings != null)
+          | select((.listen // "0.0.0.0") | test(":") | not)
+          | ((.settings.decryption // "none") != "none")
+            and ((.settings.clients[0].flow // "") == $flow)
+        ] | all
+    ' "$XRAY_CONFIG" > /dev/null 2>&1; then
+        needs_contract_refresh=false
     else
-        log WARN "Обнаружен legacy transport (${TRANSPORT}); выполняем миграцию на xhttp"
+        needs_contract_refresh=true
+    fi
+
+    if [[ "${TRANSPORT:-xhttp}" == "xhttp" && "$needs_contract_refresh" == false ]]; then
+        log INFO "Managed transport уже использует strongest direct stack; обновляем только артефакты и окружение"
+    else
+        if [[ "${TRANSPORT:-xhttp}" == "xhttp" ]]; then
+            log WARN "Обнаружен xhttp без strongest direct contract; обновляем decryption/flow"
+        else
+            log WARN "Обнаружен legacy transport (${TRANSPORT}); выполняем миграцию на xhttp"
+        fi
         if ! rebuild_config_for_transport "xhttp"; then
             log ERROR "Не удалось пересобрать config.json под xhttp"
             exit 1
@@ -1146,6 +1277,7 @@ migrate_stealth_flow() {
     setup_health_monitoring
     setup_auto_update
     save_environment
+    save_policy_file || log WARN "Не удалось сохранить policy.json после migrate-stealth"
     start_services
     if ! verify_ports_listening_after_start; then
         log ERROR "Проверка listening-портов после migrate-stealth не пройдена."

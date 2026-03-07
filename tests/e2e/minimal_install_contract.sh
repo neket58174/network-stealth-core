@@ -88,9 +88,16 @@ assert_clients_json_xhttp_contract "$CLIENTS_JSON" "$EXPECTED_CONFIGS"
 assert_raw_xray_exports_exist "$CLIENTS_JSON"
 run_root grep -q "variant: rescue" "$CLIENTS_TXT"
 run_root grep -q "mode: packet-up" "$CLIENTS_TXT"
+run_root grep -q "variant: emergency" "$CLIENTS_TXT"
+run_root grep -q "mode: stream-up" "$CLIENTS_TXT"
+run_root grep -q "browser dialer" "$CLIENTS_TXT"
+run_root test -f /etc/xray-reality/policy.json
 run_root test -f /etc/xray/private/keys/export/raw-xray-index.json
 run_root test -f /etc/xray/private/keys/export/v2rayn-links.json
 run_root test -f /etc/xray/private/keys/export/nekoray-template.json
+run_root test -f /etc/xray/private/keys/export/canary/manifest.json
+run_root test -f /etc/xray/private/keys/export/canary/measure-linux.sh
+run_root test -f /etc/xray/private/keys/export/canary/measure-windows.ps1
 run_root test -f /etc/xray/private/keys/export/compatibility-notes.txt
 
 config_count="$(run_root jq '[.inbounds[] | select(.listen == "0.0.0.0" or .listen == null)] | length' /etc/xray/config.json)"

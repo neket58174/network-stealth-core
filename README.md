@@ -1,208 +1,202 @@
 <h1 align="center">Network Stealth Core</h1>
 
 <p align="center">
-  Installation and operations toolkit for Xray Reality on Linux servers.
+  installation and operations toolkit for strongest-direct xray reality on linux servers.
 </p>
 
 <p align="center">
-  <a href="https://github.com/neket371/network-stealth-core/releases"><img alt="release" src="https://img.shields.io/badge/release-v6.0.0-0f766e"></a>
+  <a href="https://github.com/neket371/network-stealth-core/releases"><img alt="release" src="https://img.shields.io/badge/release-v7.1.0-0f766e"></a>
   <a href="LICENSE"><img alt="license" src="https://img.shields.io/badge/license-MIT-97ca00"></a>
   <a href="docs/en/OPERATIONS.md"><img alt="platform" src="https://img.shields.io/badge/platform-ubuntu%2024.04-1d4ed8"></a>
   <a href="Makefile"><img alt="qa" src="https://img.shields.io/badge/qa-make%20ci-334155"></a>
 </p>
 
 <p align="center">
-  <a href="README.ru.md">Русская версия</a> • <a href="docs/en/INDEX.md">Docs (EN)</a> • <a href="docs/ru/INDEX.md">Документация (RU)</a>
+  <a href="README.ru.md">русская версия</a> • <a href="docs/en/INDEX.md">docs (en)</a> • <a href="docs/ru/INDEX.md">документация (ru)</a>
 </p>
 
-## Project scope
+## project scope
 
-`Network Stealth Core` is a Bash-first automation project that standardizes:
+`network stealth core` is a bash-first automation project for managed xray reality nodes.
+its goal is simple:
 
-- server bootstrap and install flow
-- Xray runtime configuration generation
-- lifecycle operations (`install`, `update`, `repair`, `rollback`, `uninstall`)
-- client artifact exports for common desktop and mobile clients
+- ask almost nothing during install
+- choose the strongest safe default for rf anti-dpi use
+- keep every mutating action transactional and rollback-safe
+- export honest client artifacts instead of misleading degraded templates
 
-The project is public and maintained as a reusable tool, not as host-specific automation.
+## canonical source
 
-## Canonical source
-
-Use only the official repository:
+use only the official repository:
 
 - `https://github.com/neket371/network-stealth-core`
 
-If commands are copied from a mirror or fork, verify the source before execution.
+## quick start
 
-## Quick start
+### recommended install
 
-### Recommended: universal install
+default `install` is opinionated and minimal.
+it selects the strongest-direct contract automatically:
 
-default install is xhttp-only and keeps prompts to a minimum (`ru-auto`, strongest default path).
-use `install --advanced` only when you need manual profile and config-count prompts.
-
-```bash
-curl -fL https://raw.githubusercontent.com/neket371/network-stealth-core/ubuntu/xray-reality.sh -o /tmp/xray-reality.sh
-sudo bash /tmp/xray-reality.sh install
-```
-
-### Alternative: one-line install
-
-```bash
-sudo bash <(curl -fsSL https://raw.githubusercontent.com/neket371/network-stealth-core/ubuntu/xray-reality.sh) install
-```
-
-If `/dev/fd` is unavailable, use the universal install form.
-
-### Pinned bootstrap by commit
-
-```bash
-curl -fL https://raw.githubusercontent.com/neket371/network-stealth-core/ubuntu/xray-reality.sh -o /tmp/xray-reality.sh
-sudo XRAY_REPO_COMMIT=<full_commit_sha> bash /tmp/xray-reality.sh install
-```
-
-### Bootstrap source mode
-
-Default source is `ubuntu`:
+- `ru-auto`
+- `vless + reality + xhttp + vless encryption + xtls-rprx-vision`
+- `recommended`, `rescue`, and `emergency` client variants
 
 ```bash
 curl -fL https://raw.githubusercontent.com/neket371/network-stealth-core/ubuntu/xray-reality.sh -o /tmp/xray-reality.sh
 sudo bash /tmp/xray-reality.sh install
 ```
 
-Use latest release tag instead:
+### fully unattended install
 
 ```bash
 curl -fL https://raw.githubusercontent.com/neket371/network-stealth-core/ubuntu/xray-reality.sh -o /tmp/xray-reality.sh
-sudo XRAY_BOOTSTRAP_DEFAULT_REF=release bash /tmp/xray-reality.sh install
+sudo bash /tmp/xray-reality.sh install --non-interactive --yes
 ```
 
-Legacy alias note:
+### pinned bootstrap by commit
 
-- `main` is still accepted as a temporary compatibility alias for one release cycle.
-- Prefer `ubuntu` in all scripts and automation.
+```bash
+curl -fL https://raw.githubusercontent.com/neket371/network-stealth-core/ubuntu/xray-reality.sh -o /tmp/xray-reality.sh
+sudo XRAY_REPO_COMMIT=<full_commit_sha> bash /tmp/xray-reality.sh install --non-interactive --yes
+```
 
-## Command map
+### manual prompts only when you explicitly want them
 
-| Command | Description |
+```bash
+sudo xray-reality.sh install --advanced
+```
+
+## command map
+
+| command | description |
 |---|---|
-| `install` | Minimal xhttp-only install |
-| `migrate-stealth` | Migrate managed legacy `grpc/http2` install to `xhttp` |
-| `add-clients [N]` | Add `N` client configurations |
-| `add-keys [N]` | Alias to `add-clients` |
-| `update` | Update Xray core |
-| `repair` | Reconcile service/firewall/artifacts |
-| `status` | Runtime status summary |
-| `logs [xray\|health\|all]` | Log streaming |
-| `diagnose` | Diagnostic snapshot |
-| `rollback [dir]` | Restore backup session |
-| `uninstall` | Full uninstall |
-| `check-update` | Check upstream version |
+| `install` | minimal strongest-direct install |
+| `migrate-stealth` | convert managed legacy or pre-v7 installs to the v7 strongest-direct contract |
+| `add-clients [n]` | add `n` client configurations |
+| `add-keys [n]` | alias of `add-clients [n]` |
+| `update` | update xray-core and rebuild managed state |
+| `repair` | reconcile service, firewall, policy, and client artifacts |
+| `status` | runtime status summary |
+| `logs [xray\|health\|all]` | view logs |
+| `diagnose` | collect diagnostics |
+| `rollback [dir]` | restore backup session |
+| `uninstall` | full uninstall |
+| `check-update` | check upstream version |
 
-## Profiles and limits
+## strongest-direct public contract
 
-| Profile | Internal tier | Config limit | Notes |
-|---|---|---:|---|
-| `ru` | `tier_ru` | 100 | Main RU pool |
-| `ru-auto` | `tier_ru` | auto 5 | Fast RU install |
-| `global-50` | `tier_global_ms10` | 10 | Global pool (50 domains) |
-| `global-50-auto` | `tier_global_ms10` | auto 10 | Fast global install |
-| `custom` | `custom` | 100 | User-provided domain set |
+- `install` = minimal strongest-direct path with no transport or profile questions on the normal path
+- `install --advanced` = explicit manual compatibility flow for operators who want prompts
+- `migrate-stealth` = only supported mutating bridge for managed legacy `grpc/http2` installs and pre-v7 xhttp installs
+- `update`, `repair`, `add-clients`, and `add-keys` are blocked on older managed contracts until `migrate-stealth` succeeds
+- `clients.json` = `schema_version: 3`
+- every config exports three variants:
+  - `recommended` = `xhttp mode=auto`
+  - `rescue` = `xhttp mode=packet-up`
+  - `emergency` = `xhttp mode=stream-up + browser dialer`
+- `recommended` and `rescue` are validated by post-action self-check
+- `emergency` is exported honestly as raw xray only and is meant for field testing, not fake link templates
+- `update --replan` and `repair` may promote a stronger spare config using self-check history and saved field measurements
 
-Legacy aliases `global-ms10` and `global-ms10-auto` are still accepted for backward compatibility.
+## state and artifact surface
 
-## Key flags
+managed installs now keep these files in sync:
+
+- `/etc/xray-reality/policy.json` — strongest-direct policy source of truth
+- `data/domains/catalog.json` — canonical domain metadata used by the planner
+- `/etc/xray/private/keys/clients.json` — schema v3 client inventory
+- `/etc/xray/private/keys/export/raw-xray/` — canonical per-variant xray client json
+- `/etc/xray/private/keys/export/canary/` — field-testing bundle for `recommended`, `rescue`, and `emergency`
+- `/etc/xray/private/keys/export/capabilities.json` — honest capability matrix for generated exports
+- `/var/lib/xray/self-check.json` — last post-action verdict
+- `/var/lib/xray/self-check-history.ndjson` — recent self-check history
+- `/var/lib/xray/measurements/` — saved field reports from `scripts/measure-stealth.sh`
+- `/var/lib/xray/measurements/latest-summary.json` — aggregated field verdict used by `status --verbose`, `diagnose`, `repair`, and `update --replan`
+
+## measurement and canary workflow
+
+local measurements use the same probe engine as runtime self-check:
+
+```bash
+sudo bash scripts/measure-stealth.sh run \
+  --save \
+  --network-tag home \
+  --provider rostelecom \
+  --region moscow \
+  --output /tmp/measure-home.json
+
+sudo bash scripts/measure-stealth.sh compare \
+  --dir /var/lib/xray/measurements \
+  --output /tmp/measure-compare.json
+
+sudo bash scripts/measure-stealth.sh summarize \
+  --dir /var/lib/xray/measurements \
+  --output /tmp/measure-summary.json
+```
+
+for remote rf testing, send the generated canary bundle from `export/canary/` and use the raw xray configs there.
+set `xray.browser.dialer` on the client side when you intentionally test the `emergency` variant.
+
+## key flags
 
 ```bash
 --domain-profile ru|ru-auto|global-50|global-50-auto|custom
 --transport xhttp
 --advanced
+--replan
 --progress-mode auto|bar|plain|none
 --require-minisign
 --allow-no-systemd
---num-configs N
---start-port N
---server-ip IPV4 --server-ip6 IPV6
+--num-configs n
+--start-port n
+--server-ip ipv4 --server-ip6 ipv6
 --yes --non-interactive
 --verbose
 ```
 
-contract notes:
+notes:
 
-- `install` = minimal xhttp-only path (`ru-auto`, strongest default)
-- `install --advanced` = manual profile/count prompts for power users
-- `migrate-stealth` = only supported conversion path for managed legacy `grpc/http2` installs
-- `--transport grpc|http2` is rejected in v6
+- `--transport` is fixed to `xhttp` in v7 and exists only as a compatibility no-op for the supported value
+- legacy aliases `global-ms10` and `global-ms10-auto` still map to `global-50` and `global-50-auto`
+- `XRAY_DATA_DIR` is not a free-form trusted code source in wrapper mode; use `XRAY_ALLOW_CUSTOM_DATA_DIR=true` only for trusted non-world-writable directories
 
-artifact contract:
+## documentation map
 
-- `clients.json` now uses `schema_version: 2`
-- each config stores `variants[]`
-- xhttp installs generate `recommended (auto)` and `rescue (packet-up)` variants
-- raw per-variant xray json files are exported under `export/raw-xray/`
-- `export/capabilities.json` describes which export targets are native, link-only, or unsupported
-- `/var/lib/xray/self-check.json` stores the last transport-aware verdict
-
-operator validation tools:
-
-- mutating actions run transport-aware self-check using the exported raw xray client configs
-- `scripts/measure-stealth.sh` reuses the same probe engine for local measurement runs
-
-`XRAY_DATA_DIR` is not an arbitrary trusted code source in wrapper mode.  
-Wrapper code sourcing is restricted by default to:
-
-- current script directory (`SCRIPT_DIR`)
-- `/usr/local/share/xray-reality`
-
-For a custom module source directory, explicit opt-in is required:
-
-```bash
-XRAY_ALLOW_CUSTOM_DATA_DIR=true XRAY_DATA_DIR=/secure/path bash /tmp/xray-reality.sh install
-```
-
-Security requirement for custom source path:
-
-- directory must not be group/other writable
-
-## Documentation map
-
-| Path | Purpose |
+| path | purpose |
 |---|---|
-| `docs/en/INDEX.md` | Documentation entrypoint (EN) |
-| `docs/ru/INDEX.md` | Документация (RU) |
-| `docs/en/ARCHITECTURE.md` | Runtime architecture and module contracts |
-| `docs/en/OPERATIONS.md` | Runbook for install, migration, measurement, and incidents |
-| `docs/en/FAQ.md` | Practical FAQ |
-| `docs/en/TROUBLESHOOTING.md` | Symptom-driven troubleshooting |
-| `docs/en/COMMUNITY.md` | Public collaboration model |
-| `docs/en/ROADMAP.md` | Current development direction |
-| `docs/en/GLOSSARY.md` | Terms and definitions |
-| `docs/en/CHANGELOG.md` | Release history |
-| `.github/CONTRIBUTING.md` | Contribution rules |
-| `.github/SECURITY.md` | Security policy |
+| `docs/en/INDEX.md` | documentation entrypoint |
+| `docs/en/ARCHITECTURE.md` | runtime model, state split, and module boundaries |
+| `docs/en/OPERATIONS.md` | install, migration, repair, measurement, and incident runbook |
+| `docs/en/FAQ.md` | practical questions |
+| `docs/en/TROUBLESHOOTING.md` | symptom-driven troubleshooting |
+| `docs/en/COMMUNITY.md` | collaboration and support guidance |
+| `docs/en/ROADMAP.md` | post-v7.1.0 direction |
+| `docs/en/GLOSSARY.md` | shared terms |
+| `docs/en/CHANGELOG.md` | release history |
+| `.github/CONTRIBUTING.md` | contribution rules |
+| `.github/SECURITY.md` | security policy |
 
-## Security model
+## security model
 
-Core controls include:
+core controls include:
 
-- strict runtime validation for paths, ports, addresses, domains, and self-check URLs
+- strict runtime validation for paths, domains, ports, addresses, schedules, and probe urls
 - controlled download surface with allowlisted hosts
-- artifact integrity checks (`sha256` and optional strict `minisign`)
-- transactional writes and rollback on failure
-- restricted `systemd` service profile and unprivileged runtime user
-- post-change transport-aware validation from canonical raw xray client exports
+- optional strict minisign verification and pinned trust anchor
+- transactional writes with rollback on config, service, or self-check failure
+- restricted systemd unit and non-root runtime account
+- canonical raw xray exports as the source of truth for self-check and field measurement
 
-See [.github/SECURITY.md](.github/SECURITY.md) for full policy details.
+see [.github/SECURITY.md](.github/SECURITY.md) for the full policy.
 
-## Supported platform
+## supported platform
 
-Primary and CI-validated platform:
+primary and ci-validated platform:
 
-- `ubuntu-24.04` (LTS)
+- `ubuntu-24.04` (lts)
 
-Other Linux distributions may work, but are currently outside the active CI contract.
-
-## Quality checks
+## quality checks
 
 ```bash
 make lint
@@ -211,19 +205,9 @@ make release-check
 make ci
 ```
 
-Windows helper scripts:
+windows helpers:
 
 ```powershell
 pwsh ./scripts/markdownlint.ps1
 pwsh ./scripts/windows/run-validation.ps1
 ```
-
-## Community
-
-- Discussions: `GitHub Discussions` tab
-- Issues: bug reports and feature requests
-- Contact: X (Twitter) [x.com/neket371](https://x.com/neket371)
-
-## License
-
-MIT License. See [LICENSE](LICENSE).

@@ -57,6 +57,22 @@ load_existing_metadata_from_config() {
         | select(.streamSettings.realitySettings != null)
         | select((.listen // "0.0.0.0") | test(":") | not)
         | .streamSettings.xhttpSettings.path // .streamSettings.grpcSettings.serviceName // .streamSettings.httpSettings.path // "-" ' "$XRAY_CONFIG")
+    mapfile -t CONFIG_VLESS_DECRYPTIONS < <(jq -r '.inbounds[]
+        | select(.streamSettings.realitySettings != null)
+        | select((.listen // "0.0.0.0") | test(":") | not)
+        | .settings.decryption // "none"' "$XRAY_CONFIG")
+
+    CONFIG_PROVIDER_FAMILIES=()
+    local domain
+    for domain in "${CONFIG_DOMAINS[@]}"; do
+        if [[ -n "$domain" ]]; then
+            CONFIG_PROVIDER_FAMILIES+=("$(domain_provider_family_for "$domain" 2> /dev/null || printf '%s' "$domain")")
+        else
+            CONFIG_PROVIDER_FAMILIES+=("")
+        fi
+    done
+
+    load_existing_vless_encryptions_from_artifacts
 
     local first_transport
     first_transport=$(jq -r '
@@ -75,6 +91,62 @@ load_existing_metadata_from_config() {
             TRANSPORT="xhttp"
             ;;
     esac
+}
+
+load_existing_vless_encryptions_from_artifacts() {
+    local json_file="${XRAY_KEYS}/clients.json"
+    local keys_file="${XRAY_KEYS}/keys.txt"
+    CONFIG_VLESS_ENCRYPTIONS=()
+
+    local -a keys_encryptions=()
+    if [[ -f "$keys_file" ]]; then
+        mapfile -t keys_encryptions < <(awk -F'VLESS Encryption:[[:space:]]*' '
+            /^VLESS Encryption:/ {
+                gsub(/^[[:space:]]+|[[:space:]]+$/, "", $2)
+                if ($2 != "") print $2
+            }
+        ' "$keys_file")
+    fi
+
+    local i
+    for ((i = 0; i < ${#CONFIG_DOMAINS[@]}; i++)); do
+        local encryption=""
+        local raw_file=""
+        if [[ -f "$json_file" ]]; then
+            encryption=$(jq -r --argjson idx "$i" '.configs[$idx].vless_encryption // empty' "$json_file" 2> /dev/null || true)
+            encryption=$(trim_ws "${encryption//$'\r'/}")
+            if [[ -z "$encryption" || "$encryption" == "none" ]]; then
+                raw_file=$(jq -r --argjson idx "$i" '
+                    (.configs[$idx] // {}) as $cfg
+                    | [
+                        ($cfg.variants[]? | select(.key == ($cfg.recommended_variant // "recommended")) | .xray_client_file_v4 // empty),
+                        ($cfg.variants[]? | .xray_client_file_v4 // empty)
+                      ]
+                    | map(select(type == "string" and length > 0))
+                    | .[0] // empty
+                ' "$json_file" 2> /dev/null || true)
+                raw_file=$(trim_ws "${raw_file//$'\r'/}")
+                if [[ -n "$raw_file" && -f "$raw_file" ]]; then
+                    encryption=$(jq -r '
+                        .outbounds[]
+                        | select(.tag == "proxy")
+                        | .settings.vnext[0].users[0].encryption // empty
+                    ' "$raw_file" 2> /dev/null | head -n 1 || true)
+                    encryption=$(trim_ws "${encryption//$'\r'/}")
+                else
+                    encryption=""
+                fi
+            fi
+        fi
+
+        if [[ -z "$encryption" && -n "${keys_encryptions[$i]:-}" ]]; then
+            encryption="${keys_encryptions[$i]}"
+        fi
+        if [[ -z "$encryption" ]]; then
+            encryption="none"
+        fi
+        CONFIG_VLESS_ENCRYPTIONS+=("$encryption")
+    done
 }
 
 load_keys_from_config() {

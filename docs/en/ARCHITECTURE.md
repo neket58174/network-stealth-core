@@ -1,188 +1,152 @@
-# Architecture
+# architecture
 
-This document describes runtime architecture and module contracts in **Network Stealth Core**.
+## strongest-direct runtime contract
 
-## Design goals
+`v7.1.0` defines one managed direct baseline:
 
-- deterministic lifecycle: `install`, `update`, `repair`, `rollback`, `uninstall`
-- xhttp-only strongest-default install path
-- strict runtime validation before destructive actions
-- transport-aware post-change validation from generated client artifacts
-- transactional writes with rollback support
-- modular shell code with explicit ownership boundaries
+- protocol: `vless`
+- security: `reality`
+- transport: `xhttp`
+- direct flow: `xtls-rprx-vision`
+- per-config generated `vless encryption` and matching inbound `decryption`
 
-## Runtime topology
+managed client variants are:
 
-```mermaid
-flowchart TD
-    W[xray-reality.sh\nbootstrap wrapper]
-    L[lib.sh\nruntime core + dispatcher]
-    I[install.sh\ninstall/update flow]
-    C[config.sh\nconfig generation]
-    S[service.sh\nservice + firewall]
-    H[health.sh\nmonitoring + diagnose]
-    E[export.sh\nclient exports]
+- `recommended` = `xhttp mode=auto`
+- `rescue` = `xhttp mode=packet-up`
+- `emergency` = `xhttp mode=stream-up + browser dialer`
 
-    MCLI[modules/lib/cli.sh]
-    MGLOB[modules/lib/globals_contract.sh]
-    MVAL[modules/lib/validation.sh]
-    MFW[modules/lib/firewall.sh]
-    MLIFE[modules/lib/lifecycle.sh]
-    MCFG[modules/config/domain_planner.sh]
-    MADD[modules/config/add_clients.sh]
-    MBOOT[modules/install/bootstrap.sh]
-    MSELF[modules/health/self_check.sh]
-    MCAP[modules/export/capabilities.sh]
+`recommended` and `rescue` are part of post-action validation.
+`emergency` is field-only and is exported as raw xray json plus canary metadata.
 
-    W --> L
-    L --> I
-    L --> C
-    L --> S
-    L --> H
-    L --> E
+## state model
 
-    L --> MCLI
-    L --> MGLOB
-    L --> MVAL
-    L --> MFW
-    L --> MLIFE
+the project now splits managed policy from generated runtime state.
 
-    C --> MCFG
-    C --> MADD
-    I --> MBOOT
-    H --> MSELF
-    E --> MCAP
-```
+| file or path | role |
+|---|---|
+| `/etc/xray-reality/policy.json` | operator-facing policy source of truth |
+| `data/domains/catalog.json` | canonical domain metadata and provider families |
+| `/etc/xray/config.json` | live xray server config |
+| `/etc/xray-reality/config.env` | compatibility snapshot of generated state |
+| `/etc/xray/private/keys/clients.json` | schema v3 artifact inventory |
+| `/etc/xray/private/keys/export/raw-xray/` | canonical per-variant client configs |
+| `/etc/xray/private/keys/export/canary/` | field-testing bundle |
+| `/var/lib/xray/self-check.json` | latest post-action verdict |
+| `/var/lib/xray/self-check-history.ndjson` | recent self-check history |
+| `/var/lib/xray/measurements/*.json` | saved field reports |
+| `/var/lib/xray/measurements/latest-summary.json` | aggregate field verdict and promotion hints |
 
-## Bootstrap stage (`xray-reality.sh`)
+## planner inputs
 
-Wrapper responsibilities:
+planner decisions come from three layers:
 
-1. parse wrapper-level controls (`XRAY_REPO_REF`, `XRAY_REPO_COMMIT`, pin policy)
-2. resolve source (local scripts, installed data dir, or git clone)
-3. enforce bootstrap pin checks when configured
-4. source `lib.sh` and forward action arguments
+1. the requested domain profile from `policy.json`
+2. canonical metadata in `data/domains/catalog.json`
+3. runtime health and measurement history
 
-## Runtime control plane (`lib.sh`)
+`catalog.json` gives the planner structured metadata such as:
 
-`lib.sh` centralizes:
+- `tier`
+- `provider_family`
+- `region`
+- candidate `ports`
+- `priority`
+- `risk`
+- `sni_pool`
 
-- defaults and cross-module globals
-- argument parsing and config loading
-- strict validation of runtime inputs
-- xhttp-only action contract for mutating flows
-- logging, download, backup, rollback helpers
-- action dispatch to install/config/service/health/export layers
+this lets the planner avoid burning one provider family and keep stronger spares available.
 
-### Dispatch graph
+## mutating flow model
 
-```mermaid
-flowchart TD
-    M[main] --> P[parse_args + load_config_file]
-    P --> O[apply_runtime_overrides]
-    O --> V[strict_validate_runtime_inputs]
-    V --> X[require_xhttp_transport_contract_for_action]
-    X --> A{ACTION}
+all mutating actions keep the same high-level shape:
 
-    A --> I[install_flow]
-    A --> AC[add_clients_flow]
-    A --> U[update_flow]
-    A --> R[repair_flow]
-    A --> MS[migrate_stealth_flow]
-    A --> D[diagnose_flow]
-    A --> RB[rollback_flow]
-    A --> UN[uninstall_flow]
-    A --> ST[status_flow]
-    A --> LG[logs_flow]
-    A --> CU[check_update_flow]
-```
+1. load policy, config, and current artifacts
+2. validate inputs and feature contract
+3. back up managed state
+4. build candidate config and artifacts
+5. validate with `xray -test`
+6. apply atomically
+7. run post-action self-check using canonical raw xray clients
+8. record verdicts and either keep state or roll back
 
-## Module contracts
+## migration boundary
 
-| Module | Responsibility | Contract |
-|---|---|---|
-| `modules/lib/globals_contract.sh` | shared defaults and array declarations | stable `set -u` behavior across sourced modules |
-| `modules/lib/cli.sh` | argument parsing and CLI/env normalization | validated action and runtime overrides |
-| `modules/lib/validation.sh` | validators for domains, ports, IPs, ranges, URLs | reusable security checks across flows |
-| `modules/lib/firewall.sh` | firewall apply and rollback helpers | deterministic network rule lifecycle |
-| `modules/lib/lifecycle.sh` | backup stack and rollback orchestration | consistent rollback semantics |
-| `modules/install/bootstrap.sh` | distro-aware bootstrap helpers | predictable dependency/install path |
-| `modules/config/domain_planner.sh` | ranking, quarantine, selection planning | bounded no-repeat domain allocation |
-| `modules/config/add_clients.sh` | `add-clients` mutation logic | synchronized client artifacts and validated post-change state |
-| `modules/health/self_check.sh` | transport-aware validation engine | canonical post-action verdicts from raw xray artifacts |
-| `modules/export/capabilities.sh` | export capability matrix | explicit, machine-readable export support surface |
+`migrate-stealth` is the only mutating bridge from older managed contracts.
+it upgrades both:
 
-## Transaction model
+- legacy `grpc/http2` installs
+- pre-v7 xhttp installs that do not yet meet the strongest-direct contract
 
-Every mutating action follows one pattern:
+until that migration succeeds, `update`, `repair`, `add-clients`, and `add-keys` fail closed.
 
-1. capture backup snapshot of critical state
-2. build candidate changes in staged files
-3. validate candidate (`xray -test` and runtime guards)
-4. apply atomically
-5. run transport-aware self-check from generated raw client artifacts
-6. rollback automatically on broken verdict or non-zero failure path
+## client artifact model
 
-## Transport-aware self-check
+`clients.json` schema v3 stores the managed contract in a machine-readable form.
 
-The self-check engine uses canonical exported client artifacts instead of ad hoc regenerated probes.
+each config keeps:
 
-Inputs:
+- identity material such as `uuid`, `short_id`, and `public_key`
+- selection metadata such as `provider_family`, `primary_rank`, and `recommended_variant`
+- direct contract fields such as `transport`, `flow`, `vless_encryption`, and `vless_decryption`
+- per-variant outputs including raw xray files, links where honest, and browser-dialer requirements
 
-- `/etc/xray/private/keys/clients.json`
-- `export/raw-xray/*.json`
-- `SELF_CHECK_URLS`
-- `SELF_CHECK_TIMEOUT_SEC`
+raw xray json remains the canonical artifact because it can express the full strongest-direct contract without loss.
 
-Outputs:
+## validation and promotion model
 
-- `/var/lib/xray/self-check.json`
-- verbose status summary
-- diagnose snapshot block
+there are two observation loops:
 
-Verdict policy:
+### post-action self-check
 
-- `recommended` passes → `ok`
-- `recommended` fails but `rescue` passes → `warning`
-- both fail → `broken` and mutating flow rolls back
+- uses generated raw xray client json
+- probes `recommended` first, then `rescue`
+- writes `/var/lib/xray/self-check.json`
+- appends `/var/lib/xray/self-check-history.ndjson`
+- triggers rollback if both direct variants fail
 
-## Generated artifacts
+### field measurement
 
-| Path | Produced by | Intended permissions |
-|---|---|---|
-| `/etc/xray/config.json` | `config.sh` | `0640`, `root:xray` |
-| `/etc/xray-reality/config.env` | `config.sh` | `0600`, root-only |
-| `/etc/xray/private/keys/keys.txt` | `config.sh` | `0400`, `root:root` |
-| `/etc/xray/private/keys/clients.txt` | `config.sh` | `0640`, `root:xray` |
-| `/etc/xray/private/keys/clients.json` | `config.sh` | `0640`, `root:xray`, schema v2 with `variants[]` |
-| `/etc/xray/private/keys/export/raw-xray/*` | `config.sh` / `export.sh` | `0640`, `root:xray` |
-| `/etc/xray/private/keys/export/capabilities.json` | `export.sh` | `0640`, `root:xray` |
-| `/etc/xray/private/keys/export/compatibility-notes.txt` | `export.sh` | `0640`, `root:xray` |
-| `/var/lib/xray/self-check.json` | `self_check.sh` | `0640`, `root:xray` |
-| `/var/lib/xray/domain-health.json` | `health.sh` | runtime state file |
-| `/etc/systemd/system/xray.service` | `service.sh` | hardened service unit |
+- uses `scripts/measure-stealth.sh run|compare|summarize`
+- saves reports under `/var/lib/xray/measurements/`
+- aggregates the latest summary to help operators and promotion logic
+- may recommend `emergency` when direct variants are too weak on real networks
 
-## Export capability model
+`repair` and `update --replan` can promote a stronger spare config when recent self-check or field data justifies it.
 
-xhttp artifacts are intentionally split by honesty level:
+## export layer
 
-- `native`: `clients.txt`, `clients.json`, `raw-xray`
-- `link-only`: `v2rayn-links.json`, `nekoray-template.json`
-- `unsupported`: `sing-box`, `clash-meta`
+exports are capability-driven:
 
-The machine-readable source of truth is `export/capabilities.json`.
+- raw xray json: native
+- `clients.txt` and `clients.json`: native
+- v2rayn and nekoray: link-only where honest
+- sing-box and clash-meta: explicitly unsupported for the strongest-direct contract
+- canary bundle: native field-testing surface
 
-## Measurement harness
+that support map is written to `export/capabilities.json`.
 
-`scripts/measure-stealth.sh` reuses the same probe engine as runtime self-check.
-It reads `clients.json`, tests requested variants, and writes a JSON report suitable for field comparison.
+## module map
 
-## Quality and release gates
+| module | role |
+|---|---|
+| `lib.sh` | dispatcher, validation, path safety, and command contracts |
+| `install.sh` | install/update/repair/migrate orchestration |
+| `config.sh` | config build, schema v3 artifacts, and vless encryption generation |
+| `service.sh` | systemd, firewall, status, uninstall, and cleanup |
+| `health.sh` | diagnostics and health entrypoints |
+| `modules/health/self_check.sh` | canonical post-action self-check engine |
+| `modules/health/measurements.sh` | saved field report aggregation and promotion hints |
+| `modules/lib/policy.sh` | managed policy serialization and loading |
+| `modules/config/domain_planner.sh` | domain selection and diversity-aware planning |
+| `export.sh` | export generation, capability matrix, and canary bundle |
 
-Three control layers:
+## design intent
 
-- local: `make lint`, `make test`, `make release-check`
-- CI: lint + tests + audits + Ubuntu smoke
-- release: consistency checks, tag policy, and GitHub release assets
+the project intentionally prefers:
 
-This keeps daily development fast while preserving release integrity.
+- fewer install questions
+- one strongest safe default
+- honest exports over fake compatibility
+- fail-closed mutation on weak contracts
+- operator visibility through saved verdicts instead of guesswork

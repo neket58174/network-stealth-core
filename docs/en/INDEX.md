@@ -1,50 +1,54 @@
-# Documentation index (EN)
+# documentation index
 
-Welcome to the **Network Stealth Core** documentation hub.
+this is the entrypoint for the english docs set.
 
-## Start here
+## current product contract
 
-- [../../README.md](../../README.md) — quick start and command map
-- [OPERATIONS.md](OPERATIONS.md) — install, maintenance, migration, measurement, and rollback
-- [TROUBLESHOOTING.md](TROUBLESHOOTING.md) — symptom-driven debugging
+`v7.1.0` keeps the normal install path opinionated and minimal.
+managed installs now target the strongest-direct baseline:
 
-## Current baseline
+- `vless + reality + xhttp + vless encryption + xtls-rprx-vision`
+- `recommended`, `rescue`, and `emergency` client variants
+- `policy.json` as the managed policy source of truth
+- `clients.json` schema v3
+- transport-aware self-check plus saved field measurements
+- adaptive repair and `update --replan` based on recent verdicts
 
-- `install` = minimal xhttp-only strongest-default path
-- `install --advanced` = manual profile and config-count prompts
-- `migrate-stealth` = only managed bridge from legacy `grpc/http2`
-- `clients.json` = schema v2 with per-config `variants[]`
-- `export/raw-xray/` = raw per-variant xray client json files
-- `export/capabilities.json` = machine-readable export capability matrix
-- `/var/lib/xray/self-check.json` = last transport-aware verdict
-- `scripts/measure-stealth.sh` = local measurement harness
+## read this first
 
-## Core docs
-
-| Document | Purpose |
+| file | why it matters |
 |---|---|
-| [ARCHITECTURE.md](ARCHITECTURE.md) | runtime architecture, module contracts, generated artifacts |
-| [OPERATIONS.md](OPERATIONS.md) | day-2 operations, migration, measurement, and maintenance runbook |
-| [CHANGELOG.md](CHANGELOG.md) | released changes and version notes |
+| [OPERATIONS.md](OPERATIONS.md) | install, migrate, repair, measure, and recover |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | runtime model, state split, and module boundaries |
+| [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | symptom-driven fixes |
+| [FAQ.md](FAQ.md) | short answers to practical questions |
 
-## Operator docs
+## full map
 
-| Document | Purpose |
+| file | purpose |
 |---|---|
-| [FAQ.md](FAQ.md) | common questions about profiles, prompts, and runtime behavior |
-| [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | install, self-check, migration, and artifact recovery |
-| [GLOSSARY.md](GLOSSARY.md) | project terms used in logs, docs, and scripts |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | strongest-direct contract, state files, and module layout |
+| [OPERATIONS.md](OPERATIONS.md) | install and day-2 runbook |
+| [FAQ.md](FAQ.md) | product and operator faq |
+| [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | failure analysis and next-step commands |
+| [COMMUNITY.md](COMMUNITY.md) | how to ask for help or contribute |
+| [ROADMAP.md](ROADMAP.md) | post-v7.1.0 direction |
+| [GLOSSARY.md](GLOSSARY.md) | shared terms |
+| [CHANGELOG.md](CHANGELOG.md) | release history |
 
-## Project docs
+## operator quick links
 
-| Document | Purpose |
-|---|---|
-| [COMMUNITY.md](COMMUNITY.md) | discussions, issue quality, and useful field reports |
-| [ROADMAP.md](ROADMAP.md) | post-v6 direction and near-term priorities |
-| [../../.github/CONTRIBUTING.md](../../.github/CONTRIBUTING.md) | contributor workflow and quality gates |
-| [../../.github/SECURITY.md](../../.github/SECURITY.md) | supported versions, threat model, and disclosure process |
+- default install: `sudo xray-reality.sh install --non-interactive --yes`
+- managed migration: `sudo xray-reality.sh migrate-stealth --non-interactive --yes`
+- verbose status: `sudo xray-reality.sh status --verbose`
+- local measurement: `sudo bash scripts/measure-stealth.sh run --save`
+- replan with fresh field data: `sudo xray-reality.sh update --replan --non-interactive --yes`
 
-## Language navigation
+## important files
 
-- russian docs: [../ru/INDEX.md](../ru/INDEX.md)
-- russian readme: [../../README.ru.md](../../README.ru.md)
+- `/etc/xray-reality/policy.json`
+- `/etc/xray/private/keys/clients.json`
+- `/etc/xray/private/keys/export/raw-xray/`
+- `/etc/xray/private/keys/export/canary/`
+- `/var/lib/xray/self-check.json`
+- `/var/lib/xray/measurements/latest-summary.json`

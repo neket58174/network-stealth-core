@@ -1,77 +1,82 @@
-# Glossary
+# glossary
 
-## xhttp-only install
+## strongest-direct install
 
-The default install contract. `install` chooses the minimal strongest-default path with xhttp and reduced questioning.
+the default install contract: minimal prompts, strongest safe direct stack, and canonical raw exports.
 
-## Advanced mode
+## advanced mode
 
-`install --advanced`. Enables manual profile and config-count prompts.
+`install --advanced`, the explicit manual compatibility flow with profile and config-count prompts.
 
-## Migrate-stealth
+## stealth contract version
 
-Managed action that converts a legacy `grpc/http2` install to xhttp and rebuilds artifacts.
+the managed runtime contract version recorded in policy and client artifacts.
+in `v7.1.0` it represents the strongest-direct baseline.
 
-## Tier
+## policy.json
 
-A predefined domain pool used to generate destination and SNI combinations.
+`/etc/xray-reality/policy.json`, the managed policy source of truth.
 
-## Profile
+## domain catalog
 
-User-facing selection mapped to an internal tier and config limits such as `ru`, `ru-auto`, or `global-50`.
+`data/domains/catalog.json`, the canonical metadata set used by the domain planner.
 
-## Legacy transport
+## provider family
 
-Managed config that still uses `grpc` or `http2`. `status` marks it as legacy and mutating actions require migration first.
+a planner label used to keep configs diversified across domain cohorts.
 
-## Client variant
+## client variant
 
-A per-config client profile stored inside `clients.json` `variants[]`.
+a per-config client profile stored inside `clients.json` `variants[]`.
 
-## Recommended variant
+## recommended variant
 
-The primary xhttp client artifact that uses `mode=auto`.
+the primary xhttp client artifact with `mode=auto`.
 
-## Rescue variant
+## rescue variant
 
-The fallback xhttp client artifact that uses `mode=packet-up`.
+the compatibility fallback xhttp artifact with `mode=packet-up`.
 
-## Raw xray export
+## emergency variant
 
-Per-variant client json files written to `export/raw-xray/`.
+the browser-assisted field tier with `mode=stream-up`; exported as raw xray only.
 
-## Capability matrix
+## raw xray export
 
-`export/capabilities.json`, the machine-readable support map for native, link-only, and unsupported export targets.
+the canonical per-variant client json in `export/raw-xray/`.
 
-## Self-check state
+## capability matrix
 
-`/var/lib/xray/self-check.json`, the last transport-aware verdict recorded after a mutating action.
+`export/capabilities.json`, the machine-readable support map for generated export targets.
 
-## Measurement harness
+## canary bundle
 
-`scripts/measure-stealth.sh`, a local probe tool that reuses the runtime self-check engine.
+`export/canary/`, a portable bundle for field testing from other machines or networks.
 
-## SNI fallback
+## self-check state
 
-Automatic selection of another valid server name when the preferred SNI is unavailable.
+`/var/lib/xray/self-check.json`, the latest post-action verdict.
 
-## Domain planner
+## self-check history
 
-Module that chooses domains using ranking, quarantine, and no-repeat sequencing.
+`/var/lib/xray/self-check-history.ndjson`, recent post-action verdict history.
 
-## Health file
+## measurement harness
 
-`DOMAIN_HEALTH_FILE` runtime state used for domain ranking and quarantine decisions.
+`scripts/measure-stealth.sh`, the local tool for `run`, `compare`, and `summarize` field measurements.
 
-## Strict minisign mode
+## measurement summary
 
-`--require-minisign` behavior where missing verifier or signature fails install or update.
+`/var/lib/xray/measurements/latest-summary.json`, the aggregated field verdict used by operator surfaces and promotion logic.
 
-## Compatibility mode (no systemd)
+## replan
 
-`--allow-no-systemd` mode for constrained environments where full service management is unavailable.
+`update --replan`, a rebuild that lets recent self-check and field data influence config priority.
 
-## Artifact consistency
+## xtls-rprx-vision
 
-State where `config.json`, `keys.txt`, `clients.txt`, `clients.json`, export files, and self-check state reflect one coherent config set.
+the direct flow used by the strongest-direct contract.
+
+## vless encryption
+
+generated outbound-side encryption metadata paired with inbound `decryption` for the strongest-direct contract.

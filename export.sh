@@ -73,21 +73,32 @@ export_raw_xray_index() {
         generated,
         transport,
         schema_version,
+        stealth_contract_version,
+        xray_min_version,
         configs: [
             .configs[] | {
                 name,
                 domain,
+                provider_family,
+                primary_rank,
                 sni,
                 fingerprint,
                 transport,
                 transport_endpoint,
+                flow,
+                vless_encryption,
+                vless_decryption,
                 recommended_variant,
                 variants: [
                     .variants[] | {
                         key,
+                        category,
                         label,
                         note,
                         mode,
+                        requires,
+                        import_hint,
+                        vless_encryption,
                         vless_v4,
                         vless_v6,
                         xray_client_file_v4,
@@ -118,6 +129,7 @@ export_v2rayn_fragment_template() {
         profiles: [
             .configs[] as $cfg
             | ($cfg.variants // [])[]
+            | select((.vless_v4 // "") | length > 0)
             | {
                 name: ($cfg.name + " / " + (.label // .key // "standard")),
                 config_name: $cfg.name,
@@ -155,6 +167,7 @@ export_nekoray_fragment_template() {
         profiles: [
             .configs[] as $cfg
             | ($cfg.variants // [])[]
+            | select((.vless_v4 // "") | length > 0)
             | {
                 name: ($cfg.name + " / " + (.label // .key // "standard")),
                 domain: $cfg.domain,
@@ -190,6 +203,92 @@ export_compatibility_notes() {
     log OK "Compatibility notes сохранены: $out_file"
 }
 
+export_canary_bundle() {
+    local json_file="$1"
+    local out_dir="$2"
+    local manifest_file="${out_dir}/manifest.json"
+    local raw_dir="${out_dir}/raw-xray"
+    mkdir -p "$raw_dir"
+
+    jq -r '.configs[] | .variants[] | [.key, .xray_client_file_v4 // "", .xray_client_file_v6 // ""] | @tsv' "$json_file" 2> /dev/null |
+        while IFS=$'\t' read -r _variant_key raw_v4 raw_v6; do
+            [[ -n "$raw_v4" && -f "$raw_v4" ]] && cp -f "$raw_v4" "${raw_dir}/$(basename "$raw_v4")"
+            [[ -n "$raw_v6" && -f "$raw_v6" ]] && cp -f "$raw_v6" "${raw_dir}/$(basename "$raw_v6")"
+        done
+
+    jq -n \
+        --arg generated "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" \
+        --arg root "$out_dir" \
+        --arg browser_dialer_env "${BROWSER_DIALER_ENV_NAME:-xray.browser.dialer}" \
+        --arg browser_dialer_address "${XRAY_BROWSER_DIALER_ADDRESS:-127.0.0.1:11050}" \
+        --argjson source "$(jq '. | {
+            schema_version,
+            stealth_contract_version,
+            xray_min_version,
+            generated,
+            transport,
+            configs: [
+                .configs[] | {
+                    name,
+                    domain,
+                    recommended_variant,
+                    variants: [
+                        .variants[] | {
+                            key,
+                            category,
+                            mode,
+                            requires,
+                            import_hint,
+                            raw_xray_ipv4: (if (.xray_client_file_v4 // "") != "" then ("raw-xray/" + ((.xray_client_file_v4 | gsub("\\\\"; "/")) | split("/") | last)) else null end),
+                            raw_xray_ipv6: (if (.xray_client_file_v6 // "") != "" then ("raw-xray/" + ((.xray_client_file_v6 | gsub("\\\\"; "/")) | split("/") | last)) else null end)
+                        }
+                    ]
+                }
+            ]
+        }' "$json_file")" \
+        '{
+            generated: $generated,
+            root: $root,
+            browser_dialer_env: $browser_dialer_env,
+            browser_dialer_address: $browser_dialer_address,
+            source: $source
+        }' > "$manifest_file"
+
+    cat > "${out_dir}/measure-linux.sh" << 'EOF'
+#!/usr/bin/env bash
+set -Eeuo pipefail
+ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+MANIFEST="$ROOT_DIR/manifest.json"
+if [[ ! -f "$MANIFEST" ]]; then
+  echo "manifest.json not found" >&2
+  exit 1
+fi
+echo "use the bundle with xray and curl installed."
+echo "recommended flow:"
+echo "  1. inspect manifest.json"
+echo "  2. export ${XRAY_BROWSER_DIALER_ADDRESS:-xray.browser.dialer}=host:port if testing emergency"
+echo "  3. run repo-local scripts/measure-stealth.sh for full JSON reports when possible"
+cat "$MANIFEST"
+EOF
+    chmod +x "${out_dir}/measure-linux.sh"
+
+    cat > "${out_dir}/measure-windows.ps1" << 'EOF'
+param()
+$root = Split-Path -Parent $MyInvocation.MyCommand.Path
+$manifest = Join-Path $root 'manifest.json'
+if (-not (Test-Path $manifest)) {
+  Write-Error 'manifest.json not found'
+  exit 1
+}
+Write-Host 'use the bundle with xray and curl installed.'
+Write-Host 'for full field reports prefer scripts/measure-stealth.sh from the repo when available.'
+Get-Content $manifest
+EOF
+
+    validate_export_json_schema "$manifest_file" json || return 1
+    log OK "Canary bundle сохранён: $out_dir"
+}
+
 export_all_configs() {
     local export_dir="${XRAY_KEYS}/export"
     local json_file="${XRAY_KEYS}/clients.json"
@@ -206,6 +305,7 @@ export_all_configs() {
     export_raw_xray_index "$json_file" "${export_dir}/raw-xray-index.json"
     export_v2rayn_fragment_template "$json_file" "${export_dir}/v2rayn-links.json"
     export_nekoray_fragment_template "$json_file" "${export_dir}/nekoray-template.json"
+    export_canary_bundle "$json_file" "${export_dir}/canary"
     export_capabilities_json "$export_dir" "${export_dir}/capabilities.json"
     validate_export_json_schema "${export_dir}/capabilities.json" json || return 1
     log OK "Capability matrix сохранена: ${export_dir}/capabilities.json"
@@ -216,6 +316,9 @@ export_all_configs() {
     if ((${#artifacts[@]} > 0)); then
         chmod 640 "${artifacts[@]}"
         chown "root:${XRAY_GROUP}" "${artifacts[@]}" 2> /dev/null || true
+    fi
+    if [[ -f "${export_dir}/canary/measure-linux.sh" ]]; then
+        chmod 750 "${export_dir}/canary/measure-linux.sh" 2> /dev/null || true
     fi
     log OK "Все форматы экспортированы в ${export_dir}/"
 }

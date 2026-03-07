@@ -1,60 +1,54 @@
-# Community
+# community
 
-This repository is public and community-driven.
+## where to ask for help
 
-## Where to collaborate
+use the repository discussion and issue surfaces appropriately:
 
-- **Discussions** — architecture, roadmap, and operator questions
-- **Issues** — reproducible bugs and concrete feature requests
-- **Pull requests** — focused code and docs updates with passing checks
+- **discussions** for design questions, roadmap ideas, and deployment trade-offs
+- **issues** for reproducible bugs and contract mismatches
+- **security reporting** for vulnerabilities, using private disclosure only
 
-## Reports that help the project most
+## what makes a good support request
 
-Useful reports usually include:
+include enough data to keep the problem reproducible without exposing secrets.
 
-- exact command used
-- distro and environment details
-- sanitized logs
-- expected vs actual behavior
-- whether the failure happened on:
-  - minimal xhttp-only install
-  - `install --advanced`
-  - `migrate-stealth`
-  - `recommended` or `rescue` client variant
-  - runtime self-check or local measurement harness
+good reports include:
 
-## Useful field feedback topics
+- exact command that was run
+- current version or commit
+- output of `sudo xray-reality.sh status --verbose`
+- output of `sudo xray-reality.sh diagnose`
+- whether the node is legacy, migrated, or fresh strongest-direct
+- relevant `scripts/measure-stealth.sh` output for real-network problems
+- whether `emergency` was needed on the tested network
 
-- xhttp reachability and reliability on real-world networks
-- `packet-up` rescue behavior on difficult providers
-- migration quality from legacy `grpc/http2`
-- capability matrix correctness in v2rayn, nekoray, and raw xray clients
-- self-check verdict quality and rollback behavior
-- measurement reports from real RF operator networks
+## redact before posting
 
-## Please avoid
+do not publish:
 
-- screenshots without text logs
-- vague "does not work" reports
-- publishing private keys, `keys.txt`, or sensitive full links
-- mixing unrelated bugs into one issue
+- private keys
+- full client links
+- raw xray client json
+- private server addresses if they identify your node
 
-## PR expectations
+redact `uuid`, `short_id`, `private_key`, and domain-specific secrets.
 
-- one clear change per PR
-- tests and docs updated in the same pass
-- rollback and security behavior preserved
-- green CI before requesting review
+## contribution expectations
 
-See [../../.github/CONTRIBUTING.md](../../.github/CONTRIBUTING.md) for the full workflow.
+if you propose a change to the managed contract, include:
 
-## Maintainer contact
+- why the default path should change or stay unchanged
+- tests
+- bilingual docs updates
+- migration notes if older managed installs are affected
 
-- X (Twitter): [x.com/neket371](https://x.com/neket371)
+## project direction
 
-## Interaction rules
+the project intentionally favors:
 
-- be specific and technical
-- challenge ideas, not people
-- prefer facts, logs, and repro steps
-- keep security disclosures private
+- fewer install questions
+- one strongest safe default
+- honest export capability reporting
+- saved operator evidence over guesswork
+
+changes that weaken those goals will get stronger scrutiny.

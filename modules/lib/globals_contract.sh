@@ -15,6 +15,7 @@
 : "${XRAY_GEO_DIR:=}"
 : "${XRAY_CONFIG:=/etc/xray/config.json}"
 : "${XRAY_ENV:=/etc/xray-reality/config.env}"
+: "${XRAY_POLICY:=/etc/xray-reality/policy.json}"
 : "${XRAY_KEYS:=/etc/xray/private/keys}"
 : "${XRAY_BACKUP:=/var/backups/xray}"
 : "${XRAY_LOGS:=/var/log/xray}"
@@ -22,6 +23,7 @@
 : "${XRAY_TIERS_FILE:=}"
 : "${XRAY_SNI_POOLS_FILE:=}"
 : "${XRAY_GRPC_SERVICES_FILE:=}"
+: "${XRAY_DOMAIN_CATALOG_FILE:=}"
 : "${XRAY_SCRIPT_PATH:=/usr/local/bin/xray-reality.sh}"
 : "${XRAY_UPDATE_SCRIPT:=/usr/local/bin/xray-reality-update.sh}"
 : "${XRAY_CONFIG_FILE:=}"
@@ -63,6 +65,9 @@
 : "${DIAG_LOG:=/var/log/xray-diagnose.log}"
 : "${HEALTH_LOG:=}"
 : "${SELF_CHECK_STATE_FILE:=/var/lib/xray/self-check.json}"
+: "${SELF_CHECK_HISTORY_FILE:=/var/lib/xray/self-check-history.ndjson}"
+: "${MEASUREMENTS_DIR:=/var/lib/xray/measurements}"
+: "${MEASUREMENTS_SUMMARY_FILE:=/var/lib/xray/measurements/latest-summary.json}"
 
 : "${SERVER_IP:=}"
 : "${SERVER_IP6:=}"
@@ -124,6 +129,11 @@
 : "${PRIMARY_DOMAIN_MODE:=adaptive}"
 : "${PRIMARY_PIN_DOMAIN:=}"
 : "${PRIMARY_ADAPTIVE_TOP_N:=5}"
+: "${STEALTH_CONTRACT_VERSION:=7.1.0}"
+: "${XRAY_CLIENT_MIN_VERSION:=25.9.5}"
+: "${XRAY_DIRECT_FLOW:=xtls-rprx-vision}"
+: "${BROWSER_DIALER_ENV_NAME:=xray.browser.dialer}"
+: "${XRAY_BROWSER_DIALER_ADDRESS:=}"
 : "${DOWNLOAD_HOST_ALLOWLIST:=}"
 : "${GH_PROXY_BASE:=}"
 : "${QR_ENABLED:=auto}"
@@ -140,6 +150,7 @@
 : "${PROFILE_DEST:=}"
 : "${PROFILE_TRANSPORT_PAYLOAD:=}"
 : "${ADVANCED_MODE:=false}"
+: "${REPLAN:=false}"
 : "${SYSTEMD_MANAGEMENT_DISABLED:=false}"
 
 : "${ID:=}"
@@ -168,7 +179,16 @@ if ! declare -p CONFIG_SNIS > /dev/null 2>&1; then CONFIG_SNIS=(); fi
 if ! declare -p CONFIG_TRANSPORT_ENDPOINTS > /dev/null 2>&1; then CONFIG_TRANSPORT_ENDPOINTS=(); fi
 if ! declare -p CONFIG_DESTS > /dev/null 2>&1; then CONFIG_DESTS=(); fi
 if ! declare -p CONFIG_FPS > /dev/null 2>&1; then CONFIG_FPS=(); fi
+if ! declare -p CONFIG_PROVIDER_FAMILIES > /dev/null 2>&1; then CONFIG_PROVIDER_FAMILIES=(); fi
+if ! declare -p CONFIG_VLESS_ENCRYPTIONS > /dev/null 2>&1; then CONFIG_VLESS_ENCRYPTIONS=(); fi
+if ! declare -p CONFIG_VLESS_DECRYPTIONS > /dev/null 2>&1; then CONFIG_VLESS_DECRYPTIONS=(); fi
 if ! declare -p AVAILABLE_DOMAINS > /dev/null 2>&1; then AVAILABLE_DOMAINS=(); fi
+if ! declare -p DOMAIN_PROVIDER_FAMILIES > /dev/null 2>&1; then declare -A DOMAIN_PROVIDER_FAMILIES=(); fi
+if ! declare -p DOMAIN_REGIONS > /dev/null 2>&1; then declare -A DOMAIN_REGIONS=(); fi
+if ! declare -p DOMAIN_PRIORITY_MAP > /dev/null 2>&1; then declare -A DOMAIN_PRIORITY_MAP=(); fi
+if ! declare -p DOMAIN_RISK_MAP > /dev/null 2>&1; then declare -A DOMAIN_RISK_MAP=(); fi
+if ! declare -p DOMAIN_PORT_HINTS > /dev/null 2>&1; then declare -A DOMAIN_PORT_HINTS=(); fi
+if ! declare -p DOMAIN_SNI_POOL_OVERRIDES > /dev/null 2>&1; then declare -A DOMAIN_SNI_POOL_OVERRIDES=(); fi
 if ! declare -p FIREWALL_ROLLBACK_ENTRIES > /dev/null 2>&1; then FIREWALL_ROLLBACK_ENTRIES=(); fi
 if ! declare -p FIREWALL_FIREWALLD_DIRTY > /dev/null 2>&1; then FIREWALL_FIREWALLD_DIRTY=false; fi
 if ! declare -p CREATED_PATHS > /dev/null 2>&1; then CREATED_PATHS=(); fi

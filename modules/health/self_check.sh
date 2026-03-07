@@ -84,6 +84,16 @@ self_check_state_file_path() {
     printf '%s\n' "${SELF_CHECK_STATE_FILE:-/var/lib/xray/self-check.json}"
 }
 
+self_check_history_file_path() {
+    local state_file
+    state_file=$(self_check_state_file_path)
+    if [[ -n "${SELF_CHECK_HISTORY_FILE:-}" && ! ( "${SELF_CHECK_HISTORY_FILE:-}" == "/var/lib/xray/self-check-history.ndjson" && "$(dirname "$state_file")" != "/var/lib/xray" ) ]]; then
+        printf '%s\n' "$SELF_CHECK_HISTORY_FILE"
+        return 0
+    fi
+    printf '%s\n' "$(dirname "$state_file")/self-check-history.ndjson"
+}
+
 self_check_default_urls() {
     printf '%s\n' "${SELF_CHECK_URLS:-https://cp.cloudflare.com/generate_204,https://www.gstatic.com/generate_204}"
 }
@@ -459,6 +469,47 @@ self_check_read_state_json() {
     cat "$state_file"
 }
 
+self_check_append_history_json() {
+    local state_json="$1"
+    local history_file
+    history_file=$(self_check_history_file_path)
+    mkdir -p "$(dirname "$history_file")"
+    chmod 750 "$(dirname "$history_file")" 2> /dev/null || true
+    touch "$history_file"
+    chmod 640 "$history_file" 2> /dev/null || true
+    printf '%s\n' "$(jq -c '.' <<< "$state_json")" >> "$history_file"
+    chown "root:${XRAY_GROUP}" "$history_file" 2> /dev/null || true
+}
+
+self_check_recent_history_json() {
+    local limit="${1:-5}"
+    local history_file
+    history_file=$(self_check_history_file_path)
+    [[ -f "$history_file" ]] || {
+        printf '%s\n' '[]'
+        return 0
+    }
+    tail -n "$limit" "$history_file" 2> /dev/null | jq -s '.' 2> /dev/null || printf '%s\n' '[]'
+}
+
+self_check_warning_streak_count() {
+    local history_json
+    history_json=$(self_check_recent_history_json 2)
+    jq -r '
+        if length < 2 then 0
+        elif (.[-1].verdict == "warning" and .[-2].verdict == "warning") then 2
+        elif (.[-1].verdict == "warning") then 1
+        else 0
+        end
+    ' <<< "$history_json"
+}
+
+self_check_last_verdict() {
+    local history_json
+    history_json=$(self_check_recent_history_json 1)
+    jq -r '.[-1].verdict // "unknown"' <<< "$history_json"
+}
+
 self_check_status_summary_tsv() {
     local state_json
     state_json=$(self_check_read_state_json 2> /dev/null) || return 1
@@ -647,6 +698,7 @@ self_check_post_action_verdict() {
         }')
 
     self_check_write_state_json "$state_json" || self_check_log WARN "не удалось сохранить self-check state"
+    self_check_append_history_json "$state_json" || self_check_log WARN "не удалось сохранить self-check history"
 
     echo ""
     case "$verdict" in

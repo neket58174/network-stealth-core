@@ -1,15 +1,30 @@
-# Changelog
+# changelog
 
-Здесь фиксируются изменения **Network Stealth Core**.
+здесь фиксируются изменения **network stealth core**.
 
-Формат: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)  
-Версионирование: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
+формат: [keep a changelog](https://keepachangelog.com/en/1.0.0/)  
+версионирование: [semantic versioning](https://semver.org/spec/v2.0.0.html)
 
-## [Unreleased]
+## [unreleased]
+
+## [7.1.0] - 2026-03-07
+
+### changed
+
+- strongest-direct контракт стал managed baseline: `vless + reality + xhttp + vless encryption + xtls-rprx-vision`
+- добавлен `/etc/xray-reality/policy.json` как source of truth для managed policy
+- `clients.json` поднят до schema v3 с provider metadata, direct-flow полями и тремя variants на конфиг
+- добавлен field-only вариант `emergency` (`xhttp stream-up + browser dialer`), при этом `recommended` и `rescue` остались server-validated direct path
+- добавлен `data/domains/catalog.json` и awareness planner’а по provider family для более разнообразных наборов конфигов
+- `scripts/measure-stealth.sh` расширен до workflow `run`, `compare` и `summarize`, а measurement summaries стали сохраняться на диске
+- добавлен `export/canary/` для переносимых полевых тестов, а `export/capabilities.json` поднят до schema v2
+- `repair` и `update --replan` теперь используют self-check и field observations при продвижении более сильного spare-config
+- `migrate-stealth` теперь обновляет и legacy transport, и pre-v7 xhttp install
+- двуязычные docs, release metadata и lifecycle coverage обновлены до strongest-direct baseline v7.1.0
 
 ## [6.0.0] - 2026-03-07
 
-### Changed
+### changed
 
 - v6 переведен в xhttp-only режим для mutating product paths; `--transport grpc|http2` теперь отклоняется
 - добавлен transport-aware post-action self-check по canonical raw xray client json artifacts
@@ -21,7 +36,7 @@
 
 ## [5.1.0] - 2026-03-07
 
-### Changed
+### changed
 
 - `install` переведен в минимальный xhttp-first путь по умолчанию с `ru-auto` и auto-выбором числа конфигов
 - ручные prompt’ы выбора профиля и числа конфигов перенесены за `install --advanced`
@@ -34,71 +49,69 @@
 
 ## [4.2.3] - 2026-03-06
 
-### Changed
-- Усилена загрузка модулей в wrapper: `source` выполняется только из доверенных директорий (`SCRIPT_DIR`, `XRAY_DATA_DIR`) и больше не зависит от внешнего `MODULE_DIR`.
-- В `check-security-baseline.sh` добавлено покрытие PowerShell (запрет `Invoke-Expression`/`iex`, download-pipe execution и encoded-command исполнения).
-- Добавлены canonical-имена global-профиля: `global-50` / `global-50-auto`; legacy-алиасы `global-ms10` / `global-ms10-auto` сохранены для обратной совместимости.
-- Исправлены зависимости release quality-gate: перед `tests/lint.sh` теперь устанавливается `ripgrep`.
+### changed
+
+- усилена загрузка модулей в wrapper: `source` выполняется только из доверенных директорий (`SCRIPT_DIR`, `XRAY_DATA_DIR`) и больше не зависит от внешнего `MODULE_DIR`
+- в `check-security-baseline.sh` добавлено покрытие powershell и заблокированы `Invoke-Expression`/`iex`, download-pipe execution и encoded-command execution
+- добавлены canonical-имена global-профиля: `global-50` / `global-50-auto`; legacy-алиасы `global-ms10` / `global-ms10-auto` сохранены для обратной совместимости
+- исправлены зависимости release quality-gate: перед `tests/lint.sh` теперь устанавливается `ripgrep`
 
 ## [4.2.1] - 2026-03-02
 
-### Changed
+### changed
 
-- Усилена устойчивость интерактивного режима (`yes/no`, TTY-нормализация, единый prompt helper).
-- Исправлены рендеринг рамок/строк интерфейса и стабильность ввода в install/uninstall сценариях.
-- Вынесены и зафиксированы модульные контракты, tightened runtime-валидация путей и параметров.
-- Усилен CI-контур (stage-3 complexity gate, дополнительные e2e/регрессионные проверки).
-- Документация и структура проекта унифицированы в двуязычном формате.
+- усилена устойчивость интерактивного режима (`yes/no`, tty-нормализация, единый prompt helper)
+- исправлены рендеринг рамок и стабильность ввода в install/uninstall сценариях
+- вынесены и зафиксированы модульные контракты, tightened runtime-валидация путей и параметров
+- усилен ci-контур (stage-3 complexity gate, дополнительные e2e и регрессионные проверки)
+- документация и структура проекта унифицированы в двуязычном формате
 
-### Fixed
+### fixed
 
-- `add-clients`: добавлена fail-safe проверка IPv6 inbound сборки через `jq` и проверка итогового payload.
-- Исключены повторные/ложные циклы подтверждений в fallback-подтверждениях minisign.
+- `add-clients`: добавлена fail-safe проверка ipv6 inbound сборки через `jq` и проверка итогового payload
+- исключены повторные и ложные циклы подтверждений в fallback-подтверждениях minisign
 
 ## [4.2.0] - 2026-02-26
 
-### Changed
+### changed
 
-- Документация переведена в двуязычную структуру `docs/en` и `docs/ru`.
-- Публичное имя проекта унифицировано как `Network Stealth Core`.
+- нормализованы операционные команды под установленный `xray-reality.sh`
+- уточнён поддерживаемый контур: ubuntu 24.04 lts
+- добавлены явные compatibility-флаги: `--allow-no-systemd` и `--require-minisign`
+- документирована политика trust-anchor для minisign
+- пул `tier_global_ms10` расширен с 10 до 50 доменов
 
-- Нормализованы операционные команды под установленный `xray-reality.sh`.
-- Уточнён поддерживаемый контур: Ubuntu 24.04 LTS.
-- Добавлены явные compatibility-флаги: `--allow-no-systemd`, `--require-minisign`.
-- Документирована политика trust-anchor для minisign.
-- Пул `tier_global_ms10` расширен с 10 до 50 доменов.
+### fixed
 
-### Fixed
-
-- Install теперь нейтрализует конфликтующие systemd drop-in файлы.
-- `install`, `update`, `repair` корректно прекращают выполнение без systemd, если не включён compatibility-режим.
-- В strict minisign режиме реализован fail-closed.
-- Исправлено распределение доменов, исключены соседние дубли.
-- Исправлен аварийный diagnostic-путь (`journalctl --no-pager`).
+- install теперь нейтрализует конфликтующие systemd drop-in файлы
+- `install`, `update` и `repair` корректно прекращают выполнение без systemd, если не включён compatibility-режим
+- в strict minisign режиме реализован fail-closed
+- исправлено распределение доменов, исключены соседние дубли
+- исправлен diagnostic-путь (`journalctl --no-pager`)
 
 ## [4.1.8] - 2026-02-24
 
-### Changed
+### changed
 
-- CI и документация сфокусированы на Ubuntu 24.04.
-- Уточнены названия workflow-run и метаданные пакетов.
-- Обновлена формулировка документации для публичного репозитория.
-- Добавлен release-checklist для Ubuntu 24.04.
+- ci и документация сфокусированы на ubuntu 24.04
+- уточнены названия workflow-run и метаданные пакетов
+- обновлена формулировка документации для публичного репозитория
+- добавлен release-checklist для ubuntu 24.04
 
-### Fixed
+### fixed
 
-- Исправлена обработка BBR sysctl значений.
-- Улучшено поведение в isolated root окружениях.
+- исправлена обработка bbr sysctl значений
+- улучшено поведение в isolated root окружениях
 
 ## [4.1.7] - 2026-02-22
 
-### Note
+### note
 
-- Базовый релиз, с которого начата история в этом репозитории.
+- базовый релиз, с которого начата история в этом репозитории
 
 ## [<4.1.7]
 
-### Note
+### note
 
-- Старые релизы до миграции в новый репозиторий здесь не публикуются.
-- История до 4.1.7 намеренно свернута.
+- старые релизы до миграции в новый репозиторий здесь не публикуются
+- история до 4.1.7 намеренно свернута

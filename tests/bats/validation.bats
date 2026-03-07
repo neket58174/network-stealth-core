@@ -131,7 +131,7 @@
     [[ "$output" == *"ok"* ]]
 }
 
-@test "validate_install_config accepts xhttp-only install settings" {
+@test "validate_install_config accepts strongest-direct install settings" {
     run bash -eo pipefail -c '
     source ./lib.sh
     DOMAIN_TIER="tier_ru"
@@ -148,7 +148,7 @@
     [[ "$output" == *"off"* ]]
 }
 
-@test "validate_install_config rejects legacy transport in v6" {
+@test "validate_install_config rejects legacy transport in v7" {
     run bash -eo pipefail -c '
     source ./lib.sh
     DOMAIN_TIER="tier_ru"

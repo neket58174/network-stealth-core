@@ -1,202 +1,123 @@
-# Troubleshooting
+# troubleshooting
 
-Use this guide when installation, migration, or runtime behavior is not as expected.
+## 1. install is asking questions i did not expect
 
-## 1. Install aborted
-
-### Checks
+default install should stay minimal.
+if you used `install --advanced`, prompts are expected.
+for unattended installs use:
 
 ```bash
-sudo tail -n 200 /var/log/xray-install.log
-sudo xray-reality.sh diagnose
+sudo xray-reality.sh install --non-interactive --yes
 ```
 
-### Typical causes
+## 2. `update`, `repair`, or `add-clients` says the managed install must migrate first
 
-- missing dependencies or broken package mirrors
-- no writable target path
-- existing runtime files that fail safety validation
-- self-check could not validate either `recommended` or `rescue`
-
-## 2. Unexpected manual prompts during install
-
-Default `install` should follow the minimal xhttp-only path.
-
-If you need manual profile or config-count prompts, run:
+you are on a legacy or pre-v7 managed contract.
+run:
 
 ```bash
-sudo xray-reality.sh install --advanced
-```
-
-If automation must stay non-interactive, add:
-
-```bash
---yes --non-interactive
-```
-
-## 3. Status shows `legacy transport`
-
-### Meaning
-
-The managed install still uses legacy `grpc` or `http2`.
-
-### Recommended action
-
-```bash
-sudo xray-reality.sh status --verbose
 sudo xray-reality.sh migrate-stealth --non-interactive --yes
-sudo xray-reality.sh status --verbose
 ```
 
-Expected post-state:
-
-- `Transport: xhttp`
-- no `legacy transport` warning
-- rebuilt client artifacts, raw xray exports, and capability matrix
-
-## 4. Mutating action is blocked on a legacy install
-
-Typical message:
-
-- `action 'update' is blocked in v6`
-- `first run: xray-reality.sh migrate-stealth --non-interactive --yes`
-
-### Fix
-
-Run migration first, then retry the mutating command.
-
-## 5. Service is active but self-check is `warning`
-
-### Meaning
-
-`recommended` failed but `rescue` passed.
-
-### Checks
+then verify:
 
 ```bash
 sudo xray-reality.sh status --verbose
-sudo jq . /var/lib/xray/self-check.json
+```
+
+## 3. status shows `warning` or `broken`
+
+collect the operator picture first:
+
+```bash
+sudo xray-reality.sh status --verbose
 sudo xray-reality.sh diagnose
 ```
 
-### Recovery
+then take the next step:
 
-- inspect the selected variant and latency
-- compare `recommended` and `rescue` with `scripts/measure-stealth.sh`
-- if degradation persists, run `repair` or rotate the host
-
-## 6. Self-check is `broken`
-
-### Checks
+- `warning`: save real-network measurements and run `update --replan` or `repair`
+- `broken`: run `repair` first, then inspect whether a stronger spare is promoted
 
 ```bash
-sudo journalctl -u xray -n 200 --no-pager
-sudo xray -test -c /etc/xray/config.json
-sudo jq . /var/lib/xray/self-check.json
-sudo xray-reality.sh diagnose
+sudo bash scripts/measure-stealth.sh run --save --output /tmp/measure.json
+sudo xray-reality.sh update --replan --non-interactive --yes
 ```
 
-### Safe fallback
+## 4. client artifacts look stale or missing
 
-```bash
-sudo xray-reality.sh rollback
-```
-
-If the last mutating action failed, the project should already have rolled back automatically.
-
-## 7. Client artifacts look inconsistent
-
-### Symptoms
-
-- `clients.txt` and `clients.json` disagree
-- expected `recommended` / `rescue` variants are missing
-- `export/raw-xray/` files are absent or stale
-- `export/capabilities.json` does not match actual artifacts
-
-### Recovery
+rebuild them from the live managed state:
 
 ```bash
 sudo xray-reality.sh repair --non-interactive --yes
-sudo xray-reality.sh status --verbose
 ```
 
-Then inspect:
+this should refresh:
 
-- `/etc/xray/private/keys/clients.txt`
-- `/etc/xray/private/keys/clients.json`
-- `/etc/xray/private/keys/export/raw-xray/`
-- `/etc/xray/private/keys/export/capabilities.json`
+- `clients.txt`
+- `clients.json`
+- `export/raw-xray/`
+- `export/capabilities.json`
+- `export/canary/`
+- `policy.json`
 
-## 8. `migrate-stealth` fails
+## 5. `scripts/measure-stealth.sh run` reports no successful variants for a config
 
-### Checks
+first compare direct variants:
 
 ```bash
-sudo journalctl -u xray -n 200 --no-pager
-sudo xray -test -c /etc/xray/config.json
+sudo bash scripts/measure-stealth.sh run --variants recommended,rescue --output /tmp/measure.json
+jq . /tmp/measure.json
+```
+
+if both direct variants are weak on the tested network:
+
+- inspect `status --verbose` for `recommend_emergency`
+- use the canary bundle or raw xray `emergency` config on the client side
+- ensure the client sets `xray.browser.dialer`
+
+## 6. i need to test `emergency`
+
+`emergency` is field-only.
+use the raw xray artifact from `export/raw-xray/` or the `export/canary/` bundle.
+example client-side env:
+
+```bash
+export xray.browser.dialer=127.0.0.1:11050
+```
+
+it is normal that server-side post-action self-check does not execute `emergency`.
+
+## 7. `scripts/measure-stealth.sh` usage failed
+
+use one of the supported forms:
+
+```bash
+sudo bash scripts/measure-stealth.sh run --save
+sudo bash scripts/measure-stealth.sh compare --dir /var/lib/xray/measurements
+sudo bash scripts/measure-stealth.sh summarize --dir /var/lib/xray/measurements
+```
+
+plain invocation without a subcommand is equivalent to `run`.
+
+## 8. `migrate-stealth` failed
+
+collect diagnostics before trying random edits:
+
+```bash
 sudo xray-reality.sh diagnose
-```
-
-### Common causes
-
-- existing managed config is already broken before migration
-- local artifacts were manually changed outside the managed flow
-- systemd or firewall state is already inconsistent
-
-### Safe fallback
-
-```bash
 sudo xray-reality.sh rollback
 ```
 
-## 9. Minisign warning appears
+then inspect:
 
-### Meaning
+- xray feature support
+- self-check errors
+- field summary
+- policy and artifact paths
 
-Release did not expose a minisign signature or local verifier was unavailable.
+## 9. external client imports do not match the raw xray config
 
-### What to do
-
-- for strict environments, use `--require-minisign`
-- otherwise continue only if SHA256-only mode is acceptable in your threat model
-
-## 10. Local measurement report shows no successful variants
-
-### Checks
-
-```bash
-sudo bash scripts/measure-stealth.sh --output /tmp/measure-stealth.json
-jq . /tmp/measure-stealth.json
-```
-
-### Meaning
-
-Neither `recommended` nor `rescue` succeeded for at least one managed config on the current network.
-
-### Next steps
-
-- compare from another client network
-- inspect server health and self-check state
-- redeploy or rotate if the node appears burned
-
-## 11. Uninstall confirmation behaves unexpectedly
-
-If confirmation input is not accepted:
-
-- type plain `yes` or `no`
-- avoid pasted text with hidden characters
-- use automation-safe mode when appropriate:
-
-```bash
-sudo xray-reality.sh uninstall --yes --non-interactive
-```
-
-## 12. Last-resort recovery
-
-```bash
-sudo xray-reality.sh rollback
-sudo xray-reality.sh status --verbose
-sudo xray-reality.sh diagnose
-```
-
-If rollback does not restore service behavior, open an issue with sanitized logs and exact commands.
+this is usually intentional.
+for strongest-direct features, raw xray json is the canonical source of truth.
+use `export/capabilities.json` to see which targets are native, link-only, or unsupported.
