@@ -1,8 +1,8 @@
 # Troubleshooting
 
-Этот документ помогает диагностировать сбои установки, миграции и рантайма.
+Используй этот гайд, если установка, миграция или runtime-поведение идут не так, как ожидается.
 
-## 1. Установка прервалась
+## 1. Install завершился ошибкой
 
 ### Проверки
 
@@ -11,33 +11,34 @@ sudo tail -n 200 /var/log/xray-install.log
 sudo xray-reality.sh diagnose
 ```
 
-### Частые причины
+### Типичные причины
 
-- не установлены зависимости или сломан пакетный mirror
-- нет прав на запись в целевые пути
-- существующие runtime-файлы не проходят safety-валидацию
+- не хватает зависимостей или сломаны package mirrors
+- нет writable target path
+- существующие runtime-файлы не проходят safety validation
+- self-check не смог подтвердить ни `recommended`, ни `rescue`
 
 ## 2. Во время install появились неожиданные ручные prompt’ы
 
-Обычный `install` должен идти по минимальному xhttp-first пути.
+Обычный `install` должен идти по минимальному xhttp-only пути.
 
-Если нужен ручной выбор профиля и числа конфигов, запускайте:
+Если нужны ручные prompt’ы профиля и числа конфигов, запускай:
 
 ```bash
 sudo xray-reality.sh install --advanced
 ```
 
-Если автоматизация неожиданно блокируется на prompt’ах, добавьте:
+Если automation должен быть строго non-interactive, добавь:
 
 ```bash
 --yes --non-interactive
 ```
 
-## 3. В `status` показан `legacy transport`
+## 3. В status показан `legacy transport`
 
 ### Что это значит
 
-Managed-установка все еще использует `grpc` или `http2`.
+Managed-установка всё ещё использует legacy `grpc` или `http2`.
 
 ### Рекомендуемое действие
 
@@ -47,42 +48,70 @@ sudo xray-reality.sh migrate-stealth --non-interactive --yes
 sudo xray-reality.sh status --verbose
 ```
 
-Ожидаемое состояние после миграции:
+Ожидаемое состояние после:
 
 - `Transport: xhttp`
 - нет предупреждения `legacy transport`
-- артефакты и raw xray exports пересобраны
+- пересобраны client artifacts, raw xray exports и capability matrix
 
-## 4. Сервис active, но нужные порты не слушаются
+## 4. Mutating-действие заблокировано на legacy install
+
+Типичное сообщение:
+
+- `action 'update' is blocked in v6`
+- `first run: xray-reality.sh migrate-stealth --non-interactive --yes`
+
+### Исправление
+
+Сначала выполни миграцию, потом повтори mutating-команду.
+
+## 5. Service active, но self-check = `warning`
+
+### Что это значит
+
+`recommended` не прошел, но `rescue` прошел.
 
 ### Проверки
 
 ```bash
-sudo systemctl status xray --no-pager
-sudo journalctl -u xray -n 200 --no-pager
-sudo xray -test -c /etc/xray/config.json
-sudo ss -tlnp | grep xray
+sudo xray-reality.sh status --verbose
+sudo jq . /var/lib/xray/self-check.json
+sudo xray-reality.sh diagnose
 ```
-
-### Частые причины
-
-- конфликтующие systemd drop-in меняют `ExecStart` или runtime user
-- `config.json` рассинхронизирован с клиентскими артефактами
-- после внешних изменений произошел дрейф firewall
 
 ### Восстановление
 
+- проверь selected variant и latency
+- сравни `recommended` и `rescue` через `scripts/measure-stealth.sh`
+- если деградация держится, запусти `repair` или ротируй хост
+
+## 6. Self-check = `broken`
+
+### Проверки
+
 ```bash
-sudo xray-reality.sh repair --non-interactive --yes
+sudo journalctl -u xray -n 200 --no-pager
+sudo xray -test -c /etc/xray/config.json
+sudo jq . /var/lib/xray/self-check.json
+sudo xray-reality.sh diagnose
 ```
 
-## 5. Клиентские артефакты выглядят неконсистентно
+### Безопасный fallback
+
+```bash
+sudo xray-reality.sh rollback
+```
+
+Если последнее mutating-действие упало, проект должен был уже сделать автоматический rollback.
+
+## 7. Клиентские артефакты выглядят несогласованно
 
 ### Симптомы
 
-- `clients.txt` и `clients.json` не совпадают
-- пропали варианты `recommended` / `rescue`
+- `clients.txt` и `clients.json` расходятся
+- нет ожидаемых вариантов `recommended` / `rescue`
 - отсутствуют или устарели файлы в `export/raw-xray/`
+- `export/capabilities.json` не соответствует реальным артефактам
 
 ### Восстановление
 
@@ -91,13 +120,14 @@ sudo xray-reality.sh repair --non-interactive --yes
 sudo xray-reality.sh status --verbose
 ```
 
-Проверьте:
+Потом проверь:
 
 - `/etc/xray/private/keys/clients.txt`
 - `/etc/xray/private/keys/clients.json`
 - `/etc/xray/private/keys/export/raw-xray/`
+- `/etc/xray/private/keys/export/capabilities.json`
 
-## 6. `migrate-stealth` завершился ошибкой
+## 8. `migrate-stealth` завершился ошибкой
 
 ### Проверки
 
@@ -107,11 +137,11 @@ sudo xray -test -c /etc/xray/config.json
 sudo xray-reality.sh diagnose
 ```
 
-### Типовые причины
+### Частые причины
 
-- managed-конфиг уже сломан до миграции
-- локальные артефакты были вручную изменены вне managed flow
-- systemd или firewall уже находятся в неконсистентном состоянии
+- managed config был сломан ещё до миграции
+- локальные артефакты менялись вручную вне managed-flow
+- systemd или firewall уже в несогласованном состоянии
 
 ### Безопасный fallback
 
@@ -119,58 +149,54 @@ sudo xray-reality.sh diagnose
 sudo xray-reality.sh rollback
 ```
 
-## 7. Появилось предупреждение про minisign
+## 9. Появляется предупреждение minisign
 
 ### Что это значит
 
-В релизе нет minisign-подписи или verifier недоступен локально.
+В релизе нет minisign-подписи или локальный verifier недоступен.
 
 ### Что делать
 
-- для строгого контура используйте `--require-minisign`
-- иначе продолжайте только если SHA256-only режим допустим в вашей threat model
+- для strict-окружений используй `--require-minisign`
+- иначе продолжай только если SHA256-only режим допустим в твоей threat model
 
-## 8. DNS timeout в логах клиента
+## 10. Локальный measurement-report показывает отсутствие успешных вариантов
 
-### Симптомы
-
-Повторяются ошибки вида:
-
-- `dns: exchange failed`
-- `context deadline exceeded`
-
-### Checklist
-
-- протестировать другой сгенерированный конфиг или `rescue` вариант
-- проверить доступность сервера из клиентской сети
-- проверить локальную DNS-стратегию клиента и outbound rules
-- убедиться, что сеть не блокирует выбранный DNS-путь
-
-Быстрая серверная проверка:
+### Проверки
 
 ```bash
-sudo xray-reality.sh status
-sudo journalctl -u xray -n 200 --no-pager
+sudo bash scripts/measure-stealth.sh --output /tmp/measure-stealth.json
+jq . /tmp/measure-stealth.json
 ```
 
-## 9. Подтверждение uninstall ведет себя странно
+### Что это значит
+
+Ни `recommended`, ни `rescue` не сработали хотя бы для одного managed-конфига в текущей сети.
+
+### Что делать дальше
+
+- сравни с другой клиентской сетью
+- проверь здоровье сервера и self-check state
+- redeploy/rotate, если узел выглядит burned
+
+## 11. Подтверждение uninstall ведёт себя странно
 
 Если подтверждение не принимается:
 
-- вводите только `yes` или `no`
-- не вставляйте текст со скрытыми символами
-- для автоматизации используйте:
+- вводи обычное `yes` или `no`
+- не вставляй текст со скрытыми символами
+- при необходимости используй automation-safe режим:
 
 ```bash
 sudo xray-reality.sh uninstall --yes --non-interactive
 ```
 
-## 10. Аварийное восстановление
+## 12. Recovery последней инстанции
 
 ```bash
 sudo xray-reality.sh rollback
-sudo xray-reality.sh status
+sudo xray-reality.sh status --verbose
 sudo xray-reality.sh diagnose
 ```
 
-Если rollback не помогает, откройте issue и приложите очищенные логи и точные команды.
+Если rollback не восстановил рабочее состояние, открой issue с очищенными логами и точными командами.

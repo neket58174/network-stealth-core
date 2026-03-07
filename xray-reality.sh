@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Network Stealth Core 5.1.0 - Wrapper
+# Network Stealth Core 6.0.0 - Wrapper
 
 set -euo pipefail
 

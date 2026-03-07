@@ -62,6 +62,7 @@
 : "${UPDATE_LOG:=/var/log/xray-update.log}"
 : "${DIAG_LOG:=/var/log/xray-diagnose.log}"
 : "${HEALTH_LOG:=}"
+: "${SELF_CHECK_STATE_FILE:=/var/lib/xray/self-check.json}"
 
 : "${SERVER_IP:=}"
 : "${SERVER_IP6:=}"
@@ -72,6 +73,9 @@
 : "${DOWNLOAD_RETRIES:=3}"
 : "${DOWNLOAD_RETRY_DELAY:=2}"
 : "${HEALTH_CHECK_INTERVAL:=120}"
+: "${SELF_CHECK_ENABLED:=true}"
+: "${SELF_CHECK_URLS:=https://cp.cloudflare.com/generate_204,https://www.gstatic.com/generate_204}"
+: "${SELF_CHECK_TIMEOUT_SEC:=8}"
 : "${LOG_RETENTION_DAYS:=30}"
 : "${LOG_MAX_SIZE_MB:=10}"
 : "${KEEP_LOCAL_BACKUPS:=true}"

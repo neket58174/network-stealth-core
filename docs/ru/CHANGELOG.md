@@ -7,6 +7,18 @@
 
 ## [Unreleased]
 
+## [6.0.0] - 2026-03-07
+
+### Changed
+
+- v6 переведен в xhttp-only режим для mutating product paths; `--transport grpc|http2` теперь отклоняется
+- добавлен transport-aware post-action self-check по canonical raw xray client json artifacts
+- operator verdict сохраняется в `/var/lib/xray/self-check.json` и показывается в `status --verbose` и `diagnose`
+- введен `export/capabilities.json`, а `compatibility-notes.txt` теперь генерируется из capability matrix
+- добавлен `scripts/measure-stealth.sh` как local measurement harness для вариантов `recommended` и `rescue`
+- `update`, `repair`, `add-clients` и `add-keys` блокируются на managed legacy transport до выполнения `migrate-stealth`
+- двуязычная документация, release metadata и тесты обновлены до xhttp-only baseline v6
+
 ## [5.1.0] - 2026-03-07
 
 ### Changed

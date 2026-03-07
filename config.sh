@@ -599,6 +599,10 @@ save_environment() {
         write_env_kv DOMAIN_HEALTH_MAX_PROBES "$DOMAIN_HEALTH_MAX_PROBES"
         write_env_kv DOMAIN_HEALTH_RANKING "$DOMAIN_HEALTH_RANKING"
         write_env_kv HEALTH_CHECK_INTERVAL "$HEALTH_CHECK_INTERVAL"
+        write_env_kv SELF_CHECK_ENABLED "$SELF_CHECK_ENABLED"
+        write_env_kv SELF_CHECK_URLS "$SELF_CHECK_URLS"
+        write_env_kv SELF_CHECK_TIMEOUT_SEC "$SELF_CHECK_TIMEOUT_SEC"
+        write_env_kv SELF_CHECK_STATE_FILE "$SELF_CHECK_STATE_FILE"
         write_env_kv LOG_RETENTION_DAYS "$LOG_RETENTION_DAYS"
         write_env_kv LOG_MAX_SIZE_MB "$LOG_MAX_SIZE_MB"
         write_env_kv HEALTH_LOG "$HEALTH_LOG"
@@ -1584,6 +1588,52 @@ client_artifacts_inconsistent() {
     fi
 
     [[ "$inconsistent" == true ]]
+}
+
+client_artifacts_ready_for_self_check() {
+    local json_file="${XRAY_KEYS}/clients.json"
+    local capabilities_file="${XRAY_KEYS}/export/capabilities.json"
+
+    if client_artifacts_missing; then
+        return 1
+    fi
+    if client_artifacts_inconsistent "${#PORTS[@]}"; then
+        return 1
+    fi
+    if [[ ! -f "$capabilities_file" ]]; then
+        log WARN "Отсутствует capability matrix: ${capabilities_file}"
+        return 1
+    fi
+    if ! jq -e '.formats | type == "array"' "$capabilities_file" > /dev/null 2>&1; then
+        log WARN "capabilities.json имеет некорректную схему"
+        return 1
+    fi
+    if ! jq -e '
+        type == "object"
+        and (.configs | type == "array")
+        and ([.configs[] | .variants[] | (.xray_client_file_v4 // empty)] | map(select(length > 0)) | length) >= 1
+    ' "$json_file" > /dev/null 2>&1; then
+        log WARN "clients.json не содержит пригодных raw xray variants для self-check"
+        return 1
+    fi
+    local declared_raw
+    while IFS= read -r declared_raw; do
+        [[ -n "$declared_raw" ]] || continue
+        if [[ ! -f "$declared_raw" ]]; then
+            log WARN "Отсутствует raw xray variant: ${declared_raw}"
+            return 1
+        fi
+    done < <(jq -r '.configs[] | .variants[] | .xray_client_file_v4 // empty, .xray_client_file_v6 // empty' "$json_file" 2> /dev/null)
+    return 0
+}
+
+ensure_self_check_artifacts_ready() {
+    if client_artifacts_ready_for_self_check; then
+        return 0
+    fi
+    log INFO "Артефакты self-check отсутствуют или устарели; пересобираем"
+    rebuild_client_artifacts_from_config || return 1
+    client_artifacts_ready_for_self_check
 }
 
 rebuild_client_artifacts_from_config() {

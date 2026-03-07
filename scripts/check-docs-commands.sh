@@ -15,7 +15,7 @@ DOC_FILES=(
     .github/CONTRIBUTING.ru.md
 )
 
-VALID_ACTIONS='install|add-clients|add-keys|update|repair|diagnose|rollback|uninstall|status|logs|check-update'
+VALID_ACTIONS='install|add-clients|add-keys|update|repair|migrate-stealth|diagnose|rollback|uninstall|status|logs|check-update'
 
 fail=0
 

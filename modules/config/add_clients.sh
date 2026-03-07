@@ -543,6 +543,14 @@ add_clients_flow() {
         log ERROR "Не удалось пересобрать клиентские артефакты"
         exit 1
     }
+    ensure_self_check_artifacts_ready || {
+        log ERROR "Не удалось подготовить self-check артефакты"
+        exit 1
+    }
+    if ! post_action_verdict "add-clients"; then
+        log ERROR "Финальная self-check (add-clients) завершилась с verdict=BROKEN"
+        exit 1
+    fi
 
     print_add_clients_result "$add_count" "$client_file"
 }

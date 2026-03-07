@@ -1,45 +1,83 @@
 # FAQ
 
-## Это production-ready?
+## Проект готов для production?
 
-Это публичный automation-скрипт с CI и release-gate проверками.  
-Используйте его в рамках своей модели ответственности и hardening-политики хоста.
+Это публичный automation-toolkit с CI и release gates.
+Используй его со своей operational responsibility и нормальным host hardening.
 
 ## Какая ОС официально поддерживается?
 
-Сейчас валидируемая платформа:
+Текущая валидируемая платформа:
 
 - Ubuntu 24.04 LTS
 
-Другие Linux-дистрибутивы могут работать, но не входят в активный CI-контур.
+Другие Linux-дистрибутивы могут работать, но не входят в активный CI-контракт.
 
-## Почему везде `:443` у destination?
+## Почему install теперь задаёт меньше вопросов?
 
-Это ожидаемо. `443` — стандартный HTTPS-порт с наименьшей аномальностью.  
-Порты слушающих inbound генерируются отдельно.
+В v6 дефолтный путь специально сделан opinionated.
+`install` автоматически выбирает xhttp, `ru-auto` и default count.
+`install --advanced` нужен только для ручных prompt’ов.
 
-## Что значит `fallback` по домену?
+## Можно ли всё ещё выбрать `grpc` или `http2` при install?
 
-Пример: `SNI img.example.com unavailable; fallback to example.com`.
+Нет.
+В v6 mutating product paths работают только с xhttp.
+Если у тебя уже есть managed legacy install, выполни:
 
-Это означает, что приоритетный SNI не прошёл проверку доступности, и planner выбрал другой валидный SNI для того же домена.
+```bash
+sudo xray-reality.sh migrate-stealth --non-interactive --yes
+```
 
-## Можно ли сделать смешанный набор (например 5 RU и 1 global)?
+## Что значит `legacy transport` в status?
 
-Обычный `install` теперь использует минимальный xhttp-first путь (`ru-auto`).  
-Если нужен ручной выбор профиля (`ru`, `global-50`, `custom`), используйте `install --advanced` или явный override профиля.  
-Смешивание в одном проходе пока не является отдельной фичей; используйте отдельные действия генерации.
+Это означает, что managed server config всё ещё использует `grpc` или `http2`.
+`status`, `logs`, `diagnose`, `rollback` и `uninstall` продолжают работать, но mutating-действия вроде `update`, `repair` и `add-clients` сначала требуют миграции.
 
-## Почему иногда появляется вопрос про minisign?
+## В чём разница между `recommended` и `rescue`?
 
-Если в релизе нет minisign-артефакта или verifier недоступен, скрипт может запросить подтверждение продолжения только с SHA256.
-Для строгого fail-closed режима используйте `--require-minisign`.
+- `recommended` = xhttp `mode=auto`
+- `rescue` = xhttp `mode=packet-up`
 
-## Проект завязан на одного человека или сервер?
+Mutating-flows сначала тестируют `recommended`, а при необходимости падают на `rescue`.
 
-Нет. Репозиторий и документация ориентированы на публичное обобщённое использование.
+## Для чего нужен `capabilities.json`?
 
-## Где задавать вопросы?
+Это machine-readable capability matrix экспортов.
+Она показывает, какие форматы являются:
+
+- `native`
+- `link-only`
+- `unsupported`
+
+Для xhttp canonical client artifact — raw xray json.
+
+## Что хранится в `self-check.json`?
+
+Последний transport-aware verdict:
+
+- имя действия
+- verdict (`ok`, `warning`, `broken`)
+- выбранный variant
+- результаты probe
+- причины для оператора
+
+## Что означает self-check `warning`?
+
+Сервер остался рабочим, но `recommended` не прошел, а `rescue` прошел.
+Это деградация, но не поломка.
+Смотри `status --verbose`, `diagnose` и сохраненный state file.
+
+## Для чего нужен `scripts/measure-stealth.sh`?
+
+Это локальный measurement harness.
+Он использует тот же probe-engine, что и runtime self-check, и пишет JSON-report для сравнения `recommended` / `rescue`.
+
+## Проект привязан к одному человеку или серверу?
+
+Нет. Содержимое репозитория, документация и defaults рассчитаны на публичное универсальное использование.
+
+## Где можно задать вопросы?
 
 - GitHub Discussions
 - GitHub Issues (для воспроизводимых багов)

@@ -16,10 +16,11 @@ sudo xray-reality.sh diagnose
 - missing dependencies or broken package mirrors
 - no writable target path
 - existing runtime files that fail safety validation
+- self-check could not validate either `recommended` or `rescue`
 
 ## 2. Unexpected manual prompts during install
 
-Default `install` should follow the minimal xhttp-first path.
+Default `install` should follow the minimal xhttp-only path.
 
 If you need manual profile or config-count prompts, run:
 
@@ -27,7 +28,7 @@ If you need manual profile or config-count prompts, run:
 sudo xray-reality.sh install --advanced
 ```
 
-If automation unexpectedly blocks on prompts, add:
+If automation must stay non-interactive, add:
 
 ```bash
 --yes --non-interactive
@@ -51,38 +52,66 @@ Expected post-state:
 
 - `Transport: xhttp`
 - no `legacy transport` warning
-- rebuilt client artifacts and raw xray exports
+- rebuilt client artifacts, raw xray exports, and capability matrix
 
-## 4. Service is active but expected ports are not listening
+## 4. Mutating action is blocked on a legacy install
+
+Typical message:
+
+- `action 'update' is blocked in v6`
+- `first run: xray-reality.sh migrate-stealth --non-interactive --yes`
+
+### Fix
+
+Run migration first, then retry the mutating command.
+
+## 5. Service is active but self-check is `warning`
+
+### Meaning
+
+`recommended` failed but `rescue` passed.
 
 ### Checks
 
 ```bash
-sudo systemctl status xray --no-pager
-sudo journalctl -u xray -n 200 --no-pager
-sudo xray -test -c /etc/xray/config.json
-sudo ss -tlnp | grep xray
+sudo xray-reality.sh status --verbose
+sudo jq . /var/lib/xray/self-check.json
+sudo xray-reality.sh diagnose
 ```
-
-### Typical causes
-
-- conflicting systemd drop-ins overriding `ExecStart` or runtime user
-- stale config not matching generated client artifacts
-- firewall drift after external changes
 
 ### Recovery
 
+- inspect the selected variant and latency
+- compare `recommended` and `rescue` with `scripts/measure-stealth.sh`
+- if degradation persists, run `repair` or rotate the host
+
+## 6. Self-check is `broken`
+
+### Checks
+
 ```bash
-sudo xray-reality.sh repair --non-interactive --yes
+sudo journalctl -u xray -n 200 --no-pager
+sudo xray -test -c /etc/xray/config.json
+sudo jq . /var/lib/xray/self-check.json
+sudo xray-reality.sh diagnose
 ```
 
-## 5. Client artifacts look inconsistent
+### Safe fallback
+
+```bash
+sudo xray-reality.sh rollback
+```
+
+If the last mutating action failed, the project should already have rolled back automatically.
+
+## 7. Client artifacts look inconsistent
 
 ### Symptoms
 
 - `clients.txt` and `clients.json` disagree
 - expected `recommended` / `rescue` variants are missing
 - `export/raw-xray/` files are absent or stale
+- `export/capabilities.json` does not match actual artifacts
 
 ### Recovery
 
@@ -96,8 +125,9 @@ Then inspect:
 - `/etc/xray/private/keys/clients.txt`
 - `/etc/xray/private/keys/clients.json`
 - `/etc/xray/private/keys/export/raw-xray/`
+- `/etc/xray/private/keys/export/capabilities.json`
 
-## 6. `migrate-stealth` fails
+## 8. `migrate-stealth` fails
 
 ### Checks
 
@@ -119,41 +149,37 @@ sudo xray-reality.sh diagnose
 sudo xray-reality.sh rollback
 ```
 
-## 7. Minisign warning appears
+## 9. Minisign warning appears
 
 ### Meaning
 
-Release did not expose minisign signature or local verifier was unavailable.
+Release did not expose a minisign signature or local verifier was unavailable.
 
 ### What to do
 
 - for strict environments, use `--require-minisign`
 - otherwise continue only if SHA256-only mode is acceptable in your threat model
 
-## 8. DNS timeout errors in client logs
+## 10. Local measurement report shows no successful variants
 
-### Symptoms
-
-Repeated client-side errors like:
-
-- `dns: exchange failed`
-- `context deadline exceeded`
-
-### Checklist
-
-- test another generated config or the `rescue` variant
-- verify the server is reachable from the client network
-- review local client DNS strategy and outbound rules
-- confirm local network does not block the chosen DNS path
-
-Server-side quick check:
+### Checks
 
 ```bash
-sudo xray-reality.sh status
-sudo journalctl -u xray -n 200 --no-pager
+sudo bash scripts/measure-stealth.sh --output /tmp/measure-stealth.json
+jq . /tmp/measure-stealth.json
 ```
 
-## 9. Uninstall confirmation behaves unexpectedly
+### Meaning
+
+Neither `recommended` nor `rescue` succeeded for at least one managed config on the current network.
+
+### Next steps
+
+- compare from another client network
+- inspect server health and self-check state
+- redeploy or rotate if the node appears burned
+
+## 11. Uninstall confirmation behaves unexpectedly
 
 If confirmation input is not accepted:
 
@@ -165,11 +191,11 @@ If confirmation input is not accepted:
 sudo xray-reality.sh uninstall --yes --non-interactive
 ```
 
-## 10. Last-resort recovery
+## 12. Last-resort recovery
 
 ```bash
 sudo xray-reality.sh rollback
-sudo xray-reality.sh status
+sudo xray-reality.sh status --verbose
 sudo xray-reality.sh diagnose
 ```
 

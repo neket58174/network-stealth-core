@@ -12,6 +12,15 @@ fi
 # shellcheck source=modules/lib/globals_contract.sh
 source "$GLOBAL_CONTRACT_MODULE"
 
+SELF_CHECK_MODULE="${SCRIPT_DIR:-$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)}/modules/health/self_check.sh"
+if [[ ! -f "$SELF_CHECK_MODULE" && -n "${XRAY_DATA_DIR:-}" ]]; then
+    SELF_CHECK_MODULE="$XRAY_DATA_DIR/modules/health/self_check.sh"
+fi
+if [[ -f "$SELF_CHECK_MODULE" ]]; then
+    # shellcheck source=/dev/null
+    source "$SELF_CHECK_MODULE"
+fi
+
 CONFIG_SHARED_HELPERS_MODULE="${SCRIPT_DIR:-$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)}/modules/config/shared_helpers.sh"
 if [[ ! -f "$CONFIG_SHARED_HELPERS_MODULE" && -n "${XRAY_DATA_DIR:-}" ]]; then
     CONFIG_SHARED_HELPERS_MODULE="$XRAY_DATA_DIR/modules/config/shared_helpers.sh"
@@ -422,7 +431,10 @@ update_xray() {
         "$XRAY_CONFIG" \
         "$XRAY_KEYS/keys.txt" \
         "$XRAY_KEYS/clients.txt" \
-        "$XRAY_KEYS/clients.json"; do
+        "$XRAY_KEYS/clients.json" \
+        "$XRAY_KEYS/export/raw-xray-index.json" \
+        "$XRAY_KEYS/export/capabilities.json" \
+        "$SELF_CHECK_STATE_FILE"; do
         [[ -f "$artifact" ]] || continue
         backup_file "$artifact"
     done
@@ -592,18 +604,18 @@ uninstall_is_allowed_file_path() {
     [[ "$resolved_file" == /* ]] || return 1
 
     case "$resolved_file" in
-        /etc/systemd/system/xray.service | /etc/systemd/system/xray-health.service | /etc/systemd/system/xray-health.timer | /etc/systemd/system/xray-auto-update.service | /etc/systemd/system/xray-auto-update.timer | /etc/systemd/system/xray-diagnose@.service | /usr/lib/systemd/system/xray.service | /usr/lib/systemd/system/xray-health.service | /usr/lib/systemd/system/xray-health.timer | /usr/lib/systemd/system/xray-auto-update.service | /usr/lib/systemd/system/xray-auto-update.timer | /usr/lib/systemd/system/xray-diagnose@.service | /lib/systemd/system/xray.service | /lib/systemd/system/xray-health.service | /lib/systemd/system/xray-health.timer | /lib/systemd/system/xray-auto-update.service | /lib/systemd/system/xray-auto-update.timer | /lib/systemd/system/xray-diagnose@.service | /usr/local/bin/xray-health.sh | /etc/cron.d/xray-health | /etc/logrotate.d/xray | /etc/sysctl.d/99-xray.conf | /etc/security/limits.d/99-xray.conf | /var/log/xray-install.log | /var/log/xray-update.log | /var/log/xray-diagnose.log | /var/log/xray-repair.log | /var/log/xray-health.log | /var/log/xray.log)
+        /etc/systemd/system/xray.service | /etc/systemd/system/xray-health.service | /etc/systemd/system/xray-health.timer | /etc/systemd/system/xray-auto-update.service | /etc/systemd/system/xray-auto-update.timer | /etc/systemd/system/xray-diagnose@.service | /usr/lib/systemd/system/xray.service | /usr/lib/systemd/system/xray-health.service | /usr/lib/systemd/system/xray-health.timer | /usr/lib/systemd/system/xray-auto-update.service | /usr/lib/systemd/system/xray-auto-update.timer | /usr/lib/systemd/system/xray-diagnose@.service | /lib/systemd/system/xray.service | /lib/systemd/system/xray-health.service | /lib/systemd/system/xray-health.timer | /lib/systemd/system/xray-auto-update.service | /lib/systemd/system/xray-auto-update.timer | /lib/systemd/system/xray-diagnose@.service | /usr/local/bin/xray-health.sh | /etc/cron.d/xray-health | /etc/logrotate.d/xray | /etc/sysctl.d/99-xray.conf | /etc/security/limits.d/99-xray.conf | /var/log/xray-install.log | /var/log/xray-update.log | /var/log/xray-diagnose.log | /var/log/xray-repair.log | /var/log/xray-health.log | /var/log/xray.log | /var/lib/xray/self-check.json)
             return 0
             ;;
         *) ;;
     esac
 
-    for candidate in "$XRAY_BIN" "$XRAY_SCRIPT_PATH" "$XRAY_UPDATE_SCRIPT" "$INSTALL_LOG" "$UPDATE_LOG" "$DIAG_LOG" "$HEALTH_LOG"; do
+    for candidate in "$XRAY_BIN" "$XRAY_SCRIPT_PATH" "$XRAY_UPDATE_SCRIPT" "$INSTALL_LOG" "$UPDATE_LOG" "$DIAG_LOG" "$HEALTH_LOG" "$SELF_CHECK_STATE_FILE"; do
         [[ -n "$candidate" ]] || continue
         resolved_candidate=$(realpath -m "$candidate" 2> /dev/null || echo "$candidate")
         if [[ "$resolved_file" == "$resolved_candidate" ]]; then
             case "$(basename "$resolved_file")" in
-                xray | xray-reality.sh | xray-reality-update.sh | xray-install.log | xray-update.log | xray-diagnose.log | xray-health.log)
+                xray | xray-reality.sh | xray-reality-update.sh | xray-install.log | xray-update.log | xray-diagnose.log | xray-health.log | self-check.json)
                     return 0
                     ;;
                 *) ;;
@@ -831,6 +843,7 @@ uninstall_all() {
     uninstall_remove_file "$UPDATE_LOG"
     uninstall_remove_file "$DIAG_LOG"
     uninstall_remove_file "$HEALTH_LOG"
+    uninstall_remove_file "$SELF_CHECK_STATE_FILE"
 
     log STEP "Удаляем cron и logrotate..."
     uninstall_remove_file /etc/cron.d/xray-health
@@ -886,6 +899,7 @@ uninstall_has_managed_artifacts() {
         "$XRAY_UPDATE_SCRIPT"
         "$XRAY_CONFIG"
         "$XRAY_ENV"
+        "$SELF_CHECK_STATE_FILE"
         "/etc/xray"
         "/etc/xray-reality"
         "$XRAY_DATA_DIR"
@@ -990,7 +1004,7 @@ status_flow() {
         echo -e "${BOLD}Клиентские конфиги:${NC}"
         echo -e "  ${XRAY_KEYS}/clients.txt"
         if [[ -d "${XRAY_KEYS}/export" ]]; then
-            echo -e "  ${XRAY_KEYS}/export/ (ClashMeta, SingBox)"
+            echo -e "  ${XRAY_KEYS}/export/ (raw xray, capability matrix, client templates)"
         fi
     fi
     echo ""
@@ -1055,6 +1069,23 @@ status_flow() {
             echo "    $last_health"
         fi
         echo ""
+
+        if declare -F self_check_status_summary_tsv > /dev/null 2>&1; then
+            local self_check_summary
+            self_check_summary=$(self_check_status_summary_tsv 2> /dev/null || true)
+            echo -e "${BOLD}Self-check:${NC}"
+            if [[ -n "$self_check_summary" ]]; then
+                local verdict action checked_at variant_key variant_mode variant_family latency_ms
+                IFS=$'\t' read -r verdict action checked_at variant_key variant_mode variant_family latency_ms <<< "$self_check_summary"
+                echo -e "  Verdict: ${verdict}"
+                echo -e "  Action: ${action}"
+                echo -e "  Checked: ${checked_at}"
+                echo -e "  Variant: ${variant_key} (${variant_mode}, ${variant_family}, ${latency_ms}ms)"
+            else
+                echo -e "  Verdict: ${YELLOW}нет данных${NC}"
+            fi
+            echo ""
+        fi
 
         echo -e "${BOLD}Авто-обновления:${NC}"
         if systemctl is-active --quiet xray-auto-update.timer 2> /dev/null; then

@@ -21,6 +21,17 @@ if [[ -f "$CONFIG_SHARED_HELPERS_MODULE" ]]; then
     source "$CONFIG_SHARED_HELPERS_MODULE"
 fi
 
+EXPORT_CAPABILITIES_MODULE="${SCRIPT_DIR:-$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)}/modules/export/capabilities.sh"
+if [[ ! -f "$EXPORT_CAPABILITIES_MODULE" && -n "${XRAY_DATA_DIR:-}" ]]; then
+    EXPORT_CAPABILITIES_MODULE="$XRAY_DATA_DIR/modules/export/capabilities.sh"
+fi
+if [[ ! -f "$EXPORT_CAPABILITIES_MODULE" ]]; then
+    echo "ERROR: не найден модуль export capabilities: $EXPORT_CAPABILITIES_MODULE" >&2
+    exit 1
+fi
+# shellcheck source=modules/export/capabilities.sh
+source "$EXPORT_CAPABILITIES_MODULE"
+
 validate_export_json_schema() {
     local file="$1"
     local kind="$2"
@@ -169,37 +180,13 @@ export_nekoray_fragment_template() {
 }
 
 export_compatibility_notes() {
-    local out_file="$1"
-    local tmp_out
-    tmp_out=$(mktemp "${out_file}.tmp.XXXXXX")
+    local capabilities_file="$1"
+    local out_file="$2"
 
-    cat > "$tmp_out" << EOF
-network stealth core export notes
-===============================
-
-transport: ${TRANSPORT}
-
-primary artifacts:
-- ${XRAY_KEYS}/clients.txt
-- ${XRAY_KEYS}/clients.json
-- ${XRAY_KEYS}/export/raw-xray/
-- ${XRAY_KEYS}/export/raw-xray-index.json
-- ${XRAY_KEYS}/export/v2rayn-links.json
-- ${XRAY_KEYS}/export/nekoray-template.json
-
-notes:
-- xhttp-first installs generate raw xray client json per variant.
-- recommended xhttp mode is auto.
-- rescue xhttp mode is packet-up.
-- clashmeta and sing-box configs are intentionally not generated in xhttp-first mode to avoid misleading users with unsupported or degraded templates.
-- legacy grpc/http2 installs still receive normalized link exports, but migrate-stealth is recommended.
-EOF
-
-    if ! validate_export_json_schema "$tmp_out" text; then
-        rm -f "$tmp_out"
+    export_capabilities_notes_from_json "$capabilities_file" "$out_file"
+    if ! validate_export_json_schema "$out_file" text; then
         return 1
     fi
-    mv "$tmp_out" "$out_file"
     log OK "Compatibility notes сохранены: $out_file"
 }
 
@@ -219,7 +206,10 @@ export_all_configs() {
     export_raw_xray_index "$json_file" "${export_dir}/raw-xray-index.json"
     export_v2rayn_fragment_template "$json_file" "${export_dir}/v2rayn-links.json"
     export_nekoray_fragment_template "$json_file" "${export_dir}/nekoray-template.json"
-    export_compatibility_notes "${export_dir}/compatibility-notes.txt"
+    export_capabilities_json "$export_dir" "${export_dir}/capabilities.json"
+    validate_export_json_schema "${export_dir}/capabilities.json" json || return 1
+    log OK "Capability matrix сохранена: ${export_dir}/capabilities.json"
+    export_compatibility_notes "${export_dir}/capabilities.json" "${export_dir}/compatibility-notes.txt"
 
     local -a artifacts=()
     mapfile -t artifacts < <(find "$export_dir" -mindepth 1 -maxdepth 2 -type f)

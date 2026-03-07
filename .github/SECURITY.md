@@ -6,8 +6,8 @@ This document defines the security posture and disclosure process for **Network 
 
 | Version line | Status |
 |---|---|
-| `5.1.x` | supported |
-| `<5.1` | unsupported in this repository |
+| `6.0.x` | supported |
+| `<6.0` | unsupported in this repository |
 
 ## Reporting vulnerabilities
 
@@ -31,7 +31,8 @@ Target response windows:
 | partial write corruption | atomic writes and staged validation |
 | failed update, repair, or migration | rollback stack and runtime reconciliation |
 | service over-privilege | dedicated `xray` user and restrictive `systemd` settings |
-| stale client artifact exposure | strict permissions plus full artifact rebuild from managed config |
+| stale or misleading client exports | capability matrix plus canonical raw xray artifacts |
+| silent transport degradation | transport-aware self-check and persisted verdict state |
 
 ## Security controls
 
@@ -71,21 +72,24 @@ Project unit applies controls such as:
 Validation coverage includes:
 
 - domain, port, IPv4, IPv6 formats
-- gRPC service names and xhttp path normalization
+- xhttp path normalization
 - destructive operation path safety
 - URL and schedule format checks
+- self-check URL validation and timeout bounds
 - runtime range constraints
 
 ### Artifact safety
 
 - `clients.json` is schema v2 and remains permission-restricted
-- xhttp-first installs generate per-config variants instead of one ambiguous client link
-- raw xray exports are rebuilt from managed config and stored under restricted paths
+- raw xray exports are the canonical xhttp client artifacts
+- `export/capabilities.json` makes unsupported targets explicit
+- `self-check.json` records the last transport-aware verdict for operators
 
 ### Rollback safety
 
 - pre-change backup snapshot
 - automatic rollback on failure paths
+- rollback on broken transport-aware verdicts
 - firewall rollback records
 - runtime reconciliation after restore
 
@@ -101,6 +105,8 @@ Validation coverage includes:
 | `/etc/xray/private/keys/clients.txt` | `root:xray` | `0640` | human-readable client summary |
 | `/etc/xray/private/keys/clients.json` | `root:xray` | `0640` | structured client metadata (`schema_version: 2`) |
 | `/etc/xray/private/keys/export/raw-xray/*.json` | `root:xray` | `0640` | raw xray client artifacts |
+| `/etc/xray/private/keys/export/capabilities.json` | `root:xray` | `0640` | export capability matrix |
+| `/var/lib/xray/self-check.json` | `root:xray` | `0640` | last self-check verdict |
 | `/var/backups/xray` | `root:root` | `0700` | rollback sessions |
 
 ## Risky overrides
@@ -111,15 +117,16 @@ These flags weaken default guarantees and should be temporary:
 - `ALLOW_UNVERIFIED_MINISIGN_BOOTSTRAP=true`
 - `ALLOW_NO_SYSTEMD=true`
 - `GEO_VERIFY_HASH=false`
+- `SELF_CHECK_ENABLED=false`
 - `XRAY_ALLOW_CUSTOM_DATA_DIR=true` (only for trusted, non-world-writable module source paths)
 
 ## Operational recommendations
 
 1. prefer tagged releases for production-like deployments
-2. keep legacy `grpc/http2` installs on a short migration window
-3. monitor `journalctl -u xray` and health logs
-4. restrict shell and admin access to the host
-5. rotate or redeploy when compromise is suspected
+2. migrate managed legacy `grpc/http2` installs promptly with `migrate-stealth`
+3. monitor `journalctl -u xray`, health logs, and self-check verdicts
+4. use `scripts/measure-stealth.sh` when comparing real-network behavior
+5. rotate or redeploy when compromise or burn is suspected
 
 ## Security testing signals
 
@@ -129,6 +136,7 @@ Security-sensitive behavior is covered by:
 - path safety tests
 - rollback and lifecycle tests
 - export schema validation
+- self-check and measurement coverage
 - CI audit gates and docs command contract checks
 
 For operations-side incident response, see [../docs/en/OPERATIONS.md](../docs/en/OPERATIONS.md).

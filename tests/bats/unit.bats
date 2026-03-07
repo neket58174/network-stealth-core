@@ -212,13 +212,40 @@
     run bash -eo pipefail -c '
     source ./lib.sh
     source ./export.sh
+    export_dir=$(mktemp -d)
     tmp=$(mktemp)
-    export_compatibility_notes "$tmp"
+    export_capabilities_json "$export_dir" "$export_dir/capabilities.json"
+    export_compatibility_notes "$export_dir/capabilities.json" "$tmp"
     grep -q "network stealth core export notes" "$tmp"
+    grep -q "raw-xray: native" "$tmp"
     echo ok
   '
     [ "$status" -eq 0 ]
     [[ "$output" == *"ok"* ]]
+}
+
+@test "export_capabilities_json writes xhttp capability matrix" {
+    run bash -eo pipefail -c '
+    source ./lib.sh
+    source ./export.sh
+    tmp_dir=$(mktemp -d)
+    XRAY_KEYS="$tmp_dir/keys"
+    mkdir -p "$XRAY_KEYS" "$tmp_dir/export"
+    export_capabilities_json "$tmp_dir/export" "$tmp_dir/export/capabilities.json"
+    jq -e '\''.transport == "xhttp"'\'' "$tmp_dir/export/capabilities.json" > /dev/null
+    jq -e '\''any(.formats[]; .name == "raw-xray" and .status == "native")'\'' "$tmp_dir/export/capabilities.json" > /dev/null
+    jq -e '\''any(.formats[]; .name == "sing-box" and .status == "unsupported")'\'' "$tmp_dir/export/capabilities.json" > /dev/null
+    echo ok
+  '
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"ok"* ]]
+}
+
+@test "measure-stealth script exposes help" {
+    run bash -eo pipefail -c 'bash ./scripts/measure-stealth.sh --help'
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"usage: scripts/measure-stealth.sh"* ]]
+    [[ "$output" == *"--variants <list>"* ]]
 }
 
 @test "resolve_mirror_base replaces version placeholders" {

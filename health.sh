@@ -11,6 +11,17 @@ fi
 # shellcheck source=modules/lib/globals_contract.sh
 source "$GLOBAL_CONTRACT_MODULE"
 
+SELF_CHECK_MODULE="${SCRIPT_DIR:-$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)}/modules/health/self_check.sh"
+if [[ ! -f "$SELF_CHECK_MODULE" && -n "${XRAY_DATA_DIR:-}" ]]; then
+    SELF_CHECK_MODULE="$XRAY_DATA_DIR/modules/health/self_check.sh"
+fi
+if [[ ! -f "$SELF_CHECK_MODULE" ]]; then
+    echo "ERROR: не найден модуль self-check: $SELF_CHECK_MODULE" >&2
+    exit 1
+fi
+# shellcheck source=modules/health/self_check.sh
+source "$SELF_CHECK_MODULE"
+
 health_monitoring_collect_port_lines() {
     # shellcheck disable=SC2034 # nameref writes caller variables.
     local -n out_v4_ref="$1"
@@ -581,6 +592,11 @@ diagnose() {
         if [[ -x "$XRAY_BIN" && -f "$XRAY_CONFIG" ]]; then
             xray_config_test 2>&1 | tail -n 5 || true
         fi
+        if [[ -f "${SELF_CHECK_STATE_FILE:-/var/lib/xray/self-check.json}" ]]; then
+            echo ""
+            echo "===== SELF-CHECK ====="
+            jq '.' "${SELF_CHECK_STATE_FILE:-/var/lib/xray/self-check.json}" 2> /dev/null || cat "${SELF_CHECK_STATE_FILE:-/var/lib/xray/self-check.json}" 2> /dev/null || true
+        fi
         echo ""
 
         echo "===== SYSTEMD ====="
@@ -673,131 +689,5 @@ test_reality_connectivity() {
 }
 
 post_action_verdict() {
-    local action="${1:-action}"
-    local verdict="OK"
-    local runtime_checks=false
-    local -a reasons=()
-
-    if [[ ! -x "$XRAY_BIN" ]]; then
-        verdict="BROKEN"
-        reasons+=("бинарник xray не найден: ${XRAY_BIN}")
-    fi
-    if [[ ! -f "$XRAY_CONFIG" ]]; then
-        verdict="BROKEN"
-        reasons+=("конфиг не найден: ${XRAY_CONFIG}")
-    fi
-
-    if [[ "$verdict" != "BROKEN" ]]; then
-        if ! xray_config_test_ok "$XRAY_CONFIG"; then
-            verdict="BROKEN"
-            reasons+=("xray -test отклонил текущий config.json")
-        fi
-    fi
-
-    if systemctl_available && systemd_running; then
-        runtime_checks=true
-        if ! systemctl is-active --quiet xray; then
-            verdict="BROKEN"
-            reasons+=("systemd unit xray не active")
-        fi
-    else
-        if [[ "$verdict" != "BROKEN" ]]; then
-            verdict="WARNING"
-        fi
-        reasons+=("systemd недоступен: runtime-проверка ограничена")
-    fi
-
-    if [[ "$runtime_checks" == "true" ]] && [[ -f "$XRAY_CONFIG" ]] && command -v jq > /dev/null 2>&1; then
-        local -a verdict_ports=()
-        mapfile -t verdict_ports < <(jq -r '.inbounds[]
-            | select(.streamSettings.realitySettings != null)
-            | select((.listen // "0.0.0.0") | test(":") | not)
-            | select(.port != null)
-            | .port' "$XRAY_CONFIG" 2> /dev/null)
-
-        if ((${#verdict_ports[@]} == 0)); then
-            if [[ "$verdict" != "BROKEN" ]]; then
-                verdict="WARNING"
-            fi
-            reasons+=("в конфиге не найдено ни одного Reality inbound порта")
-        else
-            local listening expected
-            if declare -F count_listening_ports > /dev/null 2>&1; then
-                read -r listening expected < <(count_listening_ports "${verdict_ports[@]}")
-            else
-                listening=0
-                expected=0
-                local p
-                for p in "${verdict_ports[@]}"; do
-                    [[ -n "$p" ]] || continue
-                    expected=$((expected + 1))
-                    if port_is_listening "$p"; then
-                        listening=$((listening + 1))
-                    fi
-                done
-            fi
-
-            if ((expected > 0)); then
-                if ((listening == 0)); then
-                    verdict="BROKEN"
-                    reasons+=("ни один порт не слушается (0/${expected})")
-                elif ((listening < expected)); then
-                    if [[ "$verdict" != "BROKEN" ]]; then
-                        verdict="WARNING"
-                    fi
-                    reasons+=("часть портов не слушается (${listening}/${expected})")
-                fi
-            fi
-        fi
-    fi
-
-    if systemctl_available && systemd_running; then
-        local health_timer_present=false
-        if systemctl cat xray-health.timer > /dev/null 2>&1; then
-            health_timer_present=true
-        elif [[ -f /etc/systemd/system/xray-health.timer || -f /usr/lib/systemd/system/xray-health.timer || -f /lib/systemd/system/xray-health.timer ]]; then
-            health_timer_present=true
-        elif systemctl list-unit-files --type=timer 2> /dev/null | awk 'NR > 1 { print $1 }' | grep -Fxq 'xray-health.timer'; then
-            health_timer_present=true
-        fi
-
-        if [[ "$health_timer_present" == true ]]; then
-            if ! systemctl is-active --quiet xray-health.timer 2> /dev/null; then
-                if [[ "$verdict" != "BROKEN" ]]; then
-                    verdict="WARNING"
-                fi
-                reasons+=("таймер xray-health.timer не активен")
-            fi
-        elif [[ -x /usr/local/bin/xray-health.sh ]]; then
-            if [[ "$verdict" != "BROKEN" ]]; then
-                verdict="WARNING"
-            fi
-            reasons+=("таймер xray-health.timer не найден")
-        else
-            debug_file "xray-health.timer отсутствует и /usr/local/bin/xray-health.sh не найден; проверка таймера пропущена"
-        fi
-    fi
-
-    echo ""
-    case "$verdict" in
-        OK)
-            log OK "Self-check verdict (${action}): OK"
-            ;;
-        WARNING)
-            log WARN "Self-check verdict (${action}): WARNING"
-            ;;
-        *)
-            log ERROR "Self-check verdict (${action}): BROKEN"
-            ;;
-    esac
-
-    if ((${#reasons[@]} > 0)); then
-        local reason
-        for reason in "${reasons[@]}"; do
-            echo "  - ${reason}"
-        done
-    fi
-    echo ""
-
-    [[ "$verdict" != "BROKEN" ]]
+    self_check_post_action_verdict "${1:-action}"
 }

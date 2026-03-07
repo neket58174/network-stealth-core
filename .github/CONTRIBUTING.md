@@ -15,11 +15,14 @@ This guide defines the expected workflow for safe and reviewable changes.
 
 Before changing behavior, assume these contracts are public:
 
-- `install` = minimal xhttp-first strongest-default path
+- `install` = minimal xhttp-only strongest-default path
 - `install --advanced` = manual prompt-driven setup
-- `migrate-stealth` = supported managed migration from legacy `grpc/http2`
+- `migrate-stealth` = only supported managed migration from legacy `grpc/http2`
 - `clients.json` = schema v2 with per-config `variants[]`
-- `export/raw-xray/` = raw per-variant xray client json artifacts
+- `export/raw-xray/` = canonical per-variant xray client json artifacts
+- `export/capabilities.json` = machine-readable capability matrix
+- `/var/lib/xray/self-check.json` = last transport-aware verdict
+- `scripts/measure-stealth.sh` = local measurement harness
 
 ## Local setup
 
@@ -83,6 +86,7 @@ bash scripts/check-release-consistency.sh
 4. reuse shared validators
 5. use atomic writes for critical files
 6. keep mutating flows rollback-safe
+7. prefer canonical raw xray exports over partial regenerated client templates
 
 ## High-risk areas
 
@@ -95,6 +99,8 @@ Changes in these areas require extra coverage:
 - backup stack and cleanup traps
 - migration between legacy transport and xhttp
 - generated client artifacts and export paths
+- self-check verdict and rollback interactions
+- measurement-harness reporting
 
 ## Testing expectations
 
@@ -107,7 +113,8 @@ Useful targeted runs:
 ```bash
 bats tests/bats/unit.bats
 bats tests/bats/integration.bats
-bats tests/bats/transport.bats
+bats tests/bats/validation.bats
+bats tests/bats/health.bats
 ```
 
 ## Documentation update scope
@@ -121,7 +128,7 @@ Behavior changes usually affect:
 - `.github/CONTRIBUTING.md`
 - `.github/SECURITY.md`
 
-If a change touches public install behavior, migration, or artifacts, update both languages in the same pass.
+If a change touches public install behavior, migration, self-check, or artifacts, update both languages in the same pass.
 
 ## Release metadata expectations
 

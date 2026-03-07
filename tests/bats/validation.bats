@@ -131,21 +131,37 @@
     [[ "$output" == *"ok"* ]]
 }
 
-@test "validate_install_config accepts valid mux mode" {
+@test "validate_install_config accepts xhttp-only install settings" {
     run bash -eo pipefail -c '
     source ./lib.sh
     DOMAIN_TIER="tier_ru"
     NUM_CONFIGS=5
     START_PORT=443
-    TRANSPORT="grpc"
-    MUX_MODE="on"
+    TRANSPORT="xhttp"
+    MUX_MODE="off"
     MUX_CONCURRENCY_MIN=6
     MUX_CONCURRENCY_MAX=12
     validate_install_config
     echo "$MUX_MODE"
   '
     [ "$status" -eq 0 ]
-    [[ "$output" == *"on"* ]]
+    [[ "$output" == *"off"* ]]
+}
+
+@test "validate_install_config rejects legacy transport in v6" {
+    run bash -eo pipefail -c '
+    source ./lib.sh
+    DOMAIN_TIER="tier_ru"
+    NUM_CONFIGS=5
+    START_PORT=443
+    TRANSPORT="grpc"
+    MUX_MODE="off"
+    MUX_CONCURRENCY_MIN=6
+    MUX_CONCURRENCY_MAX=12
+    validate_install_config
+  '
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"больше не поддерживается"* ]]
 }
 
 @test "validate_install_config falls back to tier_ru for invalid tier" {
@@ -422,7 +438,7 @@
     DOMAIN_TIER="tier_ru"
     NUM_CONFIGS=0
     START_PORT=443
-    TRANSPORT="grpc"
+    TRANSPORT="xhttp"
     MUX_MODE="on"
     MUX_CONCURRENCY_MIN=6
     MUX_CONCURRENCY_MAX=12
@@ -437,7 +453,7 @@
     DOMAIN_TIER="tier_ru"
     NUM_CONFIGS=101
     START_PORT=443
-    TRANSPORT="grpc"
+    TRANSPORT="xhttp"
     MUX_MODE="on"
     MUX_CONCURRENCY_MIN=6
     MUX_CONCURRENCY_MAX=12
@@ -452,8 +468,8 @@
     DOMAIN_TIER="tier_global_ms10"
     NUM_CONFIGS=10
     START_PORT=443
-    TRANSPORT="grpc"
-    MUX_MODE="on"
+    TRANSPORT="xhttp"
+    MUX_MODE="off"
     MUX_CONCURRENCY_MIN=6
     MUX_CONCURRENCY_MAX=12
     validate_install_config
@@ -469,7 +485,7 @@
     DOMAIN_TIER="tier_global_ms10"
     NUM_CONFIGS=11
     START_PORT=443
-    TRANSPORT="grpc"
+    TRANSPORT="xhttp"
     MUX_MODE="on"
     MUX_CONCURRENCY_MIN=6
     MUX_CONCURRENCY_MAX=12

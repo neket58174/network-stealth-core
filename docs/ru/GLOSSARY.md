@@ -1,12 +1,12 @@
 # Глоссарий
 
-## xhttp-first install
+## xhttp-only install
 
-Дефолтный install-контракт. `install` выбирает минимальный strongest-default путь на xhttp с минимумом вопросов.
+Дефолтный install-контракт. `install` выбирает минимальный strongest-default путь с xhttp и сокращенным количеством вопросов.
 
 ## Advanced mode
 
-`install --advanced`. Включает ручной выбор профиля и числа конфигов.
+`install --advanced`. Включает ручные prompt’ы выбора профиля и числа конфигов.
 
 ## Migrate-stealth
 
@@ -18,48 +18,60 @@ Managed-действие, которое переводит legacy `grpc/http2` 
 
 ## Profile
 
-Публичный выбор пользователя, который маппится на внутренний tier и лимиты, например `ru`, `ru-auto` или `global-50`.
+Пользовательский выбор, который мапится на внутренний tier и лимиты конфигов: `ru`, `ru-auto`, `global-50` и т.д.
 
 ## Legacy transport
 
-Managed-конфиг, который все еще использует `grpc` или `http2`. В `status` он помечается как legacy и рекомендуется к миграции.
+Managed-config, который всё ещё использует `grpc` или `http2`. `status` помечает его как legacy, а mutating-действия сначала требуют миграции.
 
 ## Client variant
 
-Отдельный клиентский профиль внутри `clients.json` `variants[]`.
+Профиль клиента внутри `clients.json` `variants[]`.
 
 ## Recommended variant
 
-Основной xhttp-клиентский артефакт с `mode=auto`.
+Основной xhttp client artifact с `mode=auto`.
 
 ## Rescue variant
 
-Fallback xhttp-клиентский артефакт с `mode=packet-up`.
+Fallback xhttp client artifact с `mode=packet-up`.
 
 ## Raw xray export
 
-Файлы клиентского json, которые пишутся по вариантам в `export/raw-xray/`.
+Per-variant client json files в `export/raw-xray/`.
+
+## Capability matrix
+
+`export/capabilities.json` — machine-readable карта поддержки native, link-only и unsupported export targets.
+
+## Self-check state
+
+`/var/lib/xray/self-check.json` — последний transport-aware verdict после mutating-действия.
+
+## Measurement harness
+
+`scripts/measure-stealth.sh` — локальный probe-tool, использующий тот же engine, что и runtime self-check.
 
 ## SNI fallback
 
-Автоматический выбор другого валидного server name, если приоритетный SNI недоступен.
+Автоматический выбор другого валидного server name, когда preferred SNI недоступен.
 
 ## Domain planner
 
-Модуль выбора доменов с учетом ranking, quarantine и no-repeat последовательности.
+Модуль, который выбирает домены через ranking, quarantine и no-repeat sequencing.
 
 ## Health file
 
-`DOMAIN_HEALTH_FILE` — runtime-состояние для ранжирования и карантина доменов.
+`DOMAIN_HEALTH_FILE` — runtime-state для ranking и quarantine решений.
 
 ## Strict minisign mode
 
-Поведение `--require-minisign`, при котором отсутствие verifier или подписи ломает install или update.
+Поведение `--require-minisign`, при котором отсутствие verifier или signature ломает install/update.
 
-## Compatibility mode (без systemd)
+## Compatibility mode (no systemd)
 
-Режим `--allow-no-systemd` для ограниченных окружений без полноценного systemd management.
+Режим `--allow-no-systemd` для ограниченных окружений, где полный service-management недоступен.
 
-## Консистентность артефактов
+## Artifact consistency
 
-Состояние, при котором `config.json`, `keys.txt`, `clients.txt`, `clients.json` и export-файлы соответствуют одному набору конфигурации.
+Состояние, в котором `config.json`, `keys.txt`, `clients.txt`, `clients.json`, export files и self-check state отражают один согласованный конфиг.

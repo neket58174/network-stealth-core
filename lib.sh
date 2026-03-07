@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Network Stealth Core 5.1.0 - Автоматизация установки и сопровождения Xray Reality (xhttp-first + Reality)
+# Network Stealth Core 6.0.0 - Автоматизация установки и сопровождения Xray Reality (xhttp-only + transport-aware self-check)
 
 set -euo pipefail
 
 SCRIPT_DIR="${SCRIPT_DIR:-$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)}"
 
-readonly SCRIPT_VERSION="5.1.0"
+readonly SCRIPT_VERSION="6.0.0"
 readonly SCRIPT_NAME="Network Stealth Core"
 
 XRAY_USER="xray"
@@ -33,7 +33,7 @@ LOG_MAX_SIZE_MB="${LOG_MAX_SIZE_MB:-10}"
 KEEP_LOCAL_BACKUPS="${KEEP_LOCAL_BACKUPS:-true}"
 XRAY_TRANSPORT="${XRAY_TRANSPORT:-}"
 XRAY_ADVANCED="${XRAY_ADVANCED:-}"
-TRANSPORT="${TRANSPORT:-xhttp}" # xhttp|grpc|http2
+TRANSPORT="${TRANSPORT:-xhttp}" # xhttp only (legacy grpc/http2 require migrate-stealth)
 MUX_MODE="${MUX_MODE:-off}"     # off by default for xhttp-first installs
 MUX_CONCURRENCY_MIN="${MUX_CONCURRENCY_MIN:-3}"
 MUX_CONCURRENCY_MAX="${MUX_CONCURRENCY_MAX:-20}"
@@ -1704,7 +1704,7 @@ Commands:
   add-keys [N]                   Alias of add-clients [N]
   update                         Update Xray-core
   repair                         Re-apply units/firewall/monitoring and recover artifacts
-  migrate-stealth                Migrate managed legacy transport (gRPC/HTTP2) to xhttp
+  migrate-stealth                Convert managed legacy transport (gRPC/HTTP2) to xhttp
   status                         Show current configuration and status
   logs [xray|health|all]         View service logs (default: all)
   diagnose                       Collect diagnostics
@@ -1722,7 +1722,7 @@ Options:
   --domain-profile <ru|ru-auto|global-50|global-50-auto|custom>
                                   Domain profile for install/add (default install path: ru-auto)
   --start-port <1-65535>         Starting port (default: 443)
-  --transport <xhttp|grpc|http2> Transport mode (default: xhttp; grpc/http2 are legacy)
+  --transport <xhttp>            Transport mode (fixed to xhttp in v6)
   --progress-mode <mode>         Progress output: auto|bar|plain|none
   --require-minisign             Fail when minisign is unavailable or signature is missing
   --allow-no-systemd             Allow install/update/repair without systemd (compat mode)
@@ -1741,7 +1741,10 @@ Options:
 
 Environment variables:
   XRAY_DOMAIN_PROFILE            Domain profile (ru|ru-auto|global-50|global-50-auto|custom; legacy aliases global-ms10*)
-  TRANSPORT                      Transport mode (xhttp|grpc|http2, default: xhttp)
+  TRANSPORT                      Transport mode (xhttp only in v6)
+  SELF_CHECK_ENABLED             Enable transport-aware post-action self-check (default: true)
+  SELF_CHECK_URLS                Comma-separated probe URLs for xhttp self-check
+  SELF_CHECK_TIMEOUT_SEC         Curl timeout per self-check probe (default: 8)
   XRAY_ADVANCED                  Enable legacy interactive prompt flow
   SHORT_ID_BYTES_MIN             Min Reality ShortID bytes (default: 8)
   SHORT_ID_BYTES_MAX             Max Reality ShortID bytes (default: 8)
@@ -1809,11 +1812,11 @@ dry_run_summary() {
             echo "  3. Создание пользователя xray"
             echo "  4. Установка minisign + Xray-core (с верификацией)"
             echo "  5. Настройка доменов и генерация ключей"
-            echo "  6. Сборка конфигурации (${TRANSPORT} + Reality)"
+            echo "  6. Сборка конфигурации (xhttp + Reality)"
             echo "  7. Создание systemd-сервиса + файрвол"
             echo "  8. Настройка health-мониторинга + auto-update"
-            echo "  9. Генерация клиентских конфигов + QR-коды"
-            echo "  10. Экспорт ClashMeta/SingBox"
+            echo "  9. Генерация клиентских конфигов + raw xray artifacts"
+            echo "  10. Transport-aware self-check и capability matrix"
             ;;
         add-clients | add-keys)
             echo -e "${BOLD}Шаги:${NC}"
@@ -1881,7 +1884,7 @@ load_config_file() {
             fi
         fi
         case "$key" in
-            XRAY_DOMAIN_TIER | XRAY_DOMAIN_PROFILE | XRAY_NUM_CONFIGS | XRAY_SPIDER_MODE | XRAY_START_PORT | XRAY_PROGRESS_MODE | XRAY_ADVANCED | DOMAIN_PROFILE | DOMAIN_TIER | NUM_CONFIGS | SPIDER_MODE | START_PORT | PROGRESS_MODE | ADVANCED_MODE | XRAY_TRANSPORT | TRANSPORT | MUX_MODE | MUX_CONCURRENCY_MIN | MUX_CONCURRENCY_MAX | GRPC_IDLE_TIMEOUT_MIN | GRPC_IDLE_TIMEOUT_MAX | GRPC_HEALTH_TIMEOUT_MIN | GRPC_HEALTH_TIMEOUT_MAX | TCP_KEEPALIVE_MIN | TCP_KEEPALIVE_MAX | SHORT_ID_BYTES_MIN | SHORT_ID_BYTES_MAX | KEEP_LOCAL_BACKUPS | MAX_BACKUPS | REUSE_EXISTING | AUTO_ROLLBACK | XRAY_VERSION | XRAY_MIRRORS | MINISIGN_MIRRORS | QR_ENABLED | AUTO_UPDATE | AUTO_UPDATE_ONCALENDAR | AUTO_UPDATE_RANDOM_DELAY | ALLOW_INSECURE_SHA256 | ALLOW_UNVERIFIED_MINISIGN_BOOTSTRAP | REQUIRE_MINISIGN | ALLOW_NO_SYSTEMD | GEO_VERIFY_HASH | GEO_VERIFY_STRICT | XRAY_CUSTOM_DOMAINS | XRAY_DOMAINS_FILE | XRAY_SNI_POOLS_FILE | XRAY_GRPC_SERVICES_FILE | XRAY_TIERS_FILE | XRAY_DATA_DIR | XRAY_GEO_DIR | XRAY_SCRIPT_PATH | XRAY_UPDATE_SCRIPT | DOMAIN_CHECK | DOMAIN_CHECK_TIMEOUT | DOMAIN_CHECK_PARALLELISM | REALITY_TEST_PORTS | SKIP_REALITY_CHECK | DOMAIN_HEALTH_FILE | DOMAIN_HEALTH_PROBE_TIMEOUT | DOMAIN_HEALTH_RATE_LIMIT_MS | DOMAIN_HEALTH_MAX_PROBES | DOMAIN_HEALTH_RANKING | DOMAIN_QUARANTINE_FAIL_STREAK | DOMAIN_QUARANTINE_COOLDOWN_MIN | PRIMARY_DOMAIN_MODE | PRIMARY_PIN_DOMAIN | PRIMARY_ADAPTIVE_TOP_N | DOWNLOAD_HOST_ALLOWLIST | GH_PROXY_BASE | DOWNLOAD_TIMEOUT | DOWNLOAD_RETRIES | DOWNLOAD_RETRY_DELAY | SERVER_IP | SERVER_IP6 | DRY_RUN | VERBOSE | HEALTH_CHECK_INTERVAL | LOG_RETENTION_DAYS | LOG_MAX_SIZE_MB | HEALTH_LOG)
+            XRAY_DOMAIN_TIER | XRAY_DOMAIN_PROFILE | XRAY_NUM_CONFIGS | XRAY_SPIDER_MODE | XRAY_START_PORT | XRAY_PROGRESS_MODE | XRAY_ADVANCED | DOMAIN_PROFILE | DOMAIN_TIER | NUM_CONFIGS | SPIDER_MODE | START_PORT | PROGRESS_MODE | ADVANCED_MODE | XRAY_TRANSPORT | TRANSPORT | MUX_MODE | MUX_CONCURRENCY_MIN | MUX_CONCURRENCY_MAX | GRPC_IDLE_TIMEOUT_MIN | GRPC_IDLE_TIMEOUT_MAX | GRPC_HEALTH_TIMEOUT_MIN | GRPC_HEALTH_TIMEOUT_MAX | TCP_KEEPALIVE_MIN | TCP_KEEPALIVE_MAX | SHORT_ID_BYTES_MIN | SHORT_ID_BYTES_MAX | KEEP_LOCAL_BACKUPS | MAX_BACKUPS | REUSE_EXISTING | AUTO_ROLLBACK | XRAY_VERSION | XRAY_MIRRORS | MINISIGN_MIRRORS | QR_ENABLED | AUTO_UPDATE | AUTO_UPDATE_ONCALENDAR | AUTO_UPDATE_RANDOM_DELAY | ALLOW_INSECURE_SHA256 | ALLOW_UNVERIFIED_MINISIGN_BOOTSTRAP | REQUIRE_MINISIGN | ALLOW_NO_SYSTEMD | GEO_VERIFY_HASH | GEO_VERIFY_STRICT | XRAY_CUSTOM_DOMAINS | XRAY_DOMAINS_FILE | XRAY_SNI_POOLS_FILE | XRAY_GRPC_SERVICES_FILE | XRAY_TIERS_FILE | XRAY_DATA_DIR | XRAY_GEO_DIR | XRAY_SCRIPT_PATH | XRAY_UPDATE_SCRIPT | DOMAIN_CHECK | DOMAIN_CHECK_TIMEOUT | DOMAIN_CHECK_PARALLELISM | REALITY_TEST_PORTS | SKIP_REALITY_CHECK | DOMAIN_HEALTH_FILE | DOMAIN_HEALTH_PROBE_TIMEOUT | DOMAIN_HEALTH_RATE_LIMIT_MS | DOMAIN_HEALTH_MAX_PROBES | DOMAIN_HEALTH_RANKING | DOMAIN_QUARANTINE_FAIL_STREAK | DOMAIN_QUARANTINE_COOLDOWN_MIN | PRIMARY_DOMAIN_MODE | PRIMARY_PIN_DOMAIN | PRIMARY_ADAPTIVE_TOP_N | DOWNLOAD_HOST_ALLOWLIST | GH_PROXY_BASE | DOWNLOAD_TIMEOUT | DOWNLOAD_RETRIES | DOWNLOAD_RETRY_DELAY | SERVER_IP | SERVER_IP6 | DRY_RUN | VERBOSE | HEALTH_CHECK_INTERVAL | SELF_CHECK_ENABLED | SELF_CHECK_URLS | SELF_CHECK_TIMEOUT_SEC | SELF_CHECK_STATE_FILE | LOG_RETENTION_DAYS | LOG_MAX_SIZE_MB | HEALTH_LOG)
                 printf -v "$key" '%s' "$value"
                 ;;
             *) ;;
@@ -2269,7 +2272,7 @@ validate_destructive_runtime_paths() {
         XRAY_KEYS XRAY_BACKUP XRAY_LOGS XRAY_HOME XRAY_DATA_DIR XRAY_GEO_DIR
     )
     local -a destructive_files=(
-        XRAY_BIN XRAY_CONFIG XRAY_ENV XRAY_SCRIPT_PATH XRAY_UPDATE_SCRIPT MINISIGN_KEY
+        XRAY_BIN XRAY_CONFIG XRAY_ENV XRAY_SCRIPT_PATH XRAY_UPDATE_SCRIPT MINISIGN_KEY SELF_CHECK_STATE_FILE
     )
 
     for var in "${destructive_dirs[@]}"; do
@@ -2318,9 +2321,9 @@ strict_validate_runtime_inputs() {
         XRAY_CONFIG_FILE DOWNLOAD_HOST_ALLOWLIST XRAY_MIRRORS MINISIGN_MIRRORS
         GH_PROXY_BASE
         XRAY_GEOIP_URL XRAY_GEOSITE_URL XRAY_GEOIP_SHA256_URL XRAY_GEOSITE_SHA256_URL
-        DOMAIN_HEALTH_FILE HEALTH_LOG
+        DOMAIN_HEALTH_FILE HEALTH_LOG SELF_CHECK_URLS SELF_CHECK_STATE_FILE
         AUTO_UPDATE_ONCALENDAR AUTO_UPDATE_RANDOM_DELAY
-        HEALTH_CHECK_INTERVAL LOG_RETENTION_DAYS LOG_MAX_SIZE_MB
+        HEALTH_CHECK_INTERVAL SELF_CHECK_TIMEOUT_SEC LOG_RETENTION_DAYS LOG_MAX_SIZE_MB
         PROGRESS_MODE XRAY_PROGRESS_MODE
     )
 
@@ -2342,6 +2345,12 @@ strict_validate_runtime_inputs() {
     if [[ -n "$HEALTH_LOG" ]]; then
         if [[ "$HEALTH_LOG" != /* ]] || [[ ! "$HEALTH_LOG" =~ ^/[A-Za-z0-9._/+:-]+$ ]]; then
             log ERROR "HEALTH_LOG содержит небезопасные символы: ${HEALTH_LOG}"
+            return 1
+        fi
+    fi
+    if [[ -n "$SELF_CHECK_STATE_FILE" ]]; then
+        if [[ "$SELF_CHECK_STATE_FILE" != /* ]] || [[ ! "$SELF_CHECK_STATE_FILE" =~ ^/[A-Za-z0-9._/+:-]+$ ]]; then
+            log ERROR "SELF_CHECK_STATE_FILE содержит небезопасные символы: ${SELF_CHECK_STATE_FILE}"
             return 1
         fi
     fi
@@ -2382,6 +2391,27 @@ strict_validate_runtime_inputs() {
     strict_validate_runtime_schedule_settings || return 1
     strict_validate_progress_mode || return 1
     strict_validate_runtime_common_ranges || return 1
+
+    case "${SELF_CHECK_ENABLED,,}" in
+        true | false | 1 | 0 | yes | no | on | off) ;;
+        *)
+            log ERROR "Некорректный SELF_CHECK_ENABLED: ${SELF_CHECK_ENABLED}"
+            return 1
+            ;;
+    esac
+    if [[ ! "${SELF_CHECK_TIMEOUT_SEC:-}" =~ ^[0-9]+$ ]] || ((SELF_CHECK_TIMEOUT_SEC < 2 || SELF_CHECK_TIMEOUT_SEC > 60)); then
+        log ERROR "Некорректный SELF_CHECK_TIMEOUT_SEC: ${SELF_CHECK_TIMEOUT_SEC} (ожидается 2-60)"
+        return 1
+    fi
+    local self_check_url
+    while read -r self_check_url; do
+        self_check_url=$(trim_ws "$self_check_url")
+        [[ -z "$self_check_url" ]] && continue
+        if ! is_valid_https_url "$self_check_url"; then
+            log ERROR "SELF_CHECK_URLS содержит невалидный HTTPS URL: ${self_check_url}"
+            return 1
+        fi
+    done < <(split_list "$SELF_CHECK_URLS")
 
     local port
     while read -r port; do
@@ -2462,10 +2492,16 @@ validate_install_config() {
     fi
     DOMAIN_TIER="$normalized_tier"
     case "$TRANSPORT" in
-        xhttp | grpc | http2) ;;
-        *)
-            log WARN "Неверный TRANSPORT: $TRANSPORT (используем xhttp)"
+        "" | xhttp)
             TRANSPORT="xhttp"
+            ;;
+        grpc | http2)
+            log ERROR "TRANSPORT=${TRANSPORT} больше не поддерживается в v6; используйте xhttp или migrate-stealth для legacy install"
+            return 1
+            ;;
+        *)
+            log ERROR "Неверный TRANSPORT: $TRANSPORT (в v6 поддерживается только xhttp)"
+            return 1
             ;;
     esac
     local max_configs
@@ -2516,6 +2552,53 @@ validate_install_config() {
         SHORT_ID_BYTES_MAX="$sid_tmp"
     fi
     return 0
+}
+
+detect_current_managed_transport() {
+    if [[ -f "$XRAY_CONFIG" ]] && command -v jq > /dev/null 2>&1; then
+        local transport_mode
+        transport_mode=$(jq -r '
+            .inbounds[]
+            | select(.streamSettings.realitySettings != null)
+            | select((.listen // "0.0.0.0") | test(":") | not)
+            | .streamSettings.network // "xhttp"
+        ' "$XRAY_CONFIG" 2> /dev/null | head -n 1 | tr '[:upper:]' '[:lower:]')
+        case "$transport_mode" in
+            h2 | http/2) printf '%s\n' "http2" ;;
+            grpc | xhttp) printf '%s\n' "$transport_mode" ;;
+            "") printf '%s\n' "${TRANSPORT:-xhttp}" ;;
+            *) printf '%s\n' "unknown" ;;
+        esac
+        return 0
+    fi
+    printf '%s\n' "${TRANSPORT:-xhttp}"
+}
+
+require_xhttp_transport_contract_for_action() {
+    local action="${1:-$ACTION}"
+    case "$action" in
+        install)
+            if transport_is_legacy "${TRANSPORT:-xhttp}"; then
+                log ERROR "v6 больше не устанавливает grpc/http2 профили"
+                log ERROR "используйте xhttp по умолчанию"
+                return 1
+            fi
+            return 0
+            ;;
+        update | repair | add-clients | add-keys)
+            local current_transport
+            current_transport=$(detect_current_managed_transport)
+            if transport_is_legacy "$current_transport"; then
+                log ERROR "обнаружен legacy transport (${current_transport}); действие '${action}' заблокировано в v6"
+                log ERROR "сначала выполните: xray-reality.sh migrate-stealth --non-interactive --yes"
+                return 1
+            fi
+            return 0
+            ;;
+        *)
+            return 0
+            ;;
+    esac
 }
 
 LIB_RUNTIME_REUSE_MODULE="$MODULE_DIR/modules/lib/runtime_reuse.sh"
@@ -2637,30 +2720,35 @@ main() {
             strict_validate_runtime_inputs "install"
             require_root
             require_systemd_runtime_for_action "install"
+            require_xhttp_transport_contract_for_action "install"
             install_flow
             ;;
         add-clients)
             strict_validate_runtime_inputs "add-clients"
             require_root
             require_systemd_runtime_for_action "add-clients"
+            require_xhttp_transport_contract_for_action "add-clients"
             add_clients_flow
             ;;
         add-keys)
             strict_validate_runtime_inputs "add-keys"
             require_root
             require_systemd_runtime_for_action "add-keys"
+            require_xhttp_transport_contract_for_action "add-keys"
             add_clients_flow
             ;;
         update)
             strict_validate_runtime_inputs "update"
             require_root
             require_systemd_runtime_for_action "update"
+            require_xhttp_transport_contract_for_action "update"
             update_flow
             ;;
         repair)
             strict_validate_runtime_inputs "repair"
             require_root
             require_systemd_runtime_for_action "repair"
+            require_xhttp_transport_contract_for_action "repair"
             repair_flow
             ;;
         migrate-stealth)

@@ -1,6 +1,6 @@
 # Glossary
 
-## xhttp-first install
+## xhttp-only install
 
 The default install contract. `install` chooses the minimal strongest-default path with xhttp and reduced questioning.
 
@@ -22,7 +22,7 @@ User-facing selection mapped to an internal tier and config limits such as `ru`,
 
 ## Legacy transport
 
-Managed config that still uses `grpc` or `http2`. Status output marks it as legacy and recommends migration.
+Managed config that still uses `grpc` or `http2`. `status` marks it as legacy and mutating actions require migration first.
 
 ## Client variant
 
@@ -39,6 +39,18 @@ The fallback xhttp client artifact that uses `mode=packet-up`.
 ## Raw xray export
 
 Per-variant client json files written to `export/raw-xray/`.
+
+## Capability matrix
+
+`export/capabilities.json`, the machine-readable support map for native, link-only, and unsupported export targets.
+
+## Self-check state
+
+`/var/lib/xray/self-check.json`, the last transport-aware verdict recorded after a mutating action.
+
+## Measurement harness
+
+`scripts/measure-stealth.sh`, a local probe tool that reuses the runtime self-check engine.
 
 ## SNI fallback
 
@@ -62,4 +74,4 @@ Module that chooses domains using ranking, quarantine, and no-repeat sequencing.
 
 ## Artifact consistency
 
-State where `config.json`, `keys.txt`, `clients.txt`, `clients.json`, and export files reflect one coherent config set.
+State where `config.json`, `keys.txt`, `clients.txt`, `clients.json`, export files, and self-check state reflect one coherent config set.

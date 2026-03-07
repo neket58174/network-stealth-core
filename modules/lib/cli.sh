@@ -404,6 +404,7 @@ apply_runtime_overrides() {
     DOMAIN_CHECK=$(parse_bool "$DOMAIN_CHECK" true)
     SKIP_REALITY_CHECK=$(parse_bool "$SKIP_REALITY_CHECK" false)
     DOMAIN_HEALTH_RANKING=$(parse_bool "$DOMAIN_HEALTH_RANKING" true)
+    SELF_CHECK_ENABLED=$(parse_bool "$SELF_CHECK_ENABLED" true)
     normalize_progress_mode
     normalize_runtime_common_ranges
     normalize_runtime_schedule_settings
@@ -424,6 +425,12 @@ apply_runtime_overrides() {
     if [[ "$HEALTH_LOG" == *$'\n'* ]] || [[ "$HEALTH_LOG" =~ [[:cntrl:]] ]]; then
         log WARN "Некорректный HEALTH_LOG: содержит управляющие символы (используем default)"
         HEALTH_LOG="${XRAY_LOGS%/}/xray-health.log"
+    fi
+    if [[ -z "${SELF_CHECK_URLS:-}" ]]; then
+        SELF_CHECK_URLS="https://cp.cloudflare.com/generate_204,https://www.gstatic.com/generate_204"
+    fi
+    if [[ -z "${SELF_CHECK_STATE_FILE:-}" ]]; then
+        SELF_CHECK_STATE_FILE="/var/lib/xray/self-check.json"
     fi
     if [[ -z "$XRAY_DOMAIN_PROFILE" && -n "${DOMAIN_PROFILE:-}" ]]; then
         XRAY_DOMAIN_PROFILE="$DOMAIN_PROFILE"

@@ -1,29 +1,32 @@
-# Вклад в проект
+# Contributing
 
 Спасибо за вклад в **Network Stealth Core**.
 
-Этот документ описывает рабочий процесс для безопасных и проверяемых изменений.
+Этот гайд фиксирует ожидаемый workflow для безопасных и reviewable изменений.
 
 ## Базовые правила
 
-- коммиты должны быть узкими и понятными
-- rollback и security-поведение нельзя ломать
-- tests и docs нужно обновлять вместе с поведением
-- скрытые compatibility-breaks недопустимы
+- держи коммиты сфокусированными и небольшими
+- сохраняй rollback и security-поведение
+- обновляй тесты и docs при изменении поведения
+- не допускай тихих compatibility-break
 
-## Текущий продуктовый baseline
+## Текущий product baseline
 
-Перед изменением поведения считайте публичными такие контракты:
+Перед изменением поведения считай публичными такие контракты:
 
-- `install` = минимальный xhttp-first strongest-default путь
-- `install --advanced` = ручная установка через prompt’ы
-- `migrate-stealth` = штатная managed-миграция с legacy `grpc/http2`
+- `install` = минимальный xhttp-only strongest-default путь
+- `install --advanced` = ручной prompt-driven setup
+- `migrate-stealth` = единственная supported managed-миграция с legacy `grpc/http2`
 - `clients.json` = schema v2 с `variants[]` для каждого конфига
-- `export/raw-xray/` = raw xray client json по вариантам
+- `export/raw-xray/` = canonical per-variant xray client json artifacts
+- `export/capabilities.json` = machine-readable capability matrix
+- `/var/lib/xray/self-check.json` = последний transport-aware verdict
+- `scripts/measure-stealth.sh` = local measurement harness
 
-## Локальная подготовка
+## Локальная настройка
 
-### Что нужно
+### Prerequisites
 
 - linux или wsl
 - bash 4.3+
@@ -31,7 +34,7 @@
 - `shellcheck`, `shfmt`, `bats`, `actionlint`
 - node.js (или `npx`) для markdown lint
 
-### Клонирование и upstream
+### Клонирование и связь с upstream
 
 ```bash
 git clone https://github.com/YOUR_USERNAME/network-stealth-core.git
@@ -46,19 +49,19 @@ git fetch upstream
 |---|---|
 | `xray-reality.sh` | bootstrap wrapper |
 | `lib.sh` | runtime core и dispatcher |
-| `install.sh` | dependency setup и lifecycle entrypoints |
-| `config.sh` | генерация конфигурации и клиентских артефактов |
+| `install.sh` | setup зависимостей и lifecycle entrypoints |
+| `config.sh` | генерация config и client artifacts |
 | `service.sh` | systemd, firewall и runtime status |
 | `health.sh` | health monitor и diagnostics |
-| `export.sh` | шаблоны клиентских export-файлов |
-| `modules/` | переиспользуемые модули |
+| `export.sh` | client export templates |
+| `modules/` | вынесенные reusable modules |
 | `tests/bats/` | shell unit и integration tests |
-| `tests/e2e/` | lifecycle и migration сценарии |
+| `tests/e2e/` | lifecycle и migration scenarios |
 | `docs/` | двуязычная документация |
 
 ## Обязательные локальные проверки
 
-Перед push:
+Запусти перед push:
 
 ```bash
 make lint
@@ -67,7 +70,7 @@ make release-check
 make ci
 ```
 
-Прямые эквиваленты:
+Эквивалентные прямые команды:
 
 ```bash
 bash tests/lint.sh
@@ -75,42 +78,46 @@ bats tests/bats
 bash scripts/check-release-consistency.sh
 ```
 
-## Стандарты кода
+## Coding standards
 
-1. shell-код должен быть безопасен под `set -euo pipefail`
-2. переменные должны быть корректно экранированы
-3. нельзя использовать `eval` для пользовательского ввода
-4. нужно переиспользовать общие валидаторы
-5. критичные файлы нужно писать атомарно
-6. мутирующие потоки обязаны оставаться rollback-safe
+1. держи скрипты безопасными под `set -euo pipefail`
+2. последовательно квоть переменные
+3. не используй `eval` для user-controlled input
+4. переиспользуй общие validators
+5. используй atomic writes для критичных файлов
+6. держи mutating-flows rollback-safe
+7. предпочитай canonical raw xray exports вместо partial regenerated client templates
 
-## Зоны повышенного риска
+## High-risk areas
 
-Изменения в этих местах требуют усиленного покрытия:
+Изменения в этих зонах требуют дополнительного покрытия:
 
 - bootstrap и download verification
-- права доступа и пути
-- генерация unit-файлов systemd
-- применение и rollback firewall
+- обработка permissions и путей
+- генерация systemd units
+- firewall apply и rollback
 - backup stack и cleanup traps
 - миграция между legacy transport и xhttp
-- клиентские артефакты и export-пути
+- generated client artifacts и export paths
+- self-check verdict и взаимодействие с rollback
+- reporting в measurement harness
 
 ## Ожидания по тестам
 
-- каждое изменение поведения должно включать или обновлять bats-покрытие
-- lifecycle-чувствительные изменения должны включать e2e-проверки
-- docs update обязан проходить markdown lint и docs command contract checks
+- любое изменение поведения должно добавлять или обновлять bats coverage
+- lifecycle-sensitive изменениям нужны e2e checks
+- обновления docs обязаны проходить markdown lint и command-contract checks
 
 Полезные таргетированные прогоны:
 
 ```bash
 bats tests/bats/unit.bats
 bats tests/bats/integration.bats
-bats tests/bats/transport.bats
+bats tests/bats/validation.bats
+bats tests/bats/health.bats
 ```
 
-## Обновление документации
+## Область обновления документации
 
 Изменения поведения обычно затрагивают:
 
@@ -121,28 +128,28 @@ bats tests/bats/transport.bats
 - `.github/CONTRIBUTING.md`
 - `.github/SECURITY.md`
 
-Если изменение касается install-контракта, миграции или артефактов, обновляйте обе языковые версии в том же проходе.
+Если изменение касается публичного install-поведения, migration, self-check или артефактов, обновляй оба языка в одном проходе.
 
 ## Ожидания по release metadata
 
-Если вы готовите релиз:
+Если готовишь релиз:
 
-- обновите `SCRIPT_VERSION`
-- обновите release markers в wrapper и readme
-- добавьте совпадающие секции в оба changelog
-- не ставьте тег, пока branch ci не зеленый
+- подними `SCRIPT_VERSION`
+- обнови marker’ы релиза в wrapper/readme
+- добавь совпадающие секции в оба changelog
+- не ставь tag, пока branch CI не зелёный
 
-## Checklist для pull request
+## Чеклист pull request
 
-- [ ] локальные проверки зелёные (`make ci`)
-- [ ] tests покрывают измененное поведение
-- [ ] docs обновлены для пользовательских изменений
-- [ ] оба changelog обновлены, если затронуты release metadata
-- [ ] секреты не попали в коммит
-- [ ] rollback и security-контракты сохранены
+- [ ] локальные проверки зеленые (`make ci`)
+- [ ] тесты покрывают измененное поведение
+- [ ] docs обновлены для user-visible изменений
+- [ ] оба changelog обновлены, если затронута release metadata
+- [ ] в коммитах нет секретов
+- [ ] rollback и security-поведение сохранены
 
-## Сообщение об уязвимостях
+## Сообщение о security-проблемах
 
-Публичные issue для уязвимостей не создаются.
+Не открывай публичные issue для уязвимостей.
 
-Используйте GitHub private vulnerability reporting. См. [SECURITY.ru.md](SECURITY.ru.md).
+Используй GitHub private vulnerability reporting. См. [SECURITY.ru.md](SECURITY.ru.md).

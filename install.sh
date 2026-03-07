@@ -893,6 +893,7 @@ install_flow() {
     if declare -F export_all_configs > /dev/null 2>&1; then
         export_all_configs
     fi
+    ensure_self_check_artifacts_ready
     if ! verify_ports_available; then
         log ERROR "Некоторые порты заняты. Перезапустите установку."
         exit 1
@@ -972,6 +973,7 @@ update_flow() {
     install_self
     setup_logrotate
     update_xray
+    ensure_self_check_artifacts_ready
     setup_diagnose_service
     setup_auto_update
     if ! post_action_verdict "update"; then
@@ -1050,6 +1052,7 @@ repair_flow() {
                 log WARN "Не удалось полностью восстановить клиентские артефакты"
             fi
         fi
+        ensure_self_check_artifacts_ready || log WARN "Не удалось полностью подготовить self-check артефакты"
 
         NUM_CONFIGS=${#PORTS[@]}
         if ((NUM_CONFIGS > 0)); then
@@ -1150,6 +1153,7 @@ migrate_stealth_flow() {
     fi
     test_reality_connectivity
     rebuild_client_artifacts_from_config || exit 1
+    ensure_self_check_artifacts_ready || exit 1
     if ! post_action_verdict "migrate-stealth"; then
         log ERROR "Финальная self-check (migrate-stealth) завершилась с verdict=BROKEN"
         exit 1

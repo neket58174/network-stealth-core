@@ -7,6 +7,18 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
+## [6.0.0] - 2026-03-07
+
+### Changed
+
+- made v6 xhttp-only for mutating product paths; `--transport grpc|http2` is now rejected
+- added transport-aware post-action self-check using canonical raw xray client json artifacts
+- persisted operator verdicts to `/var/lib/xray/self-check.json` and surfaced them in `status --verbose` and `diagnose`
+- introduced `export/capabilities.json` and generated compatibility notes from the capability matrix
+- added `scripts/measure-stealth.sh` as a local measurement harness for `recommended` and `rescue` variants
+- blocked `update`, `repair`, `add-clients`, and `add-keys` on managed legacy transports until `migrate-stealth` is executed
+- updated bilingual docs, release metadata, and tests to the xhttp-only v6 baseline
+
 ## [5.1.0] - 2026-03-07
 
 ### Changed

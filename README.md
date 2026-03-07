@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/neket371/network-stealth-core/releases"><img alt="release" src="https://img.shields.io/badge/release-v5.1.0-0f766e"></a>
+  <a href="https://github.com/neket371/network-stealth-core/releases"><img alt="release" src="https://img.shields.io/badge/release-v6.0.0-0f766e"></a>
   <a href="LICENSE"><img alt="license" src="https://img.shields.io/badge/license-MIT-97ca00"></a>
   <a href="docs/en/OPERATIONS.md"><img alt="platform" src="https://img.shields.io/badge/platform-ubuntu%2024.04-1d4ed8"></a>
   <a href="Makefile"><img alt="qa" src="https://img.shields.io/badge/qa-make%20ci-334155"></a>
@@ -38,7 +38,7 @@ If commands are copied from a mirror or fork, verify the source before execution
 
 ### Recommended: universal install
 
-default install is xhttp-first and keeps prompts to a minimum (`ru-auto`, strongest default path).
+default install is xhttp-only and keeps prompts to a minimum (`ru-auto`, strongest default path).
 use `install --advanced` only when you need manual profile and config-count prompts.
 
 ```bash
@@ -86,7 +86,7 @@ Legacy alias note:
 
 | Command | Description |
 |---|---|
-| `install` | Minimal xhttp-first install |
+| `install` | Minimal xhttp-only install |
 | `migrate-stealth` | Migrate managed legacy `grpc/http2` install to `xhttp` |
 | `add-clients [N]` | Add `N` client configurations |
 | `add-keys [N]` | Alias to `add-clients` |
@@ -115,7 +115,7 @@ Legacy aliases `global-ms10` and `global-ms10-auto` are still accepted for backw
 
 ```bash
 --domain-profile ru|ru-auto|global-50|global-50-auto|custom
---transport xhttp|grpc|http2
+--transport xhttp
 --advanced
 --progress-mode auto|bar|plain|none
 --require-minisign
@@ -129,16 +129,24 @@ Legacy aliases `global-ms10` and `global-ms10-auto` are still accepted for backw
 
 contract notes:
 
-- `install` = minimal xhttp-first path (`ru-auto`, strongest default)
+- `install` = minimal xhttp-only path (`ru-auto`, strongest default)
 - `install --advanced` = manual profile/count prompts for power users
-- `migrate-stealth` = supported conversion path for managed legacy `grpc/http2` installs
+- `migrate-stealth` = only supported conversion path for managed legacy `grpc/http2` installs
+- `--transport grpc|http2` is rejected in v6
 
 artifact contract:
 
 - `clients.json` now uses `schema_version: 2`
 - each config stores `variants[]`
-- xhttp-first installs generate `recommended (auto)` and `rescue (packet-up)` variants
+- xhttp installs generate `recommended (auto)` and `rescue (packet-up)` variants
 - raw per-variant xray json files are exported under `export/raw-xray/`
+- `export/capabilities.json` describes which export targets are native, link-only, or unsupported
+- `/var/lib/xray/self-check.json` stores the last transport-aware verdict
+
+operator validation tools:
+
+- mutating actions run transport-aware self-check using the exported raw xray client configs
+- `scripts/measure-stealth.sh` reuses the same probe engine for local measurement runs
 
 `XRAY_DATA_DIR` is not an arbitrary trusted code source in wrapper mode.  
 Wrapper code sourcing is restricted by default to:
@@ -163,7 +171,7 @@ Security requirement for custom source path:
 | `docs/en/INDEX.md` | Documentation entrypoint (EN) |
 | `docs/ru/INDEX.md` | Документация (RU) |
 | `docs/en/ARCHITECTURE.md` | Runtime architecture and module contracts |
-| `docs/en/OPERATIONS.md` | Runbook for install/update/incidents |
+| `docs/en/OPERATIONS.md` | Runbook for install, migration, measurement, and incidents |
 | `docs/en/FAQ.md` | Practical FAQ |
 | `docs/en/TROUBLESHOOTING.md` | Symptom-driven troubleshooting |
 | `docs/en/COMMUNITY.md` | Public collaboration model |
@@ -177,11 +185,12 @@ Security requirement for custom source path:
 
 Core controls include:
 
-- strict runtime validation for paths, ports, addresses, and domains
+- strict runtime validation for paths, ports, addresses, domains, and self-check URLs
 - controlled download surface with allowlisted hosts
 - artifact integrity checks (`sha256` and optional strict `minisign`)
 - transactional writes and rollback on failure
 - restricted `systemd` service profile and unprivileged runtime user
+- post-change transport-aware validation from canonical raw xray client exports
 
 See [.github/SECURITY.md](.github/SECURITY.md) for full policy details.
 

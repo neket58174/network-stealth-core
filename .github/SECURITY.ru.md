@@ -1,59 +1,62 @@
 # Политика безопасности
 
-Этот документ фиксирует security-подход проекта **Network Stealth Core** и порядок disclosure.
+Этот документ описывает security posture и disclosure process для **Network Stealth Core**.
 
 ## Поддерживаемые версии
 
 | Линейка версий | Статус |
 |---|---|
-| `5.1.x` | поддерживается |
-| `<5.1` | не поддерживается в этом репозитории |
+| `6.0.x` | поддерживается |
+| `<6.0` | не поддерживается в этом репозитории |
 
-## Как сообщать об уязвимостях
+## Сообщение об уязвимостях
 
-1. не публикуйте security-баги в открытых issue
-2. используйте GitHub private vulnerability reporting
-3. прикладывайте impact, шаги воспроизведения, версию или commit и, при наличии, патч
+Используй responsible disclosure:
 
-Ожидаемые окна реакции:
+1. не открывай публичные issue для security-багов
+2. используй GitHub private vulnerability reporting
+3. приложи impact, шаги воспроизведения, затронутую версию или commit и, по желанию, patch proposal
+
+Целевые сроки ответа:
 
 - первичный triage: до 48 часов
-- цель по критичному патчу: до 7 дней
+- критический patch: до 7 дней
 
-## Практическая модель угроз
+## Практическая threat model
 
-| Угроза | Защита |
+| Угроза | Митигация |
 |---|---|
-| подмена bootstrap/download | pin по commit, SHA256 и optional strict minisign |
-| command/path injection | строгая валидация и safe path guards |
-| порча частично записанных файлов | атомарные записи и staged validation |
-| неуспешный update, repair или migration | backup stack и runtime reconciliation |
-| избыточные привилегии сервиса | отдельный `xray`-пользователь и hardened `systemd` unit |
-| устаревшие клиентские артефакты | строгие права доступа и полная пересборка из managed config |
+| tampering bootstrap и downloads | pinned bootstrap, SHA256 checks, optional strict minisign mode |
+| command или path injection | strict validators и safe path guards |
+| повреждение при partial write | atomic writes и staged validation |
+| неудачный update, repair или migration | rollback stack и runtime reconciliation |
+| избыточные привилегии service | выделенный пользователь `xray` и restrictive `systemd` settings |
+| stale или misleading client exports | capability matrix и canonical raw xray artifacts |
+| тихая транспортная деградация | transport-aware self-check и persisted verdict state |
 
-## Основные security-контроли
+## Security controls
 
 ### Целостность и поверхность загрузок
 
-- только https в критичных загрузках
-- allowlist для хостов загрузки (`DOWNLOAD_HOST_ALLOWLIST`)
-- проверка целостности артефактов (`sha256`, optional strict `REQUIRE_MINISIGN=true`)
-- закрепленный minisign trust anchor с fingerprint-check (`MINISIGN_KEY`)
-- bootstrap pin через `XRAY_REPO_COMMIT`
-- trust-boundary для source-кода wrapper по `XRAY_DATA_DIR` с явным opt-in (`XRAY_ALLOW_CUSTOM_DATA_DIR=true`)
+- https-only download flows со strict validation
+- allowlist для критичных host (`DOWNLOAD_HOST_ALLOWLIST`)
+- проверки целостности артефактов (`sha256`, optional strict `REQUIRE_MINISIGN=true`)
+- pinned minisign trust anchor с проверкой fingerprint (`MINISIGN_KEY`)
+- bootstrap pin control через `XRAY_REPO_COMMIT`
+- trust boundary wrapper для `XRAY_DATA_DIR` с явным opt-in (`XRAY_ALLOW_CUSTOM_DATA_DIR=true`)
 
-Текущий fingerprint trust anchor (`sha256` контента `MINISIGN_KEY`):
+Текущий pinned minisign key fingerprint (`sha256` содержимого `MINISIGN_KEY`):
 
 - `294701ab7f6e18646e45b5093033d9e64f3ca181f74c0cf232627628f3d8293e`
 
 ### Разделение привилегий
 
-- runtime работает от непривилегированного пользователя `xray`
-- используется минимальный capability-набор для низких портов
+- service работает под отдельным non-root аккаунтом (`xray`)
+- минимальный набор capability для bind low ports
 
-### Жесткий профиль systemd
+### Systemd hardening
 
-Используются параметры:
+Project unit применяет такие controls, как:
 
 - `NoNewPrivileges=true`
 - `ProtectSystem=strict`
@@ -62,71 +65,78 @@
 - `ProtectKernelTunables=true`
 - `ProtectKernelModules=true`
 - `ProtectControlGroups=true`
-- syscall filtering и ограниченные address families
+- syscall filtering и restricted address families
 
 ### Валидация входов и runtime
 
-Покрываются:
+Покрытие валидации включает:
 
-- домены, порты, IPv4, IPv6
-- gRPC service names и нормализация xhttp path
-- безопасные пути для destructive-операций
-- URL и schedule-параметры
-- числовые диапазоны runtime-настроек
+- форматы доменов, портов, IPv4, IPv6
+- нормализацию xhttp path
+- безопасные пути destructive-операций
+- проверки URL и расписаний
+- валидацию self-check URL и границ timeout
+- runtime range constraints
 
 ### Безопасность артефактов
 
-- `clients.json` использует schema v2 и остается под ограниченными правами
-- xhttp-first install создает варианты по конфигу вместо одной неявной клиентской ссылки
-- raw xray exports пересобираются из managed config и лежат в ограниченных путях
+- `clients.json` — schema v2 и остается permission-restricted
+- raw xray exports — canonical xhttp client artifacts
+- `export/capabilities.json` явно помечает unsupported targets
+- `self-check.json` сохраняет последний transport-aware verdict для операторов
 
 ### Безопасность rollback
 
-- backup до мутаций
-- автоматический rollback при ошибках
-- журнал rollback для firewall
-- runtime reconciliation после восстановления
+- pre-change backup snapshot
+- automatic rollback на failure-path
+- rollback при broken transport-aware verdict
+- firewall rollback records
+- runtime reconciliation после restore
 
-## Критичные пути и права
+## Чувствительные пути и ожидаемые права
 
-| Путь | Владелец | Режим | Назначение |
+| Путь | Владелец | Mode | Назначение |
 |---|---|---:|---|
 | `/usr/local/bin/xray` | `root:root` | `0755` | бинарник Xray |
-| `/etc/xray/config.json` | `root:xray` | `0640` | серверный конфиг |
+| `/etc/xray/config.json` | `root:xray` | `0640` | server config |
 | `/etc/xray-reality/config.env` | `root:root` | `0600` | runtime snapshot |
 | `/etc/xray/private` | `root:xray` | `0750` | корневая директория чувствительных данных |
-| `/etc/xray/private/keys/keys.txt` | `root:root` | `0400` | приватные ключи |
-| `/etc/xray/private/keys/clients.txt` | `root:xray` | `0640` | человекочитаемая сводка клиентов |
-| `/etc/xray/private/keys/clients.json` | `root:xray` | `0640` | структурированный экспорт (`schema_version: 2`) |
-| `/etc/xray/private/keys/export/raw-xray/*.json` | `root:xray` | `0640` | raw xray клиентские артефакты |
-| `/var/backups/xray` | `root:root` | `0700` | rollback-сессии |
+| `/etc/xray/private/keys/keys.txt` | `root:root` | `0400` | private key material |
+| `/etc/xray/private/keys/clients.txt` | `root:xray` | `0640` | читаемый summary клиентов |
+| `/etc/xray/private/keys/clients.json` | `root:xray` | `0640` | структурированные client metadata (`schema_version: 2`) |
+| `/etc/xray/private/keys/export/raw-xray/*.json` | `root:xray` | `0640` | raw xray client artifacts |
+| `/etc/xray/private/keys/export/capabilities.json` | `root:xray` | `0640` | export capability matrix |
+| `/var/lib/xray/self-check.json` | `root:xray` | `0640` | последний self-check verdict |
+| `/var/backups/xray` | `root:root` | `0700` | rollback sessions |
 
-## Рискованные override-переменные
+## Рискованные overrides
 
-Эти флаги ослабляют базовые гарантии:
+Эти флаги ослабляют default-гарантии и должны быть временными:
 
 - `ALLOW_INSECURE_SHA256=true`
 - `ALLOW_UNVERIFIED_MINISIGN_BOOTSTRAP=true`
 - `ALLOW_NO_SYSTEMD=true`
 - `GEO_VERIFY_HASH=false`
-- `XRAY_ALLOW_CUSTOM_DATA_DIR=true` (только для доверенного каталога модулей без group/other writable)
+- `SELF_CHECK_ENABLED=false`
+- `XRAY_ALLOW_CUSTOM_DATA_DIR=true` (только для trusted и non-world-writable module source paths)
 
-## Рекомендации эксплуатации
+## Операционные рекомендации
 
-1. для стабильного контура используйте релизные теги
-2. не держите legacy `grpc/http2` install дольше нужного compatibility-окна
-3. мониторьте `journalctl -u xray` и health-логи
-4. ограничивайте доступ к shell и админ-правам
-5. при подозрении на компрометацию выполняйте ротацию или redeploy
+1. для production-like deployment предпочитай tagged releases
+2. managed legacy `grpc/http2` install мигрируй как можно быстрее через `migrate-stealth`
+3. мониторь `journalctl -u xray`, health logs и self-check verdicts
+4. используй `scripts/measure-stealth.sh` для сравнения поведения на реальных сетях
+5. ротируй или переустанавливай узел при подозрении на compromise или burn
 
-## Сигналы security-тестирования
+## Сигналы security-testing
 
-Security-sensitive поведение покрывается:
+Security-sensitive поведение покрывается через:
 
 - validator tests
 - path safety tests
 - rollback и lifecycle tests
 - export schema validation
+- покрытие self-check и measurement
 - CI audit gates и docs command contract checks
 
-Для операционной части реагирования см. [../docs/ru/OPERATIONS.md](../docs/ru/OPERATIONS.md).
+Для operations-side incident response см. [../docs/ru/OPERATIONS.md](../docs/ru/OPERATIONS.md).

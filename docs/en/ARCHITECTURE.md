@@ -5,7 +5,9 @@ This document describes runtime architecture and module contracts in **Network S
 ## Design goals
 
 - deterministic lifecycle: `install`, `update`, `repair`, `rollback`, `uninstall`
+- xhttp-only strongest-default install path
 - strict runtime validation before destructive actions
+- transport-aware post-change validation from generated client artifacts
 - transactional writes with rollback support
 - modular shell code with explicit ownership boundaries
 
@@ -29,6 +31,8 @@ flowchart TD
     MCFG[modules/config/domain_planner.sh]
     MADD[modules/config/add_clients.sh]
     MBOOT[modules/install/bootstrap.sh]
+    MSELF[modules/health/self_check.sh]
+    MCAP[modules/export/capabilities.sh]
 
     W --> L
     L --> I
@@ -46,6 +50,8 @@ flowchart TD
     C --> MCFG
     C --> MADD
     I --> MBOOT
+    H --> MSELF
+    E --> MCAP
 ```
 
 ## Bootstrap stage (`xray-reality.sh`)
@@ -57,20 +63,6 @@ Wrapper responsibilities:
 3. enforce bootstrap pin checks when configured
 4. source `lib.sh` and forward action arguments
 
-### Bootstrap resolution flow
-
-```mermaid
-flowchart LR
-    A[start] --> B{local module set exists}
-    B -- yes --> C[use local sources]
-    B -- no --> D{installed data dir exists}
-    D -- yes --> E[use installed sources]
-    D -- no --> F[clone repository]
-    F --> G{pin policy satisfied}
-    G -- yes --> C
-    G -- no --> H[fail fast]
-```
-
 ## Runtime control plane (`lib.sh`)
 
 `lib.sh` centralizes:
@@ -78,6 +70,7 @@ flowchart LR
 - defaults and cross-module globals
 - argument parsing and config loading
 - strict validation of runtime inputs
+- xhttp-only action contract for mutating flows
 - logging, download, backup, rollback helpers
 - action dispatch to install/config/service/health/export layers
 
@@ -88,15 +81,17 @@ flowchart TD
     M[main] --> P[parse_args + load_config_file]
     P --> O[apply_runtime_overrides]
     O --> V[strict_validate_runtime_inputs]
-    V --> A{ACTION}
+    V --> X[require_xhttp_transport_contract_for_action]
+    X --> A{ACTION}
 
     A --> I[install_flow]
     A --> AC[add_clients_flow]
     A --> U[update_flow]
     A --> R[repair_flow]
+    A --> MS[migrate_stealth_flow]
     A --> D[diagnose_flow]
     A --> RB[rollback_flow]
-    A --> X[uninstall_flow]
+    A --> UN[uninstall_flow]
     A --> ST[status_flow]
     A --> LG[logs_flow]
     A --> CU[check_update_flow]
@@ -113,7 +108,9 @@ flowchart TD
 | `modules/lib/lifecycle.sh` | backup stack and rollback orchestration | consistent rollback semantics |
 | `modules/install/bootstrap.sh` | distro-aware bootstrap helpers | predictable dependency/install path |
 | `modules/config/domain_planner.sh` | ranking, quarantine, selection planning | bounded no-repeat domain allocation |
-| `modules/config/add_clients.sh` | `add-clients` mutation logic | synchronized client artifacts and inbounds |
+| `modules/config/add_clients.sh` | `add-clients` mutation logic | synchronized client artifacts and validated post-change state |
+| `modules/health/self_check.sh` | transport-aware validation engine | canonical post-action verdicts from raw xray artifacts |
+| `modules/export/capabilities.sh` | export capability matrix | explicit, machine-readable export support surface |
 
 ## Transaction model
 
@@ -122,41 +119,32 @@ Every mutating action follows one pattern:
 1. capture backup snapshot of critical state
 2. build candidate changes in staged files
 3. validate candidate (`xray -test` and runtime guards)
-4. commit atomically
-5. rollback automatically on non-zero failure path
+4. apply atomically
+5. run transport-aware self-check from generated raw client artifacts
+6. rollback automatically on broken verdict or non-zero failure path
 
-### Failure path
+## Transport-aware self-check
 
-```mermaid
-sequenceDiagram
-    participant F as action flow
-    participant B as backup stack
-    participant C as candidate writes
-    participant R as runtime services
-    participant X as cleanup_on_error
+The self-check engine uses canonical exported client artifacts instead of ad hoc regenerated probes.
 
-    F->>B: register pre-change state
-    F->>C: apply modifications
-    F->>R: restart or reload runtime
-    alt success
-        F->>B: prune temporary backups
-    else failure
-        R->>X: non-zero exit path
-        X->>B: restore tracked files
-        X->>R: rollback firewall and runtime state
-    end
-```
+Inputs:
 
-## Domain planning and health feedback
+- `/etc/xray/private/keys/clients.json`
+- `export/raw-xray/*.json`
+- `SELF_CHECK_URLS`
+- `SELF_CHECK_TIMEOUT_SEC`
 
-Domain selection is adaptive, not random-only. Planner inputs:
+Outputs:
 
-- static tier or custom list
-- health ranking from `DOMAIN_HEALTH_FILE`
-- quarantine based on fail streak and cooldown
-- no-repeat sequence until pool exhaustion
+- `/var/lib/xray/self-check.json`
+- verbose status summary
+- diagnose snapshot block
 
-This reduces repetitive traffic patterns and avoids persistently failing domains.
+Verdict policy:
+
+- `recommended` passes → `ok`
+- `recommended` fails but `rescue` passes → `warning`
+- both fail → `broken` and mutating flow rolls back
 
 ## Generated artifacts
 
@@ -168,8 +156,26 @@ This reduces repetitive traffic patterns and avoids persistently failing domains
 | `/etc/xray/private/keys/clients.txt` | `config.sh` | `0640`, `root:xray` |
 | `/etc/xray/private/keys/clients.json` | `config.sh` | `0640`, `root:xray`, schema v2 with `variants[]` |
 | `/etc/xray/private/keys/export/raw-xray/*` | `config.sh` / `export.sh` | `0640`, `root:xray` |
+| `/etc/xray/private/keys/export/capabilities.json` | `export.sh` | `0640`, `root:xray` |
+| `/etc/xray/private/keys/export/compatibility-notes.txt` | `export.sh` | `0640`, `root:xray` |
+| `/var/lib/xray/self-check.json` | `self_check.sh` | `0640`, `root:xray` |
 | `/var/lib/xray/domain-health.json` | `health.sh` | runtime state file |
 | `/etc/systemd/system/xray.service` | `service.sh` | hardened service unit |
+
+## Export capability model
+
+xhttp artifacts are intentionally split by honesty level:
+
+- `native`: `clients.txt`, `clients.json`, `raw-xray`
+- `link-only`: `v2rayn-links.json`, `nekoray-template.json`
+- `unsupported`: `sing-box`, `clash-meta`
+
+The machine-readable source of truth is `export/capabilities.json`.
+
+## Measurement harness
+
+`scripts/measure-stealth.sh` reuses the same probe engine as runtime self-check.
+It reads `clients.json`, tests requested variants, and writes a JSON report suitable for field comparison.
 
 ## Quality and release gates
 
@@ -177,6 +183,6 @@ Three control layers:
 
 - local: `make lint`, `make test`, `make release-check`
 - CI: lint + tests + audits + Ubuntu smoke
-- release: consistency checks and release policy gate
+- release: consistency checks, tag policy, and GitHub release assets
 
 This keeps daily development fast while preserving release integrity.

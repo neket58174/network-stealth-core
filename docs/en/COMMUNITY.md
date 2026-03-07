@@ -17,23 +17,25 @@ Useful reports usually include:
 - sanitized logs
 - expected vs actual behavior
 - whether the failure happened on:
-  - minimal xhttp-first install
+  - minimal xhttp-only install
   - `install --advanced`
   - `migrate-stealth`
   - `recommended` or `rescue` client variant
+  - runtime self-check or local measurement harness
 
 ## Useful field feedback topics
 
 - xhttp reachability and reliability on real-world networks
 - `packet-up` rescue behavior on difficult providers
 - migration quality from legacy `grpc/http2`
-- artifact compatibility in v2rayn, nekoray, and raw xray clients
-- rollback or repair behavior after failures
+- capability matrix correctness in v2rayn, nekoray, and raw xray clients
+- self-check verdict quality and rollback behavior
+- measurement reports from real RF operator networks
 
 ## Please avoid
 
 - screenshots without text logs
-- vague "`does not work`" reports
+- vague "does not work" reports
 - publishing private keys, `keys.txt`, or sensitive full links
 - mixing unrelated bugs into one issue
 
