@@ -439,6 +439,7 @@ self_check_post_action_verdict() {
     local verdict="OK"
     local -a reasons=()
     local runtime_ok=true
+    local transport_probe_required=true
     local state_json=""
     local selected_variant='null'
     local attempted_variants='[]'
@@ -468,15 +469,16 @@ self_check_post_action_verdict() {
                 reasons+=("systemd unit xray не active")
             fi
         else
+            transport_probe_required=false
             if [[ "$verdict" != "BROKEN" ]]; then
                 verdict="WARNING"
             fi
-            reasons+=("systemd недоступен: runtime-проверка ограничена")
+            reasons+=("systemd недоступен: transport-aware self-check пропущен")
         fi
     fi
 
     local json_file="${XRAY_KEYS}/clients.json"
-    if [[ "$runtime_ok" == true ]]; then
+    if [[ "$runtime_ok" == true && "$transport_probe_required" == true ]]; then
         if [[ ! -f "$json_file" ]]; then
             verdict="BROKEN"
             reasons+=("clients.json не найден: ${json_file}")

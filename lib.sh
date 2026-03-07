@@ -2553,7 +2553,6 @@ validate_install_config() {
     fi
     return 0
 }
-
 detect_current_managed_transport() {
     if [[ -f "$XRAY_CONFIG" ]] && command -v jq > /dev/null 2>&1; then
         local transport_mode
