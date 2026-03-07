@@ -266,6 +266,67 @@
     [[ "$output" == *"ok"* ]]
 }
 
+@test "export_canary_bundle succeeds without ipv6 raw files" {
+    run bash -eo pipefail -c '
+    source ./lib.sh
+    source ./export.sh
+    tmp_dir=$(mktemp -d)
+    XRAY_KEYS="$tmp_dir"
+    XRAY_GROUP="root"
+    mkdir -p "$tmp_dir/export/raw-xray"
+    printf "{}\n" > "$tmp_dir/export/raw-xray/config-1-recommended-ipv4.json"
+    printf "{}\n" > "$tmp_dir/export/raw-xray/config-1-rescue-ipv4.json"
+    printf "{}\n" > "$tmp_dir/export/raw-xray/config-1-emergency-ipv4.json"
+    cat > "$tmp_dir/clients.json" <<JSON
+{
+  "schema_version": 3,
+  "stealth_contract_version": "7.1.0",
+  "xray_min_version": "25.9.5",
+  "generated": "2026-03-07T00:00:00Z",
+  "transport": "xhttp",
+  "configs": [
+    {
+      "name": "Config 1",
+      "domain": "disk.yandex.ru",
+      "recommended_variant": "recommended",
+      "variants": [
+        {
+          "key": "recommended",
+          "category": "primary",
+          "mode": "auto",
+          "requires": {"browser_dialer": false},
+          "import_hint": "hint",
+          "xray_client_file_v4": "$tmp_dir/export/raw-xray/config-1-recommended-ipv4.json"
+        },
+        {
+          "key": "rescue",
+          "category": "fallback",
+          "mode": "packet-up",
+          "requires": {"browser_dialer": false},
+          "import_hint": "hint",
+          "xray_client_file_v4": "$tmp_dir/export/raw-xray/config-1-rescue-ipv4.json"
+        },
+        {
+          "key": "emergency",
+          "category": "emergency",
+          "mode": "stream-up",
+          "requires": {"browser_dialer": true},
+          "import_hint": "hint",
+          "xray_client_file_v4": "$tmp_dir/export/raw-xray/config-1-emergency-ipv4.json"
+        }
+      ]
+    }
+  ]
+}
+JSON
+    export_canary_bundle "$tmp_dir/clients.json" "$tmp_dir/export/canary"
+    jq -e ".source.configs[0].variants | length == 3" "$tmp_dir/export/canary/manifest.json" > /dev/null
+    test -f "$tmp_dir/export/canary/measure-linux.sh"
+    rm -rf "$tmp_dir"
+  '
+    [ "$status" -eq 0 ]
+}
+
 @test "measure-stealth script exposes help" {
     run bash -eo pipefail -c 'bash ./scripts/measure-stealth.sh --help'
     [ "$status" -eq 0 ]

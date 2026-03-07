@@ -212,8 +212,12 @@ export_canary_bundle() {
 
     jq -r '.configs[] | .variants[] | [.key, .xray_client_file_v4 // "", .xray_client_file_v6 // ""] | @tsv' "$json_file" 2> /dev/null |
         while IFS=$'\t' read -r _variant_key raw_v4 raw_v6; do
-            [[ -n "$raw_v4" && -f "$raw_v4" ]] && cp -f "$raw_v4" "${raw_dir}/$(basename "$raw_v4")"
-            [[ -n "$raw_v6" && -f "$raw_v6" ]] && cp -f "$raw_v6" "${raw_dir}/$(basename "$raw_v6")"
+            if [[ -n "$raw_v4" && -f "$raw_v4" ]]; then
+                cp -f "$raw_v4" "${raw_dir}/$(basename "$raw_v4")"
+            fi
+            if [[ -n "$raw_v6" && -f "$raw_v6" ]]; then
+                cp -f "$raw_v6" "${raw_dir}/$(basename "$raw_v6")"
+            fi
         done
 
     jq -n \
