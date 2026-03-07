@@ -99,16 +99,14 @@ self_check_is_loopback_runtime() {
         127.0.0.1 | localhost)
             return 0
             ;;
-        *)
-            ;;
+        *) ;;
     esac
 
     case "$ipv6" in
         ::1 | "[::1]" | localhost)
             return 0
             ;;
-        *)
-            ;;
+        *) ;;
     esac
 
     return 1
