@@ -191,13 +191,54 @@ self_check_start_client_process() {
     printf '%s\n' "$pid"
 }
 
+self_check_wait_for_process_exit() {
+    local pid="${1:-}"
+    local attempts="${2:-20}"
+    local sleep_interval="${3:-0.1}"
+    local process_state=""
+
+    [[ "$pid" =~ ^[0-9]+$ ]] || return 0
+
+    while ((attempts > 0)); do
+        if ! kill -0 "$pid" 2> /dev/null; then
+            return 0
+        fi
+        if command -v ps > /dev/null 2>&1; then
+            process_state=$(ps -o stat= -p "$pid" 2> /dev/null | tr -d '[:space:]')
+            if [[ "$process_state" == Z* ]]; then
+                return 0
+            fi
+        fi
+        sleep "$sleep_interval"
+        attempts=$((attempts - 1))
+    done
+    return 1
+}
+
 self_check_stop_client_process() {
     local pid="${1:-}"
-    [[ -n "$pid" ]] || return 0
-    if kill -0 "$pid" 2> /dev/null; then
-        kill "$pid" 2> /dev/null || true
+    [[ "$pid" =~ ^[0-9]+$ ]] || return 0
+
+    if ! kill -0 "$pid" 2> /dev/null; then
         wait "$pid" 2> /dev/null || true
+        return 0
     fi
+
+    kill "$pid" 2> /dev/null || true
+    if self_check_wait_for_process_exit "$pid" 20 0.1; then
+        wait "$pid" 2> /dev/null || true
+        return 0
+    fi
+
+    self_check_debug "self-check client pid ${pid} did not stop after sigterm; forcing sigkill"
+    kill -9 "$pid" 2> /dev/null || true
+    if self_check_wait_for_process_exit "$pid" 10 0.1; then
+        wait "$pid" 2> /dev/null || true
+        return 0
+    fi
+
+    self_check_debug "self-check client pid ${pid} remained after sigkill"
+    return 1
 }
 
 self_check_wait_for_proxy() {
@@ -368,7 +409,15 @@ self_check_run_variant_probe() {
         fi
     fi
 
-    self_check_stop_client_process "$pid"
+    if ! self_check_stop_client_process "$pid"; then
+        self_check_debug "self-check cleanup failed for ${config_name}/${variant_key}; pid=${pid}"
+        if [[ -z "$reason" ]]; then
+            reason="client_stop_timeout"
+            success=false
+            selected_url=""
+            best_latency_ms=0
+        fi
+    fi
     [[ -n "$tmp_dir" ]] && rm -rf "$tmp_dir"
 
     jq -n \
@@ -593,6 +642,7 @@ self_check_post_action_verdict() {
             verdict="BROKEN"
             reasons+=("clients.json повреждён или пуст")
         else
+            self_check_log STEP "transport-aware self-check: проверяем exported client variants..."
             local primary_recommended_variant
             primary_recommended_variant=$(jq -r '.configs[0].recommended_variant // "recommended"' "$json_file" 2> /dev/null)
             local config_index
@@ -638,6 +688,7 @@ self_check_post_action_verdict() {
 
                     local ip_family raw_file
                     IFS=$'\t' read -r ip_family raw_file <<< "$raw_pair"
+                    self_check_log INFO "self-check: $(jq -r '.config_name' <<< "$job_json") / ${variant_key} / ${ip_family}"
                     local probe_result
                     probe_result=$(self_check_run_variant_probe \
                         "$action" \

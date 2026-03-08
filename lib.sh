@@ -260,34 +260,37 @@ _resolve_path() {
         return 1
     fi
 
-    local custom_path tty_fd
-    if ! open_interactive_tty_fd tty_fd; then
+    local custom_path tty_read_fd tty_write_fd
+    if ! open_interactive_tty_fds tty_read_fd tty_write_fd; then
         log ERROR "Терминал /dev/tty недоступен: невозможно запросить путь вручную"
         return 1
     fi
     while true; do
-        if ! tty_printf "$tty_fd" '  Укажите путь вручную для %s: ' "$description"; then
-            exec {tty_fd}>&-
+        if ! tty_printf "$tty_write_fd" '  Укажите путь вручную для %s: ' "$description"; then
+            exec {tty_read_fd}<&-
+            exec {tty_write_fd}>&-
             log ERROR "Не удалось вывести приглашение ввода пути в /dev/tty"
             return 1
         fi
-        if ! read -r -u "$tty_fd" custom_path; then
-            exec {tty_fd}>&-
+        if ! read -r -u "$tty_read_fd" custom_path; then
+            exec {tty_read_fd}<&-
+            exec {tty_write_fd}>&-
             log ERROR "Не удалось прочитать путь из /dev/tty"
             return 1
         fi
         custom_path=$(normalize_tty_input "$custom_path")
         if [[ -z "$custom_path" ]]; then
-            tty_printf "$tty_fd" '  %bПуть не может быть пустым%b\n' "$RED" "$NC"
+            tty_printf "$tty_write_fd" '  %bПуть не может быть пустым%b\n' "$RED" "$NC"
             continue
         fi
         if _try_file_path "$custom_path" || _try_dir "$custom_path"; then
-            exec {tty_fd}>&-
+            exec {tty_read_fd}<&-
+            exec {tty_write_fd}>&-
             printf -v "$var_name" '%s' "$custom_path"
             log OK "${description}: используем ${custom_path}"
             return 0
         fi
-        tty_printf "$tty_fd" '  %bПуть %s недоступен для записи%b\n' "$RED" "$custom_path" "$NC"
+        tty_printf "$tty_write_fd" '  %bПуть %s недоступен для записи%b\n' "$RED" "$custom_path" "$NC"
     done
 }
 
@@ -512,6 +515,25 @@ open_interactive_tty_fd() {
     return 0
 }
 
+open_interactive_tty_fds() {
+    local read_var="${1:-}"
+    local write_var="${2:-}"
+    [[ -n "$read_var" && -n "$write_var" ]] || return 1
+
+    local read_fd="" write_fd=""
+    if ! open_interactive_tty_fd read_fd; then
+        return 1
+    fi
+    if ! exec {write_fd}> /dev/tty 2> /dev/null; then
+        exec {read_fd}>&-
+        return 1
+    fi
+
+    printf -v "$read_var" '%s' "$read_fd"
+    printf -v "$write_var" '%s' "$write_fd"
+    return 0
+}
+
 tty_printf() {
     local tty_fd="${1:-}"
     shift || true
@@ -613,6 +635,22 @@ normalize_yes_token_hint() {
     printf '%s' "$value"
 }
 
+extract_confirmation_token_tail() {
+    local value tail token
+    value=$(normalize_tty_input "${1:-}")
+    [[ -n "$value" ]] || return 0
+
+    tail=$(printf '%s' "$value" | sed -E 's/^.*[]:>][[:space:]]*//')
+    if [[ -z "$tail" || "$tail" == "$value" ]]; then
+        return 0
+    fi
+
+    token=$(normalize_yes_no_token "$tail")
+    if is_yes_input "$token" || is_no_input "$token"; then
+        printf '%s' "$token"
+    fi
+}
+
 is_yes_input() {
     local value
     value=$(normalize_yes_token_hint "${1:-}")
@@ -643,12 +681,14 @@ prompt_yes_no_from_tty() {
     local tty_fd="${1:-}"
     local prompt_text="${2:-}"
     local retry_text="${3:-Введите yes или no}"
+    local tty_write_fd="${4:-$tty_fd}"
     local answer normalized token
 
     [[ "$tty_fd" =~ ^[0-9]+$ ]] || return 2
+    [[ "$tty_write_fd" =~ ^[0-9]+$ ]] || return 2
 
     while true; do
-        if ! tty_printf "$tty_fd" '%s' "$prompt_text"; then
+        if ! tty_printf "$tty_write_fd" '%s' "$prompt_text"; then
             return 2
         fi
         if ! read -r -u "$tty_fd" answer; then
@@ -665,7 +705,14 @@ prompt_yes_no_from_tty() {
         if is_no_input "$token"; then
             return 1
         fi
-        if ! tty_printf "$tty_fd" '%s\n' "$retry_text"; then
+        token=$(extract_confirmation_token_tail "$normalized")
+        if is_yes_input "$token"; then
+            return 0
+        fi
+        if is_no_input "$token"; then
+            return 1
+        fi
+        if ! tty_printf "$tty_write_fd" '%s\n' "$retry_text"; then
             return 2
         fi
     done

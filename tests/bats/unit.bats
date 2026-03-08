@@ -1529,24 +1529,28 @@ EOF
 @test "interactive prompts use shared tty helpers with explicit fd reads" {
     run bash -eo pipefail -c '
     grep -Fq "open_interactive_tty_fd() {" ./lib.sh
+    grep -Fq "open_interactive_tty_fds() {" ./lib.sh
     grep -Fq "tty_printf() {" ./lib.sh
     grep -Fq "tty_print_line() {" ./lib.sh
     grep -Fq "tty_print_box() {" ./lib.sh
-    grep -Fq "open_interactive_tty_fd tty_fd" ./install.sh
-    grep -Fq "printf \"Профиль [1/2/3/4]: \" >&\"\$tty_fd\"" ./install.sh
-    grep -Fq "read -r -u \"\$tty_fd\" input" ./install.sh
+    grep -Fq "open_interactive_tty_fds tty_read_fd tty_write_fd" ./install.sh
+    grep -Fq "printf \"Профиль [1/2/3/4]: \" >&\"\$tty_write_fd\"" ./install.sh
+    grep -Fq "read -r -u \"\$tty_read_fd\" input" ./install.sh
     grep -Fq "prompt_yes_no_from_tty() {" ./lib.sh
-    grep -Fq "prompt_yes_no_from_tty \"\$tty_fd\" \"Подтвердите (yes/no): \" \"Введите yes или no (без кавычек)\"" ./install.sh
-    grep -Fq "printf \"Количество VPN-ключей (1-%s): \" \"\$max_configs\" >&\"\$tty_fd\"" ./install.sh
-    grep -Fq "printf \"Количество VPN-ключей добавить (1-%s): \" \"\$max_add\" >&\"\$tty_fd\"" ./modules/config/add_clients.sh
-    grep -Fq "tty_print_box \"\$tty_fd\" \"\$RED\" \"\$uninstall_title\" 60 90" ./service.sh
+    grep -Fq "extract_confirmation_token_tail() {" ./lib.sh
+    grep -Fq "prompt_yes_no_from_tty \"\$tty_read_fd\" \"Подтвердите (yes/no): \" \"Введите yes или no (без кавычек)\" \"\$tty_write_fd\"" ./install.sh
+    grep -Fq "printf \"Количество VPN-ключей (1-%s): \" \"\$max_configs\" >&\"\$tty_write_fd\"" ./install.sh
+    grep -Fq "printf \"Количество VPN-ключей добавить (1-%s): \" \"\$max_add\" >&\"\$tty_write_fd\"" ./modules/config/add_clients.sh
+    grep -Fq "tty_print_box \"\$tty_write_fd\" \"\$RED\" \"\$uninstall_title\" 60 90" ./service.sh
     grep -Fq "Вы уверены? Введите yes для подтверждения или no для отмены:" ./service.sh
     grep -Fq "prompt_yes_no_from_tty \\" ./service.sh
     grep -Fq "\"Введите yes или no (без кавычек)\"" ./service.sh
     ! grep -Fq "if ! prompt_yes_no_from_tty" ./service.sh
-    grep -Fq "open_interactive_tty_fd tty_fd" ./lib.sh
+    grep -Fq "open_interactive_tty_fds tty_read_fd tty_write_fd" ./lib.sh
     grep -Fq "Укажите путь вручную для %s:" ./lib.sh
-    grep -Fq "read -r -u \"\$tty_fd\" custom_path" ./lib.sh
+    grep -Fq "read -r -u \"\$tty_read_fd\" custom_path" ./lib.sh
+    grep -Fq "Запускаем transport-aware self-check..." ./install.sh
+    grep -Fq "transport-aware self-check: проверяем exported client variants..." ./modules/health/self_check.sh
     ! grep -Fq "read -r -p \"Профиль [1/2/3/4]: \" input < /dev/tty" ./install.sh
     ! grep -Fq "read -r -u \"\$tty_fd\" -p \"Подтвердите (yes/no): \" answer" ./install.sh
     ! grep -Fq "read -r -p \"Сколько VPN-ключей создать? (1-\${max_configs}): \" input < /dev/tty" ./install.sh
@@ -1688,6 +1692,19 @@ EOF
     [ "$output" = "ok" ]
 }
 
+@test "extract_confirmation_token_tail keeps only trailing yes-no answer" {
+    run bash -eo pipefail -c '
+    source ./lib.sh
+    [[ "$(extract_confirmation_token_tail "Вы уверены? Введите yes для подтверждения или no для отмены: yes")" == "yes" ]]
+    [[ "$(extract_confirmation_token_tail "Подтвердите (yes/no): no")" == "no" ]]
+    [[ -z "$(extract_confirmation_token_tail "Вы уверены? Введите yes для подтверждения или no для отмены:")" ]]
+    [[ -z "$(extract_confirmation_token_tail "random text yes maybe")" ]]
+    echo "ok"
+  '
+    [ "$status" -eq 0 ]
+    [ "$output" = "ok" ]
+}
+
 @test "open_interactive_tty_fd fails quietly without controlling tty" {
     run bash -eo pipefail -c '
     source ./lib.sh
@@ -1795,6 +1812,31 @@ EOF
     [ "$output" = "rc=1 retry=1" ]
 }
 
+@test "prompt_yes_no_from_tty accepts echoed prompt prefix without retry" {
+    run bash -eo pipefail -c '
+    source ./lib.sh
+    retry_count=0
+    tty_printf() {
+      if [[ "${3:-}" == "Введите yes или no (без кавычек)" ]]; then
+        retry_count=$((retry_count + 1))
+      fi
+      :
+    }
+    tmp=$(mktemp)
+    trap "rm -f \"$tmp\"" EXIT
+    printf "Вы уверены? Введите yes для подтверждения или no для отмены: yes\n" > "$tmp"
+    exec 9<"$tmp"
+    if prompt_yes_no_from_tty 9 "Вы уверены? Введите yes для подтверждения или no для отмены: " "Введите yes или no (без кавычек)"; then
+      rc=0
+    else
+      rc=$?
+    fi
+    echo "rc=$rc retry=$retry_count"
+  '
+    [ "$status" -eq 0 ]
+    [ "$output" = "rc=0 retry=0" ]
+}
+
 @test "prompt_yes_no_from_tty retries invalid then accepts yes" {
     run bash -eo pipefail -c '
     source ./lib.sh
@@ -1818,6 +1860,31 @@ EOF
   '
     [ "$status" -eq 0 ]
     [ "$output" = "rc=0 retry=1" ]
+}
+
+@test "prompt_yes_no_from_tty rejects prompt-only line without answer" {
+    run bash -eo pipefail -c '
+    source ./lib.sh
+    retry_count=0
+    tty_printf() {
+      if [[ "${3:-}" == "Введите yes или no (без кавычек)" ]]; then
+        retry_count=$((retry_count + 1))
+      fi
+      :
+    }
+    tmp=$(mktemp)
+    trap "rm -f \"$tmp\"" EXIT
+    printf "Вы уверены? Введите yes для подтверждения или no для отмены:\n" > "$tmp"
+    exec 9<"$tmp"
+    if prompt_yes_no_from_tty 9 "Вы уверены? Введите yes для подтверждения или no для отмены: " "Введите yes или no (без кавычек)"; then
+      rc=0
+    else
+      rc=$?
+    fi
+    echo "rc=$rc retry=$retry_count"
+  '
+    [ "$status" -eq 0 ]
+    [ "$output" = "rc=2 retry=1" ]
 }
 
 @test "ui_box_width_for_lines respects min and max bounds" {

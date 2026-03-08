@@ -758,7 +758,8 @@ uninstall_all() {
     local uninstall_box_width uninstall_title
     uninstall_title="УДАЛЕНИЕ NETWORK STEALTH CORE"
     uninstall_box_width=$(ui_box_width_for_lines 60 90 "$uninstall_title")
-    local tty_fd=""
+    local tty_read_fd=""
+    local tty_write_fd=""
     local require_confirmation=false
     if [[ "$ASSUME_YES" != "true" && "$NON_INTERACTIVE" != "true" ]]; then
         require_confirmation=true
@@ -767,7 +768,7 @@ uninstall_all() {
             hint "Повторите команду с --yes --non-interactive для явного подтверждения"
             exit 1
         fi
-        if ! open_interactive_tty_fd tty_fd; then
+        if ! open_interactive_tty_fds tty_read_fd tty_write_fd; then
             log ERROR "Требуется интерактивное подтверждение удаления, но /dev/tty недоступен"
             hint "Повторите команду с --yes --non-interactive для явного подтверждения"
             exit 1
@@ -775,18 +776,18 @@ uninstall_all() {
     fi
 
     if [[ "$require_confirmation" == "true" ]]; then
-        tty_print_line "$tty_fd" ""
-        tty_print_box "$tty_fd" "$RED" "$uninstall_title" 60 90
-        tty_print_line "$tty_fd" ""
-        tty_printf "$tty_fd" '%b⚠️  Будет удалено ВСЁ, связанное с Network Stealth Core:%b\n' "$YELLOW" "$NC"
-        tty_print_line "$tty_fd" "  • Сервисы и таймеры systemd"
-        tty_print_line "$tty_fd" "  • Бинарники и скрипты"
-        tty_print_line "$tty_fd" "  • Конфигурации и ключи"
-        tty_print_line "$tty_fd" "  • Логи и бэкапы"
-        tty_print_line "$tty_fd" "  • Правила файрвола"
-        tty_print_line "$tty_fd" "  • Системные оптимизации"
-        tty_print_line "$tty_fd" "  • Пользователь и группа xray"
-        tty_print_line "$tty_fd" ""
+        tty_print_line "$tty_write_fd" ""
+        tty_print_box "$tty_write_fd" "$RED" "$uninstall_title" 60 90
+        tty_print_line "$tty_write_fd" ""
+        tty_printf "$tty_write_fd" '%b⚠️  Будет удалено ВСЁ, связанное с Network Stealth Core:%b\n' "$YELLOW" "$NC"
+        tty_print_line "$tty_write_fd" "  • Сервисы и таймеры systemd"
+        tty_print_line "$tty_write_fd" "  • Бинарники и скрипты"
+        tty_print_line "$tty_write_fd" "  • Конфигурации и ключи"
+        tty_print_line "$tty_write_fd" "  • Логи и бэкапы"
+        tty_print_line "$tty_write_fd" "  • Правила файрвола"
+        tty_print_line "$tty_write_fd" "  • Системные оптимизации"
+        tty_print_line "$tty_write_fd" "  • Пользователь и группа xray"
+        tty_print_line "$tty_write_fd" ""
     else
         echo ""
         echo -e "${BOLD}${RED}$(ui_box_border_string top "$uninstall_box_width")${NC}"
@@ -807,11 +808,13 @@ uninstall_all() {
     if [[ "$require_confirmation" == "true" ]]; then
         local prompt_rc=0
         prompt_yes_no_from_tty \
-            "$tty_fd" \
+            "$tty_read_fd" \
             "Вы уверены? Введите yes для подтверждения или no для отмены: " \
-            "Введите yes или no (без кавычек)"
+            "Введите yes или no (без кавычек)" \
+            "$tty_write_fd"
         prompt_rc=$?
-        exec {tty_fd}>&-
+        exec {tty_read_fd}<&-
+        exec {tty_write_fd}>&-
         if ((prompt_rc == 1)); then
             log INFO "Удаление отменено"
             exit 0

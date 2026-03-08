@@ -575,3 +575,24 @@ EOF
     [ "$status" -eq 0 ]
     [ "$output" = "ok" ]
 }
+
+@test "self_check_stop_client_process force-kills stubborn client without hanging" {
+    run bash -eo pipefail -c '
+    source ./lib.sh
+    source ./health.sh
+
+    bash -c '\''trap "" TERM; while :; do sleep 1; done'\'' > /dev/null 2>&1 &
+    child_pid=$!
+    start_epoch=$(date +%s)
+    self_check_stop_client_process "$child_pid"
+    elapsed=$(( $(date +%s) - start_epoch ))
+    if kill -0 "$child_pid" 2> /dev/null; then
+      echo "child-still-running"
+      exit 1
+    fi
+    (( elapsed <= 6 ))
+    echo ok
+  '
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"ok"* ]]
+}

@@ -113,25 +113,27 @@ confirm_minisign_fallback() {
         return 1
     fi
 
-    local tty_fd=""
-    if ! open_interactive_tty_fd tty_fd; then
+    local tty_read_fd="" tty_write_fd=""
+    if ! open_interactive_tty_fds tty_read_fd tty_write_fd; then
         log ERROR "$reason"
         log ERROR "Нет доступного TTY для подтверждения fallback-режима minisign"
         hint "Для осознанного продолжения используйте --allow-insecure-sha256"
         return 1
     fi
 
-    printf '\n%b%s%b\n' "$YELLOW" "$reason" "$NC" >&"$tty_fd"
-    printf '%b⚠️  Внимание: minisign недоступен или не пройден.%b\n' "$YELLOW" "$NC" >&"$tty_fd"
-    printf '%bПродолжить установку только по SHA256?%b\n' "$YELLOW" "$NC" >&"$tty_fd"
+    printf '\n%b%s%b\n' "$YELLOW" "$reason" "$NC" >&"$tty_write_fd"
+    printf '%b⚠️  Внимание: minisign недоступен или не пройден.%b\n' "$YELLOW" "$NC" >&"$tty_write_fd"
+    printf '%bПродолжить установку только по SHA256?%b\n' "$YELLOW" "$NC" >&"$tty_write_fd"
 
     local prompt_rc=0
-    if prompt_yes_no_from_tty "$tty_fd" "Подтвердите (yes/no): " "Введите yes или no (без кавычек)"; then
-        exec {tty_fd}>&-
+    if prompt_yes_no_from_tty "$tty_read_fd" "Подтвердите (yes/no): " "Введите yes или no (без кавычек)" "$tty_write_fd"; then
+        exec {tty_read_fd}<&-
+        exec {tty_write_fd}>&-
         return 0
     fi
     prompt_rc=$?
-    exec {tty_fd}>&-
+    exec {tty_read_fd}<&-
+    exec {tty_write_fd}>&-
     if ((prompt_rc == 1)); then
         log ERROR "Операция остановлена пользователем: minisign fallback отклонён"
     else
@@ -714,27 +716,29 @@ ask_domain_profile() {
         exit 1
     fi
 
-    local tty_fd=""
-    if ! open_interactive_tty_fd tty_fd; then
+    local tty_read_fd="" tty_write_fd=""
+    if ! open_interactive_tty_fds tty_read_fd tty_write_fd; then
         log ERROR "Не удалось открыть /dev/tty для выбора профиля доменов"
         exit 1
     fi
 
-    printf '\n' >&"$tty_fd"
+    printf '\n' >&"$tty_write_fd"
     local input
     while true; do
-        printf '%s\n' "Выберите профиль доменов:" >&"$tty_fd"
-        printf '%s\n' "  1) ru (ручной ввод числа ключей, до 100)" >&"$tty_fd"
-        printf '%s\n' "  2) global-50 (ручной ввод числа ключей, до 10)" >&"$tty_fd"
-        printf '%s\n' "  3) ru-auto (автоматически: 5 ключей)" >&"$tty_fd"
-        printf '%s\n' "  4) global-50-auto (автоматически: 10 ключей)" >&"$tty_fd"
-        if ! printf "Профиль [1/2/3/4]: " >&"$tty_fd"; then
-            exec {tty_fd}>&-
+        printf '%s\n' "Выберите профиль доменов:" >&"$tty_write_fd"
+        printf '%s\n' "  1) ru (ручной ввод числа ключей, до 100)" >&"$tty_write_fd"
+        printf '%s\n' "  2) global-50 (ручной ввод числа ключей, до 10)" >&"$tty_write_fd"
+        printf '%s\n' "  3) ru-auto (автоматически: 5 ключей)" >&"$tty_write_fd"
+        printf '%s\n' "  4) global-50-auto (автоматически: 10 ключей)" >&"$tty_write_fd"
+        if ! printf "Профиль [1/2/3/4]: " >&"$tty_write_fd"; then
+            exec {tty_read_fd}<&-
+            exec {tty_write_fd}>&-
             log ERROR "Не удалось вывести запрос выбора профиля в /dev/tty"
             exit 1
         fi
-        if ! read -r -u "$tty_fd" input; then
-            exec {tty_fd}>&-
+        if ! read -r -u "$tty_read_fd" input; then
+            exec {tty_read_fd}<&-
+            exec {tty_write_fd}>&-
             log ERROR "Не удалось прочитать выбор профиля из /dev/tty"
             exit 1
         fi
@@ -773,11 +777,12 @@ ask_domain_profile() {
                 break
                 ;;
             *)
-                printf '%bВведите 1, 2, 3 или 4 (пустой ввод = ru)%b\n' "$RED" "$NC" >&"$tty_fd"
+                printf '%bВведите 1, 2, 3 или 4 (пустой ввод = ru)%b\n' "$RED" "$NC" >&"$tty_write_fd"
                 ;;
         esac
     done
-    exec {tty_fd}>&-
+    exec {tty_read_fd}<&-
+    exec {tty_write_fd}>&-
     if ! DOMAIN_TIER=$(normalize_domain_tier "$DOMAIN_TIER"); then
         DOMAIN_TIER="tier_ru"
     fi
@@ -823,34 +828,37 @@ ask_num_configs() {
         exit 1
     fi
 
-    local tty_fd=""
-    if ! open_interactive_tty_fd tty_fd; then
+    local tty_read_fd="" tty_write_fd=""
+    if ! open_interactive_tty_fds tty_read_fd tty_write_fd; then
         log ERROR "Не удалось открыть /dev/tty для обязательного ввода NUM_CONFIGS"
         exit 1
     fi
 
-    printf '\n' >&"$tty_fd"
+    printf '\n' >&"$tty_write_fd"
     local input
     while true; do
-        if ! printf "Количество VPN-ключей (1-%s): " "$max_configs" >&"$tty_fd"; then
-            exec {tty_fd}>&-
+        if ! printf "Количество VPN-ключей (1-%s): " "$max_configs" >&"$tty_write_fd"; then
+            exec {tty_read_fd}<&-
+            exec {tty_write_fd}>&-
             log ERROR "Не удалось вывести запрос NUM_CONFIGS в /dev/tty"
             exit 1
         fi
-        if ! read -r -u "$tty_fd" input; then
-            exec {tty_fd}>&-
+        if ! read -r -u "$tty_read_fd" input; then
+            exec {tty_read_fd}<&-
+            exec {tty_write_fd}>&-
             log ERROR "Не удалось прочитать значение NUM_CONFIGS из /dev/tty"
             exit 1
         fi
         input=$(normalize_tty_input "$input")
         if [[ "$input" =~ ^[0-9]+$ ]] && ((input >= 1 && input <= max_configs)); then
-            exec {tty_fd}>&-
+            exec {tty_read_fd}<&-
+            exec {tty_write_fd}>&-
             NUM_CONFIGS="$input"
             log OK "Количество ключей: ${NUM_CONFIGS}"
             echo ""
             return 0
         fi
-        printf '%bВведите число от 1 до %s (пустой ввод не допускается)%b\n' "$RED" "$max_configs" "$NC" >&"$tty_fd"
+        printf '%bВведите число от 1 до %s (пустой ввод не допускается)%b\n' "$RED" "$max_configs" "$NC" >&"$tty_write_fd"
     done
 }
 
@@ -905,6 +913,7 @@ install_flow() {
         exit 1
     fi
     test_reality_connectivity
+    log STEP "Запускаем transport-aware self-check..."
     if ! post_action_verdict "install"; then
         log ERROR "Финальная self-check (install) завершилась с verdict=BROKEN"
         exit 1
