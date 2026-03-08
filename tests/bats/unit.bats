@@ -172,23 +172,6 @@
     [[ "$output" == *"ok"* ]]
 }
 
-@test "print_secret_file_to_tty degrades gracefully without tty" {
-    run bash -eo pipefail -c '
-    source ./lib.sh
-    can_write_dev_tty() { return 1; }
-    tmp=$(mktemp)
-    trap "rm -f \"$tmp\"" EXIT
-    echo "secret-value" > "$tmp"
-    if print_secret_file_to_tty "$tmp" "Клиентские ссылки"; then
-      echo "unexpected-success"
-      exit 1
-    fi
-    echo "ok"
-  '
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"ok"* ]]
-    [[ "$output" == *"Клиентские ссылки"* ]]
-}
 
 @test "setup_logging avoids mktemp -u race pattern" {
     run bash -eo pipefail -c '
@@ -1656,6 +1639,22 @@ EOF
     [ "$output" = "ok" ]
 }
 
+@test "ui_box_line_string keeps right border stable for cyrillic text in C locale" {
+    run bash -eo pipefail -c '
+    export LC_ALL=C
+    export LANG=C
+    source ./lib.sh
+    line=$(ui_box_line_string "Config 1: yandex.ru * ГЛАВНЫЙ" 32)
+    top=$(ui_box_border_string top 32)
+    [ "$(ui_box_text_length "$line")" -eq "$(ui_box_text_length "$top")" ]
+    [[ "${line:0:1}" == "|" ]]
+    [[ "${line: -1}" == "|" ]]
+    echo "ok"
+  '
+    [ "$status" -eq 0 ]
+    [ "$output" = "ok" ]
+}
+
 @test "clients header box writes one line per segment" {
     run bash -eo pipefail -c '
     grep -Fq "printf '\''%s\\n'\'' \"\$(ui_box_border_string top \"\$header_width\")\"" ./config.sh
@@ -1965,6 +1964,27 @@ EOF
     source ./lib.sh
     [ "$(ui_box_width_for_lines 60 80 "short")" = "60" ]
     [ "$(ui_box_width_for_lines 10 20 "1234567890123456789012345")" = "20" ]
+    echo "ok"
+  '
+    [ "$status" -eq 0 ]
+    [ "$output" = "ok" ]
+}
+
+@test "ui_box_width_for_lines clamps to tty width override" {
+    run bash -eo pipefail -c '
+    source ./lib.sh
+    UI_BOX_TTY_COLS=42
+    [ "$(ui_box_width_for_lines 60 90 "abcdefghijklmnopqrstuvwxyz")" = "40" ]
+    echo "ok"
+  '
+    [ "$status" -eq 0 ]
+    [ "$output" = "ok" ]
+}
+
+@test "install result no longer auto-dumps clients file to tty" {
+    run bash -eo pipefail -c '
+    grep -Fq "Клиентские конфиги автоматически не печатаются в терминал, чтобы не ломать layout." ./install.sh
+    ! grep -Fq "print_secret_file_to_tty \"\$client_file\" \"Клиентские ссылки\"" ./install.sh
     echo "ok"
   '
     [ "$status" -eq 0 ]

@@ -942,7 +942,9 @@ show_install_result() {
 
     local client_file="${XRAY_KEYS}/clients.txt"
     if [[ -f "$client_file" ]]; then
-        print_secret_file_to_tty "$client_file" "Клиентские ссылки" || true
+        echo -e "  ${DIM}💡 Клиентские конфиги автоматически не печатаются в терминал, чтобы не ломать layout.${NC}"
+        echo -e "  ${DIM}   Откройте файл вручную: ${client_file}${NC}"
+        echo ""
     fi
 
     echo -e "${BOLD}📁 Файлы:${NC}"

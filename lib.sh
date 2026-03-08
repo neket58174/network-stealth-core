@@ -456,6 +456,62 @@ ui_box_sanitize_text() {
     printf '%s' "$text"
 }
 
+ui_box_text_length() {
+    local text="${1:-}"
+    local ui_locale="${UI_TEXT_LOCALE:-C.UTF-8}"
+    local LC_ALL="$ui_locale"
+    local LANG="$ui_locale"
+    printf '%s' "${#text}"
+}
+
+ui_box_text_slice() {
+    local text="${1:-}"
+    local start="${2:-0}"
+    local length="${3:-}"
+    local ui_locale="${UI_TEXT_LOCALE:-C.UTF-8}"
+    local LC_ALL="$ui_locale"
+    local LANG="$ui_locale"
+    if [[ -n "$length" ]]; then
+        printf '%s' "${text:start:length}"
+    else
+        printf '%s' "${text:start}"
+    fi
+}
+
+ui_box_terminal_width() {
+    local cols="${UI_BOX_TTY_COLS:-}"
+    if [[ "$cols" =~ ^[0-9]+$ ]] && ((cols > 0)); then
+        printf '%s' "$cols"
+        return 0
+    fi
+
+    if [[ -t 1 ]]; then
+        cols="${COLUMNS:-}"
+        if [[ "$cols" =~ ^[0-9]+$ ]] && ((cols > 0)); then
+            printf '%s' "$cols"
+            return 0
+        fi
+
+        if command -v tput > /dev/null 2>&1; then
+            cols=$(tput cols 2> /dev/null || echo 0)
+            if [[ "$cols" =~ ^[0-9]+$ ]] && ((cols > 0)); then
+                printf '%s' "$cols"
+                return 0
+            fi
+        fi
+
+        if command -v stty > /dev/null 2>&1; then
+            cols=$(stty size 2> /dev/null | awk '{print $2}' || echo 0)
+            if [[ "$cols" =~ ^[0-9]+$ ]] && ((cols > 0)); then
+                printf '%s' "$cols"
+                return 0
+            fi
+        fi
+    fi
+
+    printf '%s' 0
+}
+
 format_generated_timestamp() {
     local stamp
     stamp=$(LC_ALL=C date '+%a %b %d %I:%M:%S %p %Z %Y' 2> /dev/null || date '+%a %b %d %I:%M:%S %p %Z %Y')
@@ -473,18 +529,20 @@ ui_box_fit_text() {
 
     local sanitized
     sanitized=$(ui_box_sanitize_text "$text")
+    local sanitized_len
+    sanitized_len=$(ui_box_text_length "$sanitized")
 
-    if ((${#sanitized} <= width)); then
+    if ((sanitized_len <= width)); then
         printf '%s' "$sanitized"
         return 0
     fi
 
     if ((width <= 3)); then
-        printf '%s' "${sanitized:0:width}"
+        ui_box_text_slice "$sanitized" 0 "$width"
         return 0
     fi
 
-    printf '%s...' "${sanitized:0:$((width - 3))}"
+    printf '%s...' "$(ui_box_text_slice "$sanitized" 0 "$((width - 3))")"
 }
 
 ui_box_width_for_lines() {
@@ -499,11 +557,26 @@ ui_box_width_for_lines() {
         max_width="$min_width"
     fi
 
+    local tty_cols available_width
+    tty_cols=$(ui_box_terminal_width)
+    if [[ "$tty_cols" =~ ^[0-9]+$ ]] && ((tty_cols > 2)); then
+        available_width=$((tty_cols - 2))
+        if ((available_width < 1)); then
+            available_width=1
+        fi
+        if ((max_width > available_width)); then
+            max_width="$available_width"
+        fi
+        if ((min_width > available_width)); then
+            min_width="$available_width"
+        fi
+    fi
+
     local desired="$min_width"
     local line sanitized line_len
     for line in "$@"; do
         sanitized=$(ui_box_sanitize_text "$line")
-        line_len=${#sanitized}
+        line_len=$(ui_box_text_length "$sanitized")
         if ((line_len > desired)); then
             desired="$line_len"
         fi
@@ -534,7 +607,7 @@ ui_box_line_string() {
     local pad
     ui_init_glyphs
     fitted=$(ui_box_fit_text "$text" "$width")
-    pad_len=$((width - ${#fitted}))
+    pad_len=$((width - $(ui_box_text_length "$fitted")))
     if ((pad_len < 0)); then
         pad_len=0
     fi
@@ -732,33 +805,6 @@ cleanup_logging_processes() {
         done
     fi
     LOGGING_BACKEND="none"
-}
-
-print_secret_file_to_tty() {
-    local file="$1"
-    local label="${2:-секретные данные}"
-    local fallback_file="${3:-$file}"
-
-    [[ -f "$file" ]] || return 1
-    if can_write_dev_tty; then
-        if {
-            cat "$file"
-            echo ""
-        } > /dev/tty 2> /dev/null; then
-            log INFO "${label} выведены только в /dev/tty (в install log не записаны)"
-            return 0
-        fi
-    fi
-
-    log INFO "Терминал недоступен; ${label} не печатаются в лог. Откройте файл: ${fallback_file}"
-    return 1
-}
-
-can_write_dev_tty() {
-    [[ -e /dev/tty && -w /dev/tty ]] || return 1
-    tty -s 2> /dev/null || return 1
-    { :; } > /dev/tty 2> /dev/null || return 1
-    return 0
 }
 
 hint() {
