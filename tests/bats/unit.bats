@@ -1528,16 +1528,16 @@ EOF
 
 @test "interactive prompts use shared tty helpers with explicit fd reads" {
     run bash -eo pipefail -c '
-    grep -Fq "open_interactive_tty_fd() {" ./lib.sh
-    grep -Fq "open_interactive_tty_fds() {" ./lib.sh
-    grep -Fq "tty_printf() {" ./lib.sh
-    grep -Fq "tty_print_line() {" ./lib.sh
-    grep -Fq "tty_print_box() {" ./lib.sh
+    grep -Fq "open_interactive_tty_fd() {" ./modules/lib/tty.sh
+    grep -Fq "open_interactive_tty_fds() {" ./modules/lib/tty.sh
+    grep -Fq "tty_printf() {" ./modules/lib/tty.sh
+    grep -Fq "tty_print_line() {" ./modules/lib/tty.sh
+    grep -Fq "tty_print_box() {" ./modules/lib/tty.sh
     grep -Fq "open_interactive_tty_fds tty_read_fd tty_write_fd" ./install.sh
     grep -Fq "printf \"Профиль [1/2/3/4]: \" >&\"\$tty_write_fd\"" ./install.sh
     grep -Fq "read -r -u \"\$tty_read_fd\" input" ./install.sh
-    grep -Fq "prompt_yes_no_from_tty() {" ./lib.sh
-    grep -Fq "extract_confirmation_token_tail() {" ./lib.sh
+    grep -Fq "prompt_yes_no_from_tty() {" ./modules/lib/tty.sh
+    grep -Fq "extract_confirmation_token_tail() {" ./modules/lib/tty.sh
     grep -Fq "prompt_yes_no_from_tty \"\$tty_read_fd\" \"Подтвердите (yes/no): \" \"Введите yes или no (без кавычек)\" \"\$tty_write_fd\"" ./install.sh
     grep -Fq "printf \"Количество VPN-ключей (1-%s): \" \"\$max_configs\" >&\"\$tty_write_fd\"" ./install.sh
     grep -Fq "printf \"Количество VPN-ключей добавить (1-%s): \" \"\$max_add\" >&\"\$tty_write_fd\"" ./modules/config/add_clients.sh

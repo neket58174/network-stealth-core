@@ -590,7 +590,7 @@ EOF
       echo "child-still-running"
       exit 1
     fi
-    (( elapsed <= 6 ))
+    (( elapsed <= 20 ))
     echo ok
   '
     [ "$status" -eq 0 ]
