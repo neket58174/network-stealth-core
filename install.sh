@@ -964,7 +964,7 @@ show_install_result() {
         echo -e "  QR-коды: ${XRAY_KEYS}/qr/"
     fi
     if [[ -d "${XRAY_KEYS}/export" ]]; then
-        echo -e "  Экспорт: ${XRAY_KEYS}/export/ (raw xray, client templates)"
+        echo -e "  Экспорт: ${XRAY_KEYS}/export/ (raw xray, шаблоны клиентов, canary)"
     fi
     echo -e "  Конфигурация Xray: ${XRAY_CONFIG}"
     echo -e "  Окружение: ${XRAY_ENV}"
@@ -978,30 +978,115 @@ show_install_result() {
 
 }
 
+build_install_quick_start_file() {
+    local json_file="$1"
+    local output_file="$2"
+
+    [[ -f "$json_file" ]] || return 1
+    if ! jq -e 'type == "object" and (.configs | type == "array") and ((.configs | length) > 0)' "$json_file" > /dev/null 2>&1; then
+        return 1
+    fi
+
+    local summary_json
+    summary_json=$(jq -c '
+        .configs[0] as $cfg |
+        {
+            name: ($cfg.name // "Config 1"),
+            domain: ($cfg.domain // "unknown"),
+            recommended_link: (($cfg.variants[]? | select(.key == ($cfg.recommended_variant // "recommended")) | (.vless_v4 // .vless_v6 // empty)) // empty),
+            rescue_link: (($cfg.variants[]? | select(.key == "rescue") | (.vless_v4 // .vless_v6 // empty)) // empty),
+            emergency_raw: (($cfg.variants[]? | select(.key == "emergency") | (.xray_client_file_v4 // .xray_client_file_v6 // empty)) // empty)
+        }
+    ' "$json_file" 2> /dev/null) || return 1
+
+    local config_name domain recommended_link rescue_link emergency_raw config_label
+    config_name=$(jq -r '.name // "Config 1"' <<< "$summary_json")
+    domain=$(jq -r '.domain // "unknown"' <<< "$summary_json")
+    recommended_link=$(jq -r '.recommended_link // empty' <<< "$summary_json")
+    rescue_link=$(jq -r '.rescue_link // empty' <<< "$summary_json")
+    emergency_raw=$(jq -r '.emergency_raw // empty' <<< "$summary_json")
+    config_label="$domain"
+    [[ -n "$config_label" && "$config_label" != "unknown" ]] || config_label="$config_name"
+    if [[ -n "$config_name" && "$config_name" != "$config_label" && "$config_name" != "Config 1" ]]; then
+        config_label="${config_label} (${config_name})"
+    fi
+
+    [[ -n "$recommended_link" || -n "$rescue_link" || -n "$emergency_raw" ]] || return 1
+
+    {
+        echo "для обычного старта ничего выбирать не надо:"
+        echo "- сначала импортируй основную ссылку"
+        echo "- если не заработала, попробуй запасную"
+        echo ""
+        echo "Config 1: ${config_label}"
+        echo ""
+        if [[ -n "$recommended_link" ]]; then
+            echo "основная ссылка (recommended):"
+            printf '%s\n' "$recommended_link"
+            echo ""
+        fi
+        if [[ -n "$rescue_link" ]]; then
+            echo "запасная ссылка (rescue):"
+            printf '%s\n' "$rescue_link"
+            echo ""
+        fi
+        if [[ -n "$emergency_raw" ]]; then
+            echo "аварийный режим (emergency):"
+            echo "raw xray json: ${emergency_raw}"
+            echo "используй его только если обычные ссылки не проходят и клиент умеет browser dialer"
+            echo ""
+        fi
+        echo "остальные конфиги и ссылки: ${XRAY_KEYS}/clients-links.txt"
+        echo "подробное описание: ${XRAY_KEYS}/clients.txt"
+    } > "$output_file"
+}
+
 print_install_links_summary() {
     local client_links_file="$1"
-    [[ -f "$client_links_file" ]] || return 1
+    local clients_json="${XRAY_KEYS}/clients.json"
+    local summary_file=""
+
+    if [[ -f "$clients_json" ]]; then
+        summary_file=$(mktemp "${XRAY_KEYS}/install-quick-start.XXXXXX")
+        if ! build_install_quick_start_file "$clients_json" "$summary_file"; then
+            rm -f "$summary_file"
+            summary_file=""
+        fi
+    fi
+
+    local target_file="$client_links_file"
+    local header_text="🔗 что использовать сейчас:"
+    if [[ -n "$summary_file" ]]; then
+        target_file="$summary_file"
+    else
+        header_text="🔗 быстрые ссылки:"
+    fi
 
     if [[ -t 1 ]]; then
-        echo -e "${BOLD}🔗 Быстрый импорт VLESS:${NC}"
-        cat "$client_links_file"
+        echo -e "${BOLD}${header_text}${NC}"
+        cat "$target_file"
+        [[ -n "$summary_file" ]] && rm -f "$summary_file"
         return 0
     fi
 
     local tty_fd=""
     if ! open_interactive_tty_fd tty_fd; then
+        [[ -n "$summary_file" ]] && rm -f "$summary_file"
         return 1
     fi
 
-    tty_printf "$tty_fd" '%b%s%b\n' "$BOLD" "🔗 Быстрый импорт VLESS:" "$NC" || {
+    tty_printf "$tty_fd" '%b%s%b\n' "$BOLD" "$header_text" "$NC" || {
         exec {tty_fd}>&-
+        [[ -n "$summary_file" ]] && rm -f "$summary_file"
         return 1
     }
-    if ! cat "$client_links_file" >&"$tty_fd"; then
+    if ! cat "$target_file" >&"$tty_fd"; then
         exec {tty_fd}>&-
+        [[ -n "$summary_file" ]] && rm -f "$summary_file"
         return 1
     fi
     exec {tty_fd}>&-
+    [[ -n "$summary_file" ]] && rm -f "$summary_file"
     return 0
 }
 

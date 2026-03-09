@@ -27,7 +27,7 @@ what this should do:
 - build the strongest-direct stack without transport questions
 - write `policy.json`
 - generate schema v3 client artifacts
-- print quick `vless` links from `clients-links.txt` when install runs in an interactive terminal
+- print the primary and fallback `vless` links during install and keep the full list in `clients-links.txt`
 - run post-action self-check with `recommended`, then `rescue` if needed
 - export raw xray configs, capability matrix, and canary bundle
 

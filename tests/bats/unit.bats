@@ -1681,10 +1681,11 @@ EOF
     [ "$output" = "ok" ]
 }
 
-@test "clients update command is rendered as one line" {
+@test "clients summary keeps concise management commands" {
     run bash -eo pipefail -c '
-    grep -Fq "Для обновления Xray до новой версии выполните: sudo xray-reality.sh update" ./config.sh
-    ! grep -Fq "  sudo xray-reality.sh update" ./config.sh
+    grep -Fq -- "- обновить: xray-reality.sh update" ./config.sh
+    grep -Fq -- "- удалить: xray-reality.sh uninstall" ./config.sh
+    ! grep -Fq "Для обновления Xray до новой версии выполните: sudo xray-reality.sh update" ./config.sh
     echo "ok"
   '
     [ "$status" -eq 0 ]
@@ -1984,25 +1985,14 @@ EOF
     [ "$output" = "ok" ]
 }
 
-@test "install result prints compact quick links instead of dumping clients.txt" {
-    run bash -eo pipefail -c '
-    grep -Fq "local client_links_file=\"\${XRAY_KEYS}/clients-links.txt\"" ./install.sh
-    grep -Fq "cat \"\$client_links_file\"" ./install.sh
-    grep -Fq "Быстрые VLESS-ссылки: \${client_links_file}" ./install.sh
-    echo "ok"
-  '
+@test "install result prints russian quick start instead of dumping full links file" {
+    run bash -eo pipefail -c "grep -Fq 'build_install_quick_start_file()' ./install.sh; grep -Fq 'header_text=' ./install.sh; grep -Fq 'остальные конфиги и ссылки: \${XRAY_KEYS}/clients-links.txt' ./install.sh; echo ok"
     [ "$status" -eq 0 ]
     [ "$output" = "ok" ]
 }
 
-@test "clients summary points operators to clients-links.txt" {
-    run bash -eo pipefail -c '
-    grep -Fq "Quick import links: \${links_file}" ./config.sh
-    grep -Fq "quick vless links: \${links_file}" ./config.sh
-    grep -Fq "vless link (ipv4): see \${links_file}" ./config.sh
-    grep -Fq "render_clients_links_txt_from_json" ./config.sh
-    echo "ok"
-  '
+@test "clients summary points operators to russian links guidance" {
+    run bash -eo pipefail -c "grep -Fq 'быстрые ссылки: \${links_file}' ./config.sh; grep -Fq 'быстрая vless-ссылка: см. \${links_file}' ./config.sh; grep -Fq 'как пользоваться:' ./config.sh; grep -Fq 'render_clients_links_txt_from_json' ./config.sh; echo ok"
     [ "$status" -eq 0 ]
     [ "$output" = "ok" ]
 }
@@ -2154,6 +2144,84 @@ EOF
     run bash -eo pipefail -c '
     grep -q '\''render_clients_txt_from_json "\$json_file" "\$client_file"'\'' ./config.sh
     echo "ok"
+  '
+    [ "$status" -eq 0 ]
+    [ "$output" = "ok" ]
+}
+
+@test "render_clients_links_txt_from_json writes russian quick-link headings" {
+    run bash -eo pipefail -c '
+    source ./lib.sh
+    source ./config.sh
+    backup_file() { :; }
+    XRAY_KEYS="$(mktemp -d)"
+    trap "rm -rf \"$XRAY_KEYS\"" EXIT
+    XRAY_GROUP=xray
+    json_file="$XRAY_KEYS/clients.json"
+    links_file="$XRAY_KEYS/clients-links.txt"
+    cat > "$json_file" <<JSON
+{
+  "generated": "2026-03-09T01:00:00Z",
+  "server_ipv4": "127.0.0.1",
+  "server_ipv6": "::1",
+  "configs": [
+    {
+      "name": "Config 1",
+      "domain": "mail.ru",
+      "port_ipv4": 25040,
+      "recommended_variant": "recommended",
+      "variants": [
+        { "key": "recommended", "mode": "auto", "vless_v4": "vless://main" },
+        { "key": "rescue", "mode": "packet-up", "vless_v4": "vless://rescue" },
+        { "key": "emergency", "mode": "stream-up", "xray_client_file_v4": "/tmp/emergency.json", "requires": { "browser_dialer": true } }
+      ]
+    }
+  ]
+}
+JSON
+    render_clients_links_txt_from_json "$json_file" "$links_file"
+    grep -Fq "как использовать этот файл:" "$links_file"
+    grep -Fq "основная (recommended) | mode=auto" "$links_file"
+    grep -Fq "запасная (rescue) | mode=packet-up" "$links_file"
+    grep -Fq "аварийная (emergency) | mode=stream-up" "$links_file"
+    grep -Fq "raw xray only: нужен browser dialer" "$links_file"
+    echo ok
+  '
+    [ "$status" -eq 0 ]
+    [ "$output" = "ok" ]
+}
+
+@test "build_install_quick_start_file prints primary and fallback links" {
+    run bash -eo pipefail -c '
+    source ./lib.sh
+    source ./config.sh
+    source ./install.sh
+    XRAY_KEYS="$(mktemp -d)"
+    trap "rm -rf \"$XRAY_KEYS\"" EXIT
+    json_file="$XRAY_KEYS/clients.json"
+    out_file="$XRAY_KEYS/quick-start.txt"
+    cat > "$json_file" <<JSON
+{
+  "configs": [
+    {
+      "name": "Config 1",
+      "domain": "mail.ru",
+      "recommended_variant": "recommended",
+      "variants": [
+        { "key": "recommended", "vless_v4": "vless://main" },
+        { "key": "rescue", "vless_v4": "vless://rescue" },
+        { "key": "emergency", "xray_client_file_v4": "/tmp/emergency.json" }
+      ]
+    }
+  ]
+}
+JSON
+    build_install_quick_start_file "$json_file" "$out_file"
+    grep -Fq "для обычного старта ничего выбирать не надо:" "$out_file"
+    grep -Fq "основная ссылка (recommended):" "$out_file"
+    grep -Fq "запасная ссылка (rescue):" "$out_file"
+    grep -Fq "аварийный режим (emergency):" "$out_file"
+    echo ok
   '
     [ "$status" -eq 0 ]
     [ "$output" = "ok" ]

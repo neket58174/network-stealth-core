@@ -27,7 +27,7 @@ sudo xray-reality.sh install --non-interactive --yes
 - strongest-direct стек собирается без вопросов про transport
 - пишется `policy.json`
 - генерируются клиентские артефакты schema v3
-- в интерактивном терминале после install сразу печатаются быстрые `vless`-ссылки из `clients-links.txt`
+- в интерактивном терминале после install сразу печатаются основная и запасная `vless`-ссылки, а детали остаются в `clients-links.txt`
 - запускается post-action self-check для `recommended`, затем `rescue`, если нужно
 - экспортируются raw xray configs, capability matrix и canary bundle
 

@@ -831,30 +831,30 @@ client_variant_catalog() {
 client_variant_title() {
     local key="${1:-standard}"
     case "$key" in
-        recommended) printf '%s' "recommended" ;;
-        rescue) printf '%s' "rescue" ;;
-        emergency) printf '%s' "emergency" ;;
-        *) printf '%s' "standard" ;;
+        recommended) printf '%s' "основная (recommended)" ;;
+        rescue) printf '%s' "запасная (rescue)" ;;
+        emergency) printf '%s' "аварийная (emergency)" ;;
+        *) printf '%s' "стандартная (standard)" ;;
     esac
 }
 
 client_variant_category() {
     local key="${1:-standard}"
     case "$key" in
-        recommended) printf '%s' "direct" ;;
-        rescue) printf '%s' "fallback" ;;
-        emergency) printf '%s' "emergency" ;;
-        *) printf '%s' "legacy" ;;
+        recommended) printf '%s' "прямой режим" ;;
+        rescue) printf '%s' "запасной режим" ;;
+        emergency) printf '%s' "аварийный режим" ;;
+        *) printf '%s' "legacy-режим" ;;
     esac
 }
 
 client_variant_note() {
     local key="${1:-standard}"
     case "$key" in
-        recommended) printf '%s' "primary strongest direct profile" ;;
-        rescue) printf '%s' "packet-up fallback for difficult networks" ;;
-        emergency) printf '%s' "field-only emergency profile; requires browser dialer and raw xray json import" ;;
-        *) printf '%s' "legacy-compatible profile" ;;
+        recommended) printf '%s' "это основной и рекомендуемый вариант" ;;
+        rescue) printf '%s' "используй его, если основная ссылка не работает или сеть режет трафик" ;;
+        emergency) printf '%s' "используй только как последний вариант: нужен browser dialer и raw xray json" ;;
+        *) printf '%s' "legacy-совместимый профиль" ;;
     esac
 }
 
@@ -1046,18 +1046,11 @@ render_clients_txt_from_json() {
     local transport_summary
     transport_summary=$(transport_display_name "$transport_raw")
 
-    local mux_summary="Disabled"
-    if [[ "${transport_raw,,}" == "xhttp" ]]; then
-        mux_summary="Disabled (xhttp handles transport mixing itself)"
-    elif [[ "${MUX_ENABLED:-false}" == true ]]; then
-        mux_summary="Enabled (Concurrency: ${MUX_CONCURRENCY})"
-    fi
-
     backup_file "$client_file"
     local tmp_client
     tmp_client=$(mktemp "${client_file}.tmp.XXXXXX")
 
-    local header_title="Network Stealth Core ${SCRIPT_VERSION} - CLIENT CONFIGS"
+    local header_title="network stealth core ${SCRIPT_VERSION} - клиентские конфиги"
     local header_width
     header_width=$(ui_box_width_for_lines 60 90 "$header_title")
 
@@ -1066,46 +1059,22 @@ render_clients_txt_from_json() {
         printf '%s\n' "$(ui_box_line_string "$header_title" "$header_width")"
         printf '%s\n' "$(ui_box_border_string bottom "$header_width")"
         echo ""
+        echo "сервер ipv4: ${server_ipv4}"
+        echo "сервер ipv6: ${server_ipv6}"
+        echo "создано: ${generated}"
+        echo "транспорт: ${transport_summary}"
+        echo "стек: reality + xhttp + vless encryption + ${XRAY_DIRECT_FLOW:-xtls-rprx-vision}"
+        echo "spider mode: $([[ "${spider_mode}" == "true" ]] && echo "включён" || echo "выключен")"
+        echo "быстрые ссылки: ${links_file}"
+        echo ""
+        echo "как пользоваться:"
+        echo "1. сначала пробуй 'основная (recommended)' из ${links_file}"
+        echo "2. если не работает — переходи на 'запасная (rescue)'"
+        echo "3. 'аварийная (emergency)' нужна редко и работает только через raw xray json + browser dialer"
+        echo ""
+        echo "${rule58}"
+        echo ""
     } > "$tmp_client"
-
-    cat >> "$tmp_client" << EOF
-Server: ${server_ipv4}
-Server IPv6: ${server_ipv6}
-Generated: ${generated}
-Transport: ${transport_summary}
-Security: Reality + xhttp + VLESS encryption + ${XRAY_DIRECT_FLOW:-xtls-rprx-vision}
-DPI Bypass: strongest direct stack + emergency browser-assisted fallback
-Spider Mode: $([[ "${spider_mode}" == "true" ]] && echo "Enabled" || echo "Disabled")
-Install UX: $([[ "${ADVANCED_MODE:-false}" == "true" ]] && echo "advanced" || echo "minimal")
-Quick import links: ${links_file}
-
-${rule58}
-
-recommended clients:
-
-- android: v2rayNG 1.8+, nekoray, hiddify
-- ios: shadowrocket, streisand, foxray
-- windows: v2rayn 6+, nekoray, invisible man
-- macos: v2rayu, qv2ray, foxray
-- linux: xray-core, nekoray
-
-${rule58}
-
-⚙️  РЕКОМЕНДУЕМЫЕ НАСТРОЙКИ КЛИЕНТА:
-
-✓ Mux: ${mux_summary}
-✓ TCP Fast Open: ON
-✓ Domain Strategy: AsIs
-✓ Sniffing: Enabled
-✓ Transport default: xhttp auto
-✓ Fallback: xhttp packet-up
-✓ Emergency: xhttp stream-up + browser dialer (raw xray only)
-
-${rule58}
-
-🔗 КОНФИГУРАЦИИ:
-
-EOF
 
     local config_count
     config_count=$(jq -r '.configs | length' "$json_file" 2> /dev/null || echo 0)
@@ -1128,32 +1097,36 @@ EOF
 
         local priority=""
         if [[ $i -eq 0 ]]; then
-            priority=" * ГЛАВНЫЙ"
+            priority=" ★ основной"
         elif [[ $i -eq 1 ]]; then
-            priority=" ~ РЕЗЕРВНЫЙ"
+            priority=" ☆ запасной"
         fi
 
-        local transport_display transport_extra_key
+        local transport_display transport_extra_label
         transport_display=$(transport_display_name "$transport_value")
-        transport_extra_key=$(transport_endpoint_label "$transport_value")
+        case "${transport_value,,}" in
+            xhttp) transport_extra_label="путь xhttp" ;;
+            http2 | h2 | http/2) transport_extra_label="путь http/2" ;;
+            *) transport_extra_label="grpc service" ;;
+        esac
 
         {
             echo "$BOX60_TOP"
             box60_line "Config $((i + 1)): ${domain}${priority}"
             echo "$BOX60_SEP"
-            box60_line "Port IPv4: ${port_v4}"
-            box60_line "Port IPv6: ${port_v6}"
-            box60_line "SNI: ${sni}"
-            box60_line "Provider: ${provider_family}"
-            box60_line "Fingerprint: ${fp}"
-            box60_line "Transport: ${transport_display}"
-            box60_line "${transport_extra_key}: ${endpoint}"
-            box60_line "Flow: ${flow_value}"
-            box60_line "VLESS enc: ${encryption_value}"
+            box60_line "порт ipv4: ${port_v4}"
+            box60_line "порт ipv6: ${port_v6}"
+            box60_line "sni: ${sni}"
+            box60_line "провайдер: ${provider_family}"
+            box60_line "отпечаток: ${fp}"
+            box60_line "транспорт: ${transport_display}"
+            box60_line "${transport_extra_label}: ${endpoint}"
+            box60_line "flow: ${flow_value}"
+            box60_line "vless encryption: ${encryption_value}"
             echo "$BOX60_BOT"
+            echo "быстрые ссылки: ${links_file}"
             echo ""
-            echo "quick vless links: ${links_file}"
-            echo ""
+            echo "варианты:"
         } >> "$tmp_client"
 
         local variant_count
@@ -1164,12 +1137,10 @@ EOF
 
         local j
         for ((j = 0; j < variant_count; j++)); do
-            local variant_key variant_note variant_mode vless_v4 vless_v6 raw_v4 raw_v6 import_hint variant_category requires_browser_dialer
-            variant_key=$(jq -r ".configs[$i].variants[$j].key // .configs[$i].recommended_variant // \"standard\"" "$json_file" 2> /dev/null || echo "standard")
+            local variant_key variant_note variant_mode raw_v4 raw_v6 import_hint variant_category requires_browser_dialer
+            variant_key=$(jq -r ".configs[$i].variants[$j].key // .configs[$i].recommended_variant // \"recommended\"" "$json_file" 2> /dev/null || echo "recommended")
             variant_note=$(jq -r ".configs[$i].variants[$j].note // empty" "$json_file" 2> /dev/null || true)
             variant_mode=$(jq -r ".configs[$i].variants[$j].mode // empty" "$json_file" 2> /dev/null || true)
-            vless_v4=$(jq -r ".configs[$i].variants[$j].vless_v4 // .configs[$i].vless_v4 // empty" "$json_file" 2> /dev/null || true)
-            vless_v6=$(jq -r ".configs[$i].variants[$j].vless_v6 // .configs[$i].vless_v6 // empty" "$json_file" 2> /dev/null || true)
             raw_v4=$(jq -r ".configs[$i].variants[$j].xray_client_file_v4 // empty" "$json_file" 2> /dev/null || true)
             raw_v6=$(jq -r ".configs[$i].variants[$j].xray_client_file_v6 // empty" "$json_file" 2> /dev/null || true)
             import_hint=$(jq -r ".configs[$i].variants[$j].import_hint // empty" "$json_file" 2> /dev/null || true)
@@ -1177,33 +1148,26 @@ EOF
             requires_browser_dialer=$(jq -r ".configs[$i].variants[$j].requires.browser_dialer // false" "$json_file" 2> /dev/null || echo "false")
             [[ -n "$variant_note" && "$variant_note" != "null" ]] || variant_note=$(client_variant_note "$variant_key")
             [[ -n "$import_hint" && "$import_hint" != "null" ]] || import_hint=$(client_variant_import_hint "$variant_key")
+            [[ -n "$variant_category" && "$variant_category" != "null" ]] || variant_category=$(client_variant_category "$variant_key")
 
             {
-                echo "variant: $(client_variant_title "$variant_key")"
-                if [[ -n "$variant_category" && "$variant_category" != "null" ]]; then
-                    echo "category: ${variant_category}"
-                fi
+                echo "- вариант: $(client_variant_title "$variant_key")"
+                echo "  тип: ${variant_category}"
                 if [[ -n "$variant_mode" && "$variant_mode" != "null" ]]; then
-                    echo "mode: ${variant_mode}"
+                    echo "  режим: ${variant_mode}"
                 fi
-                echo "note: ${variant_note}"
-                echo "import hint: ${import_hint}"
+                echo "  когда использовать: ${variant_note}"
+                echo "  подсказка: ${import_hint}"
                 if [[ "$requires_browser_dialer" == "true" ]]; then
-                    echo "requires: browser dialer via env ${BROWSER_DIALER_ENV_NAME:-xray.browser.dialer}"
-                fi
-                if [[ -n "$vless_v4" && "$vless_v4" != "null" ]]; then
-                    echo "vless link (ipv4): see ${links_file}"
+                    echo "  browser dialer: нужен"
                 else
-                    echo "vless link (ipv4): n/a"
-                fi
-                if [[ -n "$vless_v6" && "$vless_v6" != "null" ]]; then
-                    echo "vless link (ipv6): see ${links_file}"
+                    echo "  быстрая vless-ссылка: см. ${links_file}"
                 fi
                 if [[ -n "$raw_v4" && "$raw_v4" != "null" ]]; then
-                    echo "raw xray (ipv4): ${raw_v4}"
+                    echo "  raw xray ipv4: ${raw_v4}"
                 fi
                 if [[ -n "$raw_v6" && "$raw_v6" != "null" ]]; then
-                    echo "raw xray (ipv6): ${raw_v6}"
+                    echo "  raw xray ipv6: ${raw_v6}"
                 fi
                 echo ""
             } >> "$tmp_client"
@@ -1217,50 +1181,13 @@ EOF
 
     cat >> "$tmp_client" << EOF
 
-💡 СОВЕТЫ ПО ИСПОЛЬЗОВАНИЮ:
+управление:
+- статус: xray-reality.sh status
+- логи: xray-reality.sh logs
+- обновить: xray-reality.sh update
+- удалить: xray-reality.sh uninstall
+- raw xray и canary: ${XRAY_KEYS}/export/
 
-• Начните с Config 1 (⭐ ГЛАВНЫЙ) - самый стабильный
-• Config 2 используйте как резервный
-• При блокировках переключайтесь между конфигами
-• Периодически меняйте конфиги для безопасности
-• В часы пиковой нагрузки используйте IPv6 (если доступен)
-
-🔒 УЛУЧШЕНИЯ БЕЗОПАСНОСТИ (v4.0):
-
-✓ Minisign проверка Xray (защита от supply chain атак)
-✓ xhttp-first strongest direct stack для reality
-✓ vless encryption + ${XRAY_DIRECT_FLOW:-xtls-rprx-vision}
-✓ rescue-профиль packet-up для сложных сетей
-✓ emergency-профиль stream-up + browser dialer
-✓ Динамический Reality dest port (обход port-based блокировок)
-✓ Spider Mode v2 (приоритетные домены)
-✓ Раздельные порты IPv4/IPv6 (избегание конфликтов)
-✓ Расширенный health monitoring
-
-📊 ДИАГНОСТИКА:
-
-Проверить статус:       systemctl status xray
-Посмотреть логи:        journalctl -u xray -f
-Тест конфигурации:      xray -test -c /etc/xray/config.json
-Проверить порты:        ss -tlnp | grep xray
-Health monitoring лог:  tail -f ${HEALTH_LOG}
-
-🔄 ОБНОВЛЕНИЕ:
-
-Для обновления Xray до новой версии выполните: sudo xray-reality.sh update
-
-Авто-обновления настроены через systemd timer.
-
-${rule58}
-
-⚠️  ВАЖНО:
-
-• НЕ делитесь файлом keys.txt - он содержит приватные ключи!
-• Делитесь только clients.txt с доверенными пользователями
-• Регулярно проверяйте логи на наличие аномалий
-• При подозрении на компрометацию - пересоздайте конфиги
-
-${rule58}
 EOF
 
     mv "$tmp_client" "$client_file"
@@ -1294,7 +1221,7 @@ render_clients_links_txt_from_json() {
     local tmp_links
     tmp_links=$(mktemp "${links_file}.tmp.XXXXXX")
 
-    local header_title="Network Stealth Core ${SCRIPT_VERSION} - QUICK VLESS LINKS"
+    local header_title="network stealth core ${SCRIPT_VERSION} - быстрые ссылки"
     local header_width
     header_width=$(ui_box_width_for_lines 60 90 "$header_title")
 
@@ -1303,13 +1230,14 @@ render_clients_links_txt_from_json() {
         printf '%s\n' "$(ui_box_line_string "$header_title" "$header_width")"
         printf '%s\n' "$(ui_box_border_string bottom "$header_width")"
         echo ""
-        echo "server: ${server_ipv4}"
-        echo "server ipv6: ${server_ipv6}"
-        echo "generated: ${generated}"
+        echo "сервер ipv4: ${server_ipv4}"
+        echo "сервер ipv6: ${server_ipv6}"
+        echo "создано: ${generated}"
         echo ""
-        echo "этот файл нужен для быстрого копирования vless-ссылок после установки."
-        echo "подробное описание профилей смотри в ${XRAY_KEYS}/clients.txt"
-        echo "emergency-профиль даётся только как raw xray json."
+        echo "как использовать этот файл:"
+        echo "- сначала импортируй 'основная (recommended)'"
+        echo "- если не работает, импортируй 'запасная (rescue)'"
+        echo "- 'аварийная (emergency)' даётся только как raw xray json"
         echo ""
         echo "${rule58}"
         echo ""
@@ -1328,15 +1256,15 @@ render_clients_links_txt_from_json() {
 
         local priority=""
         if [[ $i -eq 0 ]]; then
-            priority=" * primary"
+            priority=" ★ основной"
         elif [[ $i -eq 1 ]]; then
-            priority=" ~ spare"
+            priority=" ☆ запасной"
         fi
 
         {
             echo "Config $((i + 1)): ${domain}${priority}"
-            echo "Port IPv4: ${port_v4}"
-            echo "Port IPv6: ${port_v6}"
+            echo "порт ipv4: ${port_v4}"
+            echo "порт ipv6: ${port_v6}"
             echo ""
         } >> "$tmp_links"
 
@@ -1348,10 +1276,9 @@ render_clients_links_txt_from_json() {
 
         local j
         for ((j = 0; j < variant_count; j++)); do
-            local variant_key variant_mode variant_category vless_v4 vless_v6 raw_v4 raw_v6 requires_browser_dialer
+            local variant_key variant_mode vless_v4 vless_v6 raw_v4 raw_v6 requires_browser_dialer
             variant_key=$(jq -r ".configs[$i].variants[$j].key // .configs[$i].recommended_variant // \"recommended\"" "$json_file" 2> /dev/null || echo "recommended")
             variant_mode=$(jq -r ".configs[$i].variants[$j].mode // empty" "$json_file" 2> /dev/null || true)
-            variant_category=$(jq -r ".configs[$i].variants[$j].category // empty" "$json_file" 2> /dev/null || true)
             vless_v4=$(jq -r ".configs[$i].variants[$j].vless_v4 // empty" "$json_file" 2> /dev/null || true)
             vless_v6=$(jq -r ".configs[$i].variants[$j].vless_v6 // empty" "$json_file" 2> /dev/null || true)
             raw_v4=$(jq -r ".configs[$i].variants[$j].xray_client_file_v4 // empty" "$json_file" 2> /dev/null || true)
@@ -1359,17 +1286,14 @@ render_clients_links_txt_from_json() {
             requires_browser_dialer=$(jq -r ".configs[$i].variants[$j].requires.browser_dialer // false" "$json_file" 2> /dev/null || echo "false")
 
             {
-                printf 'variant: %s' "$(client_variant_title "$variant_key")"
-                if [[ -n "$variant_category" && "$variant_category" != "null" ]]; then
-                    printf ' | %s' "$variant_category"
-                fi
+                printf '%s' "$(client_variant_title "$variant_key")"
                 if [[ -n "$variant_mode" && "$variant_mode" != "null" ]]; then
                     printf ' | mode=%s' "$variant_mode"
                 fi
                 printf '\n'
 
                 if [[ "$requires_browser_dialer" == "true" ]]; then
-                    echo "raw xray only (browser dialer required)"
+                    echo "raw xray only: нужен browser dialer"
                 else
                     if [[ -n "$vless_v4" && "$vless_v4" != "null" ]]; then
                         echo "vless ipv4:"
@@ -1383,11 +1307,13 @@ render_clients_links_txt_from_json() {
                     fi
                 fi
 
-                if [[ -n "$raw_v4" && "$raw_v4" != "null" ]]; then
-                    echo "raw xray ipv4: ${raw_v4}"
-                fi
-                if [[ -n "$raw_v6" && "$raw_v6" != "null" ]]; then
-                    echo "raw xray ipv6: ${raw_v6}"
+                if [[ "$requires_browser_dialer" == "true" ]]; then
+                    if [[ -n "$raw_v4" && "$raw_v4" != "null" ]]; then
+                        echo "raw xray ipv4: ${raw_v4}"
+                    fi
+                    if [[ -n "$raw_v6" && "$raw_v6" != "null" ]]; then
+                        echo "raw xray ipv6: ${raw_v6}"
+                    fi
                 fi
                 echo ""
             } >> "$tmp_links"

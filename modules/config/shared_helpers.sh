@@ -104,16 +104,16 @@ client_variant_import_hint() {
     local key="${1:-standard}"
     case "$key" in
         recommended)
-            printf '%s' "import raw xray json when possible; vless link is secondary"
+            printf '%s' "для обычного старта достаточно этой ссылки; raw xray json нужен только если клиент умеет его импортировать"
             ;;
         rescue)
-            printf '%s' "use raw xray json if the normal variant is unstable"
+            printf '%s' "переходи сюда, если основная ссылка не проходит или работает нестабильно"
             ;;
         emergency)
-            printf '%s' "raw xray json only; requires browser dialer on the client"
+            printf '%s' "только raw xray json; на клиенте нужно включить browser dialer"
             ;;
         *)
-            printf '%s' "import raw xray json"
+            printf '%s' "импортируй raw xray json"
             ;;
     esac
 }
