@@ -62,8 +62,13 @@ assert_service_active xray
 
 echo "==> validate ipv6 client links after install"
 run_root test -f /etc/xray/private/keys/clients.txt
-if ! run_root grep -q '@\[::1\]' /etc/xray/private/keys/clients.txt; then
-    echo "expected ipv6 links in clients.txt after install" >&2
+run_root test -f /etc/xray/private/keys/clients-links.txt
+if ! run_root grep -q 'clients-links.txt' /etc/xray/private/keys/clients.txt; then
+    echo "expected clients.txt to point operators to clients-links.txt after install" >&2
+    exit 1
+fi
+if ! run_root grep -q '@\[::1\]' /etc/xray/private/keys/clients-links.txt; then
+    echo "expected ipv6 links in clients-links.txt after install" >&2
     exit 1
 fi
 
@@ -79,8 +84,12 @@ run_root env \
     bash "$SCRIPT_PATH" add-clients "$ADD_CONFIGS"
 assert_service_active xray
 
-if ! run_root grep -q '@\[::1\]' /etc/xray/private/keys/clients.txt; then
-    echo "expected ipv6 links in clients.txt after add-clients" >&2
+if ! run_root grep -q 'clients-links.txt' /etc/xray/private/keys/clients.txt; then
+    echo "expected clients.txt to point operators to clients-links.txt after add-clients" >&2
+    exit 1
+fi
+if ! run_root grep -q '@\[::1\]' /etc/xray/private/keys/clients-links.txt; then
+    echo "expected ipv6 links in clients-links.txt after add-clients" >&2
     exit 1
 fi
 
