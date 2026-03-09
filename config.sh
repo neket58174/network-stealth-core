@@ -1958,7 +1958,7 @@ client_artifacts_inconsistent() {
         fi
     fi
 
-    local section_pattern='^([Cc]onfig|конфиг) [0-9]+:'
+    local section_pattern='([Cc]onfig|конфиг) [0-9]+:'
 
     if [[ -f "$client_file" ]]; then
         count=$(awk -v pattern="$section_pattern" '$0 ~ pattern {c++} END {print c+0}' "$client_file")
