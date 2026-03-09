@@ -1107,21 +1107,6 @@ build_install_quick_start_file() {
     [[ -n "$recommended_link" || -n "$rescue_link" || -n "$emergency_raw" ]] || return 1
 
     {
-        if install_is_nonprod_runtime_mode; then
-            echo "режим: стенд / compat"
-            echo "это не боевой install path"
-            if install_is_loopback_lab_mode; then
-                echo "loopback-адрес: ссылки ниже работают только внутри текущего стенда"
-            fi
-            if install_is_compat_no_systemd_mode; then
-                echo "compat без systemd: сервисы и таймеры не активированы"
-            fi
-            echo "для боевого сервера укажи внешний ip или домен и запускай обычную установку"
-        else
-            echo "режим: боевой сервер"
-            echo "это полноценная установка для реального сервера"
-        fi
-        echo ""
         echo "что делать сейчас:"
         echo "1. импортируй основную ссылку"
         echo "2. если сеть её режет — попробуй запасную"

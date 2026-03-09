@@ -2337,10 +2337,9 @@ JSON
 }
 JSON
     build_install_quick_start_file "$json_file" "$out_file"
-    grep -Fq "режим: стенд / compat" "$out_file"
-    grep -Fq "это не боевой install path" "$out_file"
-    grep -Fq "loopback-адрес: ссылки ниже работают только внутри текущего стенда" "$out_file"
-    grep -Fq "для боевого сервера укажи внешний ip или домен и запускай обычную установку" "$out_file"
+    grep -Fq "что делать сейчас:" "$out_file"
+    ! grep -Fq "режим: стенд / compat" "$out_file"
+    ! grep -Fq "это не боевой install path" "$out_file"
     echo ok
   '
     [ "$status" -eq 0 ]
@@ -2374,8 +2373,8 @@ JSON
 }
 JSON
     build_install_quick_start_file "$json_file" "$out_file"
-    grep -Fq "режим: боевой сервер" "$out_file"
-    grep -Fq "это полноценная установка для реального сервера" "$out_file"
+    grep -Fq "что делать сейчас:" "$out_file"
+    ! grep -Fq "режим: боевой сервер" "$out_file"
     ! grep -Fq "режим: стенд / compat" "$out_file"
     echo ok
   '
