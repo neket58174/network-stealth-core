@@ -2337,9 +2337,57 @@ JSON
 }
 JSON
     build_install_quick_start_file "$json_file" "$out_file"
-    grep -Fq "режим стенда:" "$out_file"
-    grep -Fq "это loopback/lab-установка для локальной проверки" "$out_file"
-    grep -Fq "для боевого сервера укажи внешний ip или домен" "$out_file"
+    grep -Fq "режим: стенд / compat" "$out_file"
+    grep -Fq "это не боевой install path" "$out_file"
+    grep -Fq "loopback-адрес: ссылки ниже работают только внутри текущего стенда" "$out_file"
+    grep -Fq "для боевого сервера укажи внешний ip или домен и запускай обычную установку" "$out_file"
+    echo ok
+  '
+    [ "$status" -eq 0 ]
+    [ "$output" = "ok" ]
+}
+
+@test "build_install_quick_start_file labels production installs clearly" {
+    run bash -eo pipefail -c '
+    source ./lib.sh
+    source ./config.sh
+    source ./install.sh
+    XRAY_KEYS="$(mktemp -d)"
+    trap "rm -rf \"$XRAY_KEYS\"" EXIT
+    SERVER_IP="203.0.113.10"
+    ALLOW_NO_SYSTEMD=false
+    json_file="$XRAY_KEYS/clients.json"
+    out_file="$XRAY_KEYS/quick-start.txt"
+    cat > "$json_file" <<JSON
+{
+  "configs": [
+    {
+      "name": "Config 1",
+      "domain": "mail.ru",
+      "recommended_variant": "recommended",
+      "variants": [
+        { "key": "recommended", "vless_v4": "vless://main" },
+        { "key": "rescue", "vless_v4": "vless://rescue" }
+      ]
+    }
+  ]
+}
+JSON
+    build_install_quick_start_file "$json_file" "$out_file"
+    grep -Fq "режим: боевой сервер" "$out_file"
+    grep -Fq "это полноценная установка для реального сервера" "$out_file"
+    ! grep -Fq "режим: стенд / compat" "$out_file"
+    echo ok
+  '
+    [ "$status" -eq 0 ]
+    [ "$output" = "ok" ]
+}
+
+@test "show_install_result prints explicit runtime mode notice" {
+    run bash -eo pipefail -c '
+    grep -Fq "print_install_runtime_mode_notice" ./install.sh
+    grep -Fq "РЕЖИМ: СТЕНД / COMPAT" ./install.sh
+    grep -Fq "РЕЖИМ: БОЕВОЙ СЕРВЕР" ./install.sh
     echo ok
   '
     [ "$status" -eq 0 ]

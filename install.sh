@@ -940,6 +940,9 @@ show_install_result() {
     echo -e "${BOLD}${GREEN}${box_bottom}${NC}"
     echo ""
 
+    print_install_runtime_mode_notice
+    echo ""
+
     local client_file="${XRAY_KEYS}/clients.txt"
     local client_links_file="${XRAY_KEYS}/clients-links.txt"
     if [[ -f "$client_links_file" ]]; then
@@ -993,6 +996,81 @@ install_is_loopback_lab_mode() {
     esac
 }
 
+install_is_compat_no_systemd_mode() {
+    [[ "${ALLOW_NO_SYSTEMD:-false}" == "true" ]] || return 1
+    if ! declare -F systemctl_available > /dev/null 2>&1; then
+        return 0
+    fi
+    if ! systemctl_available; then
+        return 0
+    fi
+    if declare -F systemd_running > /dev/null 2>&1 && ! systemd_running; then
+        return 0
+    fi
+    return 1
+}
+
+install_is_nonprod_runtime_mode() {
+    install_is_loopback_lab_mode || install_is_compat_no_systemd_mode
+}
+
+install_runtime_mode_title() {
+    if install_is_nonprod_runtime_mode; then
+        printf '%s' "РЕЖИМ: СТЕНД / COMPAT"
+    else
+        printf '%s' "РЕЖИМ: БОЕВОЙ СЕРВЕР"
+    fi
+}
+
+install_runtime_mode_color() {
+    if install_is_nonprod_runtime_mode; then
+        printf '%s' "$YELLOW"
+    else
+        printf '%s' "$GREEN"
+    fi
+}
+
+install_runtime_mode_lines() {
+    if install_is_nonprod_runtime_mode; then
+        printf '%s\n' "это не боевой install path"
+        if install_is_loopback_lab_mode; then
+            printf '%s\n' "loopback-адрес обнаружен: ссылки работают только внутри текущего стенда"
+        fi
+        if install_is_compat_no_systemd_mode; then
+            printf '%s\n' "compat-режим без systemd: сервисы, таймеры и автообновления не активированы"
+        fi
+        printf '%s\n' "для реального сервера используй внешний ip/домен и обычный install path с systemd"
+    else
+        printf '%s\n' "это полноценный install path для реального сервера"
+        printf '%s\n' "основная ссылка ниже — стартовый рекомендуемый вариант"
+        printf '%s\n' "запасную ссылку используй только если сеть режет основной вариант"
+    fi
+}
+
+print_install_runtime_mode_notice() {
+    local title color
+    title=$(install_runtime_mode_title)
+    color=$(install_runtime_mode_color)
+    local -a lines=()
+    while IFS= read -r line; do
+        [[ -n "$line" ]] || continue
+        lines+=("$line")
+    done < <(install_runtime_mode_lines)
+
+    local box_width top header bottom line
+    box_width=$(ui_box_width_for_lines 60 90 "$title" "${lines[@]}")
+    top=$(ui_box_border_string top "$box_width")
+    header=$(ui_box_line_string "$title" "$box_width")
+    bottom=$(ui_box_border_string bottom "$box_width")
+
+    echo -e "${BOLD}${color}${top}${NC}"
+    echo -e "${BOLD}${color}${header}${NC}"
+    for line in "${lines[@]}"; do
+        echo -e "${color}$(ui_box_line_string "$line" "$box_width")${NC}"
+    done
+    echo -e "${BOLD}${color}${bottom}${NC}"
+}
+
 build_install_quick_start_file() {
     local json_file="$1"
     local output_file="$2"
@@ -1029,13 +1107,21 @@ build_install_quick_start_file() {
     [[ -n "$recommended_link" || -n "$rescue_link" || -n "$emergency_raw" ]] || return 1
 
     {
-        if install_is_loopback_lab_mode; then
-            echo "режим стенда:"
-            echo "это loopback/lab-установка для локальной проверки"
-            echo "ссылки ниже работают только внутри текущего стенда"
-            echo "для боевого сервера укажи внешний ip или домен"
-            echo ""
+        if install_is_nonprod_runtime_mode; then
+            echo "режим: стенд / compat"
+            echo "это не боевой install path"
+            if install_is_loopback_lab_mode; then
+                echo "loopback-адрес: ссылки ниже работают только внутри текущего стенда"
+            fi
+            if install_is_compat_no_systemd_mode; then
+                echo "compat без systemd: сервисы и таймеры не активированы"
+            fi
+            echo "для боевого сервера укажи внешний ip или домен и запускай обычную установку"
+        else
+            echo "режим: боевой сервер"
+            echo "это полноценная установка для реального сервера"
         fi
+        echo ""
         echo "что делать сейчас:"
         echo "1. импортируй основную ссылку"
         echo "2. если сеть её режет — попробуй запасную"
