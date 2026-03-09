@@ -74,7 +74,7 @@ create_users() {
         log INFO "Группа ${XRAY_GROUP} уже существует"
     fi
     if ! id "$XRAY_USER" > /dev/null 2>&1; then
-        useradd -r -g "$XRAY_GROUP" -s /usr/sbin/nologin -d "$XRAY_HOME" -m "$XRAY_USER"
+        useradd -r -g "$XRAY_GROUP" -s /usr/sbin/nologin -d "$XRAY_HOME" -M "$XRAY_USER"
         log OK "Пользователь ${XRAY_USER} создан"
     else
         log INFO "Пользователь ${XRAY_USER} уже существует"
@@ -637,7 +637,7 @@ detect_ips() {
 auto_configure() {
     SPIDER_MODE=$(parse_bool "$SPIDER_MODE" true)
     validate_install_config
-    log OK "Авто-конфигурация: ${DOMAIN_TIER}, transport=${TRANSPORT}, порт ${START_PORT}, ${NUM_CONFIGS} конфигов, spider=${SPIDER_MODE}"
+    log OK "Авто-конфигурация: ${DOMAIN_TIER}, transport=${TRANSPORT}, порт ${START_PORT}, $(format_russian_count_noun "$NUM_CONFIGS" "конфиг" "конфига" "конфигов"), spider=${SPIDER_MODE}"
 }
 
 auto_profile_default_num_configs() {
@@ -978,6 +978,21 @@ show_install_result() {
 
 }
 
+install_is_loopback_lab_mode() {
+    if declare -F self_check_is_loopback_runtime > /dev/null 2>&1 && self_check_is_loopback_runtime; then
+        return 0
+    fi
+
+    case "${SERVER_IP:-}" in
+        127.0.0.1 | localhost) return 0 ;;
+        *) ;;
+    esac
+    case "${SERVER_IP6:-}" in
+        ::1 | "[::1]" | localhost) return 0 ;;
+        *) return 1 ;;
+    esac
+}
+
 build_install_quick_start_file() {
     local json_file="$1"
     local output_file="$2"
@@ -993,9 +1008,9 @@ build_install_quick_start_file() {
         {
             name: ($cfg.name // "Config 1"),
             domain: ($cfg.domain // "unknown"),
-            recommended_link: (($cfg.variants[]? | select(.key == ($cfg.recommended_variant // "recommended")) | (.vless_v4 // .vless_v6 // empty)) // empty),
-            rescue_link: (($cfg.variants[]? | select(.key == "rescue") | (.vless_v4 // .vless_v6 // empty)) // empty),
-            emergency_raw: (($cfg.variants[]? | select(.key == "emergency") | (.xray_client_file_v4 // .xray_client_file_v6 // empty)) // empty)
+            recommended_link: ([$cfg.variants[]? | select(.key == ($cfg.recommended_variant // "recommended")) | (.vless_v4 // .vless_v6 // "")] | .[0] // ""),
+            rescue_link: ([$cfg.variants[]? | select(.key == "rescue") | (.vless_v4 // .vless_v6 // "")] | .[0] // ""),
+            emergency_raw: ([$cfg.variants[]? | select(.key == "emergency") | (.xray_client_file_v4 // .xray_client_file_v6 // "")] | .[0] // "")
         }
     ' "$json_file" 2> /dev/null) || return 1
 
@@ -1014,6 +1029,13 @@ build_install_quick_start_file() {
     [[ -n "$recommended_link" || -n "$rescue_link" || -n "$emergency_raw" ]] || return 1
 
     {
+        if install_is_loopback_lab_mode; then
+            echo "режим стенда:"
+            echo "это loopback/lab-установка для локальной проверки"
+            echo "ссылки ниже работают только внутри текущего стенда"
+            echo "для боевого сервера укажи внешний ip или домен"
+            echo ""
+        fi
         echo "что делать сейчас:"
         echo "1. импортируй основную ссылку"
         echo "2. если сеть её режет — попробуй запасную"

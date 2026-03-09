@@ -631,6 +631,39 @@ ui_section_title_string() {
     fi
 }
 
+russian_count_noun() {
+    local count="${1:-0}"
+    local one="${2:-}"
+    local few="${3:-$one}"
+    local many="${4:-$few}"
+
+    if ! [[ "$count" =~ ^-?[0-9]+$ ]]; then
+        count=0
+    fi
+    if ((count < 0)); then
+        count=$((-count))
+    fi
+
+    local mod10=$((count % 10))
+    local mod100=$((count % 100))
+    if ((mod100 >= 11 && mod100 <= 14)); then
+        printf '%s' "$many"
+        return 0
+    fi
+
+    case "$mod10" in
+        1) printf '%s' "$one" ;;
+        2 | 3 | 4) printf '%s' "$few" ;;
+        *) printf '%s' "$many" ;;
+    esac
+}
+
+format_russian_count_noun() {
+    local count="${1:-0}"
+    shift || true
+    printf '%s %s' "$count" "$(russian_count_noun "$count" "$@")"
+}
+
 setup_logging() {
     local log_dir
     log_dir=$(dirname "$INSTALL_LOG")

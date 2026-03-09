@@ -2012,6 +2012,20 @@ EOF
     [ "$output" = "ok" ]
 }
 
+@test "format_russian_count_noun uses correct config grammar" {
+    run bash -eo pipefail -c '
+    source ./lib.sh
+    [[ "$(format_russian_count_noun 1 "конфиг" "конфига" "конфигов")" == "1 конфиг" ]]
+    [[ "$(format_russian_count_noun 2 "конфиг" "конфига" "конфигов")" == "2 конфига" ]]
+    [[ "$(format_russian_count_noun 5 "конфиг" "конфига" "конфигов")" == "5 конфигов" ]]
+    [[ "$(format_russian_count_noun 11 "конфиг" "конфига" "конфигов")" == "11 конфигов" ]]
+    [[ "$(format_russian_count_noun 21 "конфиг" "конфига" "конфигов")" == "21 конфиг" ]]
+    echo "ok"
+  '
+    [ "$status" -eq 0 ]
+    [ "$output" = "ok" ]
+}
+
 @test "install result prints russian quick start instead of dumping full links file" {
     run bash -eo pipefail -c "grep -Fq 'build_install_quick_start_file()' ./install.sh; grep -Fq 'header_text=' ./install.sh; grep -Fq 'все ссылки: \${XRAY_KEYS}/clients-links.txt' ./install.sh; echo ok"
     [ "$status" -eq 0 ]
@@ -2291,6 +2305,51 @@ JSON
     grep -Fq "основная ссылка:" "$out_file"
     grep -Fq "запасная ссылка:" "$out_file"
     grep -Fq "аварийный режим:" "$out_file"
+    echo ok
+  '
+    [ "$status" -eq 0 ]
+    [ "$output" = "ok" ]
+}
+
+@test "build_install_quick_start_file labels loopback lab installs" {
+    run bash -eo pipefail -c '
+    source ./lib.sh
+    source ./config.sh
+    source ./install.sh
+    XRAY_KEYS="$(mktemp -d)"
+    trap "rm -rf \"$XRAY_KEYS\"" EXIT
+    SERVER_IP="127.0.0.1"
+    json_file="$XRAY_KEYS/clients.json"
+    out_file="$XRAY_KEYS/quick-start.txt"
+    cat > "$json_file" <<JSON
+{
+  "configs": [
+    {
+      "name": "Config 1",
+      "domain": "mail.ru",
+      "recommended_variant": "recommended",
+      "variants": [
+        { "key": "recommended", "vless_v4": "vless://main" },
+        { "key": "rescue", "vless_v4": "vless://rescue" }
+      ]
+    }
+  ]
+}
+JSON
+    build_install_quick_start_file "$json_file" "$out_file"
+    grep -Fq "режим стенда:" "$out_file"
+    grep -Fq "это loopback/lab-установка для локальной проверки" "$out_file"
+    grep -Fq "для боевого сервера укажи внешний ip или домен" "$out_file"
+    echo ok
+  '
+    [ "$status" -eq 0 ]
+    [ "$output" = "ok" ]
+}
+
+@test "create_users avoids useradd home warning by skipping implicit home creation" {
+    run bash -eo pipefail -c '
+    grep -Fq "useradd -r -g \"\$XRAY_GROUP\" -s /usr/sbin/nologin -d \"\$XRAY_HOME\" -M \"\$XRAY_USER\"" ./install.sh
+    ! grep -Fq "useradd -r -g \"\$XRAY_GROUP\" -s /usr/sbin/nologin -d \"\$XRAY_HOME\" -m \"\$XRAY_USER\"" ./install.sh
     echo ok
   '
     [ "$status" -eq 0 ]
