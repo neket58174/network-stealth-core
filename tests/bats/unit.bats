@@ -468,6 +468,7 @@ EOF
     grep -Fq "/usr/local/bin/nsc-vm-install-repo" ./scripts/lab/guest-vm-lifecycle.sh
     grep -Fq "/usr/local/bin/nsc-vm-guest-ip" ./scripts/lab/guest-vm-lifecycle.sh
     grep -Fq "raw curl install внутри этого гостя" ./scripts/lab/guest-vm-lifecycle.sh
+    grep -Fq "ALLOW_INSECURE_SHA256" ./scripts/lab/guest-vm-lifecycle.sh
     grep -Fq "используй nsc-vm-install-latest [--num-configs n|--advanced]" ./scripts/lab/enter-vm-smoke.sh
     echo ok
   '

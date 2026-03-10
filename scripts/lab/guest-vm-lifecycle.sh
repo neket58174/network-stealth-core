@@ -63,6 +63,8 @@ vm-lab: быстрый старт
 - raw curl install внутри этого гостя может автоопределить public ip хоста
   и завалить финальный self-check
 - helper-обёртки автоматически фиксируют SERVER_IP на guest ipv4
+- helper-обёртки для vm-lab по умолчанию разрешают sha256 fallback,
+  если upstream релиз xray не содержит minisign-подпись
 EOF
 
     sudo tee /usr/local/bin/nsc-vm-guest-ip > /dev/null << 'EOF'
@@ -89,14 +91,15 @@ guest_ip="${SERVER_IP:-}"
 if [[ -z "$guest_ip" ]]; then
     guest_ip="$(nsc-vm-guest-ip)"
 fi
+allow_insecure_sha256="${ALLOW_INSECURE_SHA256:-true}"
 
 curl -fL https://raw.githubusercontent.com/neket371/network-stealth-core/ubuntu/xray-reality.sh -o /tmp/xray-reality.sh
 
 if [[ "$(id -u)" -eq 0 ]]; then
-    exec env SERVER_IP="$guest_ip" bash /tmp/xray-reality.sh install "$@"
+    exec env SERVER_IP="$guest_ip" ALLOW_INSECURE_SHA256="$allow_insecure_sha256" bash /tmp/xray-reality.sh install "$@"
 fi
 
-exec sudo env SERVER_IP="$guest_ip" bash /tmp/xray-reality.sh install "$@"
+exec sudo env SERVER_IP="$guest_ip" ALLOW_INSECURE_SHA256="$allow_insecure_sha256" bash /tmp/xray-reality.sh install "$@"
 EOF
     sudo chmod 0755 /usr/local/bin/nsc-vm-install-latest
 
@@ -115,12 +118,13 @@ guest_ip="${SERVER_IP:-}"
 if [[ -z "$guest_ip" ]]; then
     guest_ip="$(nsc-vm-guest-ip)"
 fi
+allow_insecure_sha256="${ALLOW_INSECURE_SHA256:-true}"
 
 if [[ "$(id -u)" -eq 0 ]]; then
-    exec env SERVER_IP="$guest_ip" bash "$script_path" install "$@"
+    exec env SERVER_IP="$guest_ip" ALLOW_INSECURE_SHA256="$allow_insecure_sha256" bash "$script_path" install "$@"
 fi
 
-exec sudo env SERVER_IP="$guest_ip" bash "$script_path" install "$@"
+exec sudo env SERVER_IP="$guest_ip" ALLOW_INSECURE_SHA256="$allow_insecure_sha256" bash "$script_path" install "$@"
 EOF
     sudo chmod 0755 /usr/local/bin/nsc-vm-install-repo
 
@@ -143,6 +147,8 @@ vm-lab:
   или nsc-vm-install-repo [--num-configs n|--advanced]
   raw curl install внутри гостя может автоопределить public ip хоста
   и завалить финальный self-check.
+  vm-lab helper'ы по умолчанию разрешают sha256 fallback,
+  если у upstream xray релиза нет minisign-подписи.
 MSG
 EOF
     sudo chmod 0644 /etc/profile.d/90-nsc-vm-lab.sh
