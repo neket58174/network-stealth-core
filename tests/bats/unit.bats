@@ -78,6 +78,17 @@
     [ "$output" = "install:24" ]
 }
 
+@test "parse_args accepts install-first long options with values" {
+    run bash -eo pipefail -c '
+    source ./lib.sh
+    parse_args install --num-configs 3 --non-interactive --yes
+    apply_runtime_overrides
+    echo "${ACTION}:${NUM_CONFIGS}:${NON_INTERACTIVE}:${ASSUME_YES}"
+  '
+    [ "$status" -eq 0 ]
+    [ "$output" = "install:3:true:true" ]
+}
+
 @test "parse_args accepts --require-minisign and --allow-no-systemd" {
     run bash -eo pipefail -c '
     source ./lib.sh

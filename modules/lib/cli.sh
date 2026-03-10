@@ -267,6 +267,7 @@ parse_args() {
     local explicit_cmd=""
     local opts=()
     local pos=()
+    local remaining=()
     local i=0
 
     while [[ $i -lt ${#args[@]} ]]; do
@@ -289,21 +290,22 @@ parse_args() {
         fi
 
         if [[ "$a" == --* || "$a" == -* ]]; then
-            opts+=("$a")
-
             if cli_option_requires_value "$a" && [[ "$a" != *=* ]]; then
                 i=$((i + 1))
                 if [[ $i -ge ${#args[@]} ]]; then
                     log ERROR "Не указан параметр для $a"
                     exit 1
                 fi
-                opts+=("${args[$i]}")
+                opts+=("${a}=${args[$i]}")
             elif [[ "$a" == --rollback && "$a" != *=* ]]; then
+                opts+=("$a")
                 local next="${args[$((i + 1))]:-}"
                 if [[ -n "$next" && "$next" != --* ]]; then
                     i=$((i + 1))
                     opts+=("$next")
                 fi
+            else
+                opts+=("$a")
             fi
         else
             pos+=("$a")
@@ -312,11 +314,7 @@ parse_args() {
         i=$((i + 1))
     done
 
-    if [[ -n "$cmd" ]]; then
-        set -- "${opts[@]}" "$cmd" "${pos[@]}"
-    else
-        set -- "${opts[@]}" "${pos[@]}"
-    fi
+    set -- "${opts[@]}"
 
     OPTIND=1
     while getopts ":h-:" opt; do
@@ -344,45 +342,52 @@ parse_args() {
         esac
     done
 
-    shift $((OPTIND - 1))
-
-    if [[ $# -gt 0 ]] && cli_is_action "$1"; then
-        ACTION="$1"
-        shift
+    shift $((OPTIND - 1)) || true
+    if [[ $# -gt 0 ]]; then
+        remaining=("$@")
+    fi
+    if ((${#remaining[@]} > 0)); then
+        log ERROR "Неожиданные аргументы после разбора опций: ${remaining[*]}"
+        print_usage
+        exit 1
     fi
 
-    if [[ -z "$explicit_cmd" && "$ACTION" == "install" && $# -gt 0 ]]; then
-        log ERROR "Неизвестная команда: $1"
+    if [[ -n "$cmd" ]]; then
+        ACTION="$cmd"
+    fi
+
+    if [[ -z "$explicit_cmd" && ${#pos[@]} -gt 0 ]]; then
+        log ERROR "Неизвестная команда: ${pos[0]}"
         print_usage
         exit 1
     fi
 
     case "$ACTION" in
         rollback)
-            if [[ -z "$ROLLBACK_DIR" && -n "${1:-}" && "${1:-}" != --* ]]; then
-                ROLLBACK_DIR="$1"
-                shift
+            if [[ -z "$ROLLBACK_DIR" && ${#pos[@]} -gt 0 && "${pos[0]}" != --* ]]; then
+                ROLLBACK_DIR="${pos[0]}"
+                pos=("${pos[@]:1}")
             fi
             ;;
         logs)
-            if [[ -n "${1:-}" && "${1:-}" != --* ]]; then
+            if [[ ${#pos[@]} -gt 0 && "${pos[0]}" != --* ]]; then
                 # shellcheck disable=SC2034 # Used in health.sh
-                LOGS_TARGET="$1"
-                shift
+                LOGS_TARGET="${pos[0]}"
+                pos=("${pos[@]:1}")
             fi
             ;;
         add-clients | add-keys)
-            if [[ -n "${1:-}" && "${1:-}" != --* ]]; then
+            if [[ ${#pos[@]} -gt 0 && "${pos[0]}" != --* ]]; then
                 # shellcheck disable=SC2034 # Used in config.sh add_clients_flow
-                ADD_CLIENTS_COUNT="$1"
-                shift
+                ADD_CLIENTS_COUNT="${pos[0]}"
+                pos=("${pos[@]:1}")
             fi
             ;;
         *) ;;
     esac
 
-    if [[ $# -gt 0 ]]; then
-        log ERROR "Неожиданные позиционные аргументы для '${ACTION}': $*"
+    if ((${#pos[@]} > 0)); then
+        log ERROR "Неожиданные позиционные аргументы для '${ACTION}': ${pos[*]}"
         print_usage
         exit 1
     fi
