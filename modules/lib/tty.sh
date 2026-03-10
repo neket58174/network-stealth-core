@@ -215,6 +215,26 @@ extract_confirmation_token_tail() {
     fi
 }
 
+extract_confirmation_token_last_prompt_word() {
+    local value sanitized token
+    value=$(normalize_tty_input "${1:-}")
+    [[ -n "$value" ]] || return 0
+    looks_like_confirmation_prompt_echo "$value" || return 0
+
+    sanitized=$(printf '%s' "$value" | sed -E 's/[][(){}<>:,;|]+/ /g')
+    local -a words=()
+    # shellcheck disable=SC2206 # Intentional word split after prompt sanitization.
+    words=($sanitized)
+    local idx
+    for ((idx = ${#words[@]} - 1; idx >= 0; idx--)); do
+        token=$(normalize_yes_no_token "${words[$idx]}")
+        if is_yes_input "$token" || is_no_input "$token"; then
+            printf '%s' "$token"
+            return 0
+        fi
+    done
+}
+
 extract_confirmation_token_from_prompt_echo_followup() {
     local value token
     value=$(normalize_tty_input "${1:-}")
@@ -222,6 +242,9 @@ extract_confirmation_token_from_prompt_echo_followup() {
 
     looks_like_confirmation_prompt_echo "$value" || return 1
     token=$(extract_confirmation_token_tail "$value")
+    if [[ -z "$token" ]]; then
+        token=$(extract_confirmation_token_last_prompt_word "$value")
+    fi
     [[ -z "$token" ]]
 }
 
@@ -237,6 +260,12 @@ resolve_confirmation_token() {
     fi
 
     token=$(extract_confirmation_token_tail "$value")
+    if is_yes_input "$token" || is_no_input "$token"; then
+        printf '%s' "$token"
+        return 0
+    fi
+
+    token=$(extract_confirmation_token_last_prompt_word "$value")
     if is_yes_input "$token" || is_no_input "$token"; then
         printf '%s' "$token"
         return 0

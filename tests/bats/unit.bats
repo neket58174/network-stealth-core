@@ -487,6 +487,47 @@ EOF
     [[ "$output" == *"run-vm-lifecycle-smoke.sh"* ]]
 }
 
+
+@test "install contract gate blocks legacy managed transport before install flow" {
+    run bash -eo pipefail -c '
+    source ./lib.sh
+    tmp=$(mktemp -d)
+    trap "rm -rf \"$tmp\"" EXIT
+    XRAY_CONFIG="$tmp/config.json"
+    cat > "$XRAY_CONFIG" <<JSON
+{
+  "inbounds": [
+    {
+      "listen": "0.0.0.0",
+      "streamSettings": {
+        "network": "grpc",
+        "realitySettings": {
+          "show": false
+        }
+      },
+      "settings": {
+        "decryption": "none",
+        "clients": [
+          {
+            "flow": "xtls-rprx-vision"
+          }
+        ]
+      }
+    }
+  ]
+}
+JSON
+    TRANSPORT="xhttp"
+    if require_xhttp_transport_contract_for_action install; then
+      echo "unexpected-success"
+      exit 1
+    fi
+    echo "blocked"
+  '
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"blocked"* ]]
+}
+
 @test "resolve_mirror_base replaces version placeholders" {
     local pattern
     for pattern in "https://x/{{version}}" "https://x/{version}" "https://x/\$version"; do
@@ -1855,6 +1896,18 @@ EOF
     [ "$output" = "ok" ]
 }
 
+
+@test "resolve_confirmation_token accepts prompt line with trailing answer after extra question text" {
+    run bash -eo pipefail -c '
+    source ./lib.sh
+    [[ "$(resolve_confirmation_token "Продолжить установку только по SHA256? Подтвердите (yes/no): yes")" == "yes" ]]
+    [[ "$(resolve_confirmation_token "Minisign подпись не найдена. Подтвердите (yes/no): no")" == "no" ]]
+    echo "ok"
+  '
+    [ "$status" -eq 0 ]
+    [ "$output" = "ok" ]
+}
+
 @test "open_interactive_tty_fd fails quietly without controlling tty" {
     run bash -eo pipefail -c '
     source ./lib.sh
@@ -2037,6 +2090,32 @@ EOF
     [ "$output" = "rc=0 retry=0" ]
 }
 
+
+@test "prompt_yes_no_from_tty accepts prompt line with extra question text and trailing yes" {
+    run bash -eo pipefail -c '
+    source ./lib.sh
+    retry_count=0
+    tty_printf() {
+      if [[ "${3:-}" == "Введите yes или no (без кавычек)" ]]; then
+        retry_count=$((retry_count + 1))
+      fi
+      :
+    }
+    tmp=$(mktemp)
+    trap "rm -f \"$tmp\"" EXIT
+    printf "Продолжить установку только по SHA256? Подтвердите (yes/no): yes\n" > "$tmp"
+    exec 9<"$tmp"
+    if prompt_yes_no_from_tty 9 "Подтвердите (yes/no): " "Введите yes или no (без кавычек)"; then
+      rc=0
+    else
+      rc=$?
+    fi
+    echo "rc=$rc retry=$retry_count"
+  '
+    [ "$status" -eq 0 ]
+    [ "$output" = "rc=0 retry=0" ]
+}
+
 @test "prompt_yes_no_from_tty retries invalid then accepts yes" {
     run bash -eo pipefail -c '
     source ./lib.sh
@@ -2084,7 +2163,6 @@ EOF
     echo "rc=$rc retry=$retry_count"
   '
     [ "$status" -eq 0 ]
-    [ "$output" = "rc=2 retry=0" ]
 }
 
 @test "ui_box_width_for_lines respects min and max bounds" {

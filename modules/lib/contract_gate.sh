@@ -1,11 +1,18 @@
 #!/usr/bin/env bash
 # shellcheck shell=bash
 
+contract_gate_transport_is_legacy() {
+    case "${1:-}" in
+        grpc | http2) return 0 ;;
+        *) return 1 ;;
+    esac
+}
+
 managed_install_needs_migrate_stealth() {
     local current_transport
     local xray_config="${XRAY_CONFIG:-/etc/xray/config.json}"
     current_transport=$(detect_current_managed_transport)
-    if transport_is_legacy "$current_transport"; then
+    if contract_gate_transport_is_legacy "$current_transport"; then
         return 0
     fi
     if [[ -f "$xray_config" ]] && command -v jq > /dev/null 2>&1; then
@@ -27,7 +34,14 @@ require_xhttp_transport_contract_for_action() {
     local action="${1:-$ACTION}"
     case "$action" in
         install)
-            if transport_is_legacy "${TRANSPORT:-xhttp}"; then
+            local current_transport
+            current_transport=$(detect_current_managed_transport)
+            if managed_install_needs_migrate_stealth; then
+                log ERROR "обнаружен managed install без strongest direct contract (${current_transport}); действие '${action}' заблокировано в v7"
+                log ERROR "сначала выполните: xray-reality.sh migrate-stealth --non-interactive --yes"
+                return 1
+            fi
+            if contract_gate_transport_is_legacy "${TRANSPORT:-xhttp}"; then
                 log ERROR "v7 больше не устанавливает grpc/http2 профили"
                 log ERROR "используйте xhttp по умолчанию"
                 return 1
