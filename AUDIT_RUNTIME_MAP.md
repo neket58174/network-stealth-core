@@ -31,7 +31,7 @@ baseline commit: `c848ef7ca8ed3679d7e2cfe5ac6649ee21ff24f4`
 |---|---|---|---|---|
 | `xray-reality.sh` | bootstrap wrapper and trusted loader | env bootstrap refs, repo url, pinning, local script dir | cloned/synced runtime tree, sourced module dir | works; trust boundary is explicit and pinned |
 | `lib.sh` | central orchestrator | cli args, env, runtime files, policy/state paths | action dispatch, logging, validation, cleanup, runtime defaults | works; still too large and contract-heavy |
-| `install.sh` | mutating lifecycle entrypoint | install/update/repair/migrate/uninstall args, current managed state | xray install/update, config creation, rollback, and composition over focused output helpers | works; narrower after install-output extraction, but still larger than ideal |
+| `install.sh` | mutating lifecycle entrypoint | install/update/repair/migrate/uninstall args, current managed state | xray install/update, config creation, rollback, and composition over focused output/selection helpers | works; narrower after focused install module extraction, but still larger than ideal |
 | `config.sh` | config and runtime apply builder | planner outputs, ports, keys, domains, transport settings | `config.json`, environment snapshot, validated runtime apply helpers | works; artifact-heavy logic was extracted into a focused module |
 | `service.sh` | service/runtime ops | existing managed install and systemd state | `status`, `logs`, `check-update`, and service-level orchestration over focused modules | works; narrower after uninstall extraction, but still larger than ideal |
 | `health.sh` | health/diagnostics entry | runtime state, domain health data, timers | health script/timer content, diagnose helpers | works; heavy lifting now mostly delegated to modules |
@@ -67,6 +67,7 @@ baseline commit: `c848ef7ca8ed3679d7e2cfe5ac6649ee21ff24f4`
 | `modules/health/self_check.sh` | transport-aware self-check engine and persisted verdicts | works; bounded process cleanup and fallback behavior verified |
 | `modules/install/bootstrap.sh` | installed runtime tree sync and wrapper deployment | works; packages neutral transport endpoint seeds for legacy transport compatibility |
 | `modules/install/output.sh` | install success summary, runtime-mode notice, and quick-start link rendering | works; meaningfully narrows `install.sh` while preserving install ux |
+| `modules/install/selection.sh` | strongest-default profile selection, count prompts, and manual override helpers | works; meaningfully narrows `install.sh` while preserving minimal install behavior |
 | `modules/service/uninstall.sh` | uninstall file removal, destructive path guards, account cleanup, and service teardown helpers | works; meaningfully narrows `service.sh` while preserving uninstall semantics |
 
 ## qa / release / lab scripts
@@ -94,7 +95,7 @@ baseline commit: `c848ef7ca8ed3679d7e2cfe5ac6649ee21ff24f4`
 
 | suite | role | current verdict |
 |---|---|---|
-| `tests/bats/*.bats` | unit/integration/validation/health/runtime contract suites | strong coverage: current `bats` total is 422 passing tests inside `make ci-full` |
+| `tests/bats/*.bats` | unit/integration/validation/health/runtime contract suites | strong coverage: current `bats` total is 426 passing tests inside `make ci-full` |
 | `tests/e2e/*.sh` | install/add/update/rollback/migrate contract scenarios | strong coverage for product paths and regressions |
 | `tests/lint.sh` | broader standalone lint harness | passes and currently covers all workflows, including self-hosted |
 

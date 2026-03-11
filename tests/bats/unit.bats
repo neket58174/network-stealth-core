@@ -1729,15 +1729,15 @@ EOF
     grep -Fq "tty_printf() {" ./modules/lib/tty.sh
     grep -Fq "tty_print_line() {" ./modules/lib/tty.sh
     grep -Fq "tty_print_box() {" ./modules/lib/tty.sh
-    grep -Fq "open_interactive_tty_fds tty_read_fd tty_write_fd" ./install.sh
-    grep -Fq "printf \"Профиль [1/2/3/4]: \" >&\"\$tty_write_fd\"" ./install.sh
-    grep -Fq "read -r -u \"\$tty_read_fd\" input" ./install.sh
+    grep -Fq "open_interactive_tty_fds tty_read_fd tty_write_fd" ./modules/install/selection.sh
+    grep -Fq "printf \"Профиль [1/2/3/4]: \" >&\"\$tty_write_fd\"" ./modules/install/selection.sh
+    grep -Fq "read -r -u \"\$tty_read_fd\" input" ./modules/install/selection.sh
     grep -Fq "prompt_yes_no_from_tty() {" ./modules/lib/tty.sh
     grep -Fq "extract_confirmation_token_tail() {" ./modules/lib/tty.sh
     grep -Fq "extract_confirmation_token_from_prompt_echo_followup() {" ./modules/lib/tty.sh
     grep -Fq "resolve_confirmation_token() {" ./modules/lib/tty.sh
     grep -Fq "prompt_yes_no_from_tty \"\$tty_read_fd\" \"Подтвердите (yes/no): \" \"Введите yes или no (без кавычек)\" \"\$tty_write_fd\"" ./install.sh
-    grep -Fq "printf \"Количество конфигов (1-%s): \" \"\$max_configs\" >&\"\$tty_write_fd\"" ./install.sh
+    grep -Fq "printf \"Количество конфигов (1-%s): \" \"\$max_configs\" >&\"\$tty_write_fd\"" ./modules/install/selection.sh
     grep -Fq "printf \"Количество конфигов добавить (1-%s): \" \"\$max_add\" >&\"\$tty_write_fd\"" ./modules/config/add_clients.sh
     grep -Fq "tty_print_box \"\$tty_write_fd\" \"\$RED\" \"\$uninstall_title\" 60 90" ./modules/service/uninstall.sh
     grep -Fq "Вы уверены? Введите yes для подтверждения или no для отмены:" ./modules/service/uninstall.sh
@@ -1749,9 +1749,9 @@ EOF
     grep -Fq "read -r -u \"\$tty_read_fd\" custom_path" ./lib.sh
     grep -Fq "Запускаем transport-aware self-check..." ./install.sh
     grep -Fq "transport-aware self-check: проверяем exported client variants..." ./modules/health/self_check.sh
-    ! grep -Fq "read -r -p \"Профиль [1/2/3/4]: \" input < /dev/tty" ./install.sh
+    ! grep -Fq "read -r -p \"Профиль [1/2/3/4]: \" input < /dev/tty" ./modules/install/selection.sh
     ! grep -Fq "read -r -u \"\$tty_fd\" -p \"Подтвердите (yes/no): \" answer" ./install.sh
-    ! grep -Fq "read -r -p \"Сколько конфигов создать? (1-\${max_configs}): \" input < /dev/tty" ./install.sh
+    ! grep -Fq "read -r -p \"Сколько конфигов создать? (1-\${max_configs}): \" input < /dev/tty" ./modules/install/selection.sh
     ! grep -Fq "read -r -p \"Сколько конфигов добавить? (1-\${max_add}): \" input < /dev/tty" ./modules/config/add_clients.sh
     ! grep -Fq "read -r -u \"\$tty_fd\" -p \"Вы уверены? Введите yes для подтверждения или no для отмены: \" confirm" ./modules/service/uninstall.sh
     ! grep -Fq "read -r -u \"\$tty_fd\" confirm" ./modules/service/uninstall.sh
@@ -2613,6 +2613,19 @@ JSON
     grep -Fq '\''source "$INSTALL_OUTPUT_MODULE"'\'' ./install.sh
     grep -q '\''show_install_result() {'\'' ./modules/install/output.sh
     grep -q '\''print_install_links_summary() {'\'' ./modules/install/output.sh
+    echo "ok"
+  '
+    [ "$status" -eq 0 ]
+    [ "$output" = "ok" ]
+}
+
+@test "install sources dedicated selection module" {
+    run bash -eo pipefail -c '
+    grep -Fq '\''INSTALL_SELECTION_MODULE="$SCRIPT_DIR/modules/install/selection.sh"'\'' ./install.sh
+    grep -Fq '\''source "$INSTALL_SELECTION_MODULE"'\'' ./install.sh
+    grep -q '\''auto_configure() {'\'' ./modules/install/selection.sh
+    grep -q '\''ask_domain_profile() {'\'' ./modules/install/selection.sh
+    grep -q '\''ask_num_configs() {'\'' ./modules/install/selection.sh
     echo "ok"
   '
     [ "$status" -eq 0 ]

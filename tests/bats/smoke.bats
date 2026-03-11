@@ -16,6 +16,7 @@
     [ -f "modules/service/uninstall.sh" ]
     [ -f "modules/install/bootstrap.sh" ]
     [ -f "modules/install/output.sh" ]
+    [ -f "modules/install/selection.sh" ]
 }
 
 @test "data files exist" {
@@ -26,6 +27,6 @@
 
 @test "bash syntax is valid" {
     run bash -n xray-reality.sh lib.sh install.sh config.sh service.sh health.sh export.sh \
-        modules/lib/validation.sh modules/config/client_artifacts.sh modules/config/domain_planner.sh modules/service/uninstall.sh modules/install/bootstrap.sh modules/install/output.sh
+        modules/lib/validation.sh modules/config/client_artifacts.sh modules/config/domain_planner.sh modules/service/uninstall.sh modules/install/bootstrap.sh modules/install/output.sh modules/install/selection.sh
     [ "$status" -eq 0 ]
 }

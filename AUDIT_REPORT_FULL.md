@@ -11,7 +11,7 @@ this audit refresh covers the current `v7.1.0` baseline, not the old `4.2.x` she
 
 reviewed surfaces:
 
-- all repo-tracked files in `audit_coverage_matrix.md` (**125/125** including the new `modules/install/output.sh` split module)
+- all repo-tracked files in `audit_coverage_matrix.md` (**127/127** including the new `modules/install/output.sh` and `modules/install/selection.sh` split modules)
 - runtime entrypoints: `xray-reality.sh`, `lib.sh`, `install.sh`, `config.sh`, `service.sh`, `health.sh`, `export.sh`
 - runtime modules under `modules/*`
 - qa/release/lab/windows scripts under `scripts/*`
@@ -31,7 +31,7 @@ companion docs for this pass:
 ### local verification
 
 - `make ci-full` — **pass**
-  - bats: **425/425** pass
+  - bats: **426/426** pass
   - release consistency: pass (`7.1.0`)
   - dead-function check: pass
   - shell complexity check: pass
@@ -130,6 +130,7 @@ status: **good with contract debt**
 - client artifact rendering/rebuild logic is now split out of `config.sh` into a focused module
 - uninstall/remove/account cleanup logic is now split out of `service.sh` into `modules/service/uninstall.sh`
 - install success/runtime-mode/quick-start rendering is now split out of `install.sh` into `modules/install/output.sh`
+- install strongest-default profile/count selection logic is now split out of `install.sh` into `modules/install/selection.sh`
 - however, planner data still spans catalog + tier + side-map inputs
 
 ### service/firewall/monitoring
@@ -171,14 +172,14 @@ status: **good**
 - type: maintainability
 - files:
   - `lib.sh` — 2513 lines
-  - `install.sh` — 1302 lines
+  - `install.sh` — 1085 lines
   - `service.sh` — 902 lines
 - impact:
   - slows review and safe refactoring
   - increases blast radius of small changes
   - keeps important contracts spread across very large files plus modules
 - verdict:
-  - not a correctness bug today, but still the biggest code-shape problem left after reducing `config.sh`, `service.sh`, and part of `install.sh`
+  - not a correctness bug today, but still the biggest code-shape problem left after reducing `config.sh`, `service.sh`, and `install.sh` in several focused passes
 
 ## closed in this audit refresh
 
