@@ -3,7 +3,7 @@
 date: 2026-03-11
 repository: `neket371/network-stealth-core`
 branch: `ubuntu`
-baseline commit: `c848ef7ca8ed3679d7e2cfe5ac6649ee21ff24f4`
+baseline snapshot: `ubuntu` working tree after service runtime extraction
 
 ## top-level execution chain
 
@@ -20,7 +20,7 @@ baseline commit: `c848ef7ca8ed3679d7e2cfe5ac6649ee21ff24f4`
 
 - local: `make ci-full` — pass
 - local: `bash tests/lint.sh` — pass
-- github: `ci`, `packages`, `ubuntu smoke` on `c848ef7` — success
+- github: latest green `ci`, `packages`, and `ubuntu smoke` runs on `ubuntu` — success
 - remote vm-lab lifecycle smoke on `185.218.204.206` — pass
 - remote interactive raw install inside vm guest — one minisign prompt only (`prompt_count=1`, `logged_prompts=1`), `self-check=ok`, uninstall cleanup verified
 - remote host production `xray` after vm-lab checks — still `active`
@@ -33,7 +33,7 @@ baseline commit: `c848ef7ca8ed3679d7e2cfe5ac6649ee21ff24f4`
 | `lib.sh` | central orchestrator | cli args, env, runtime files, policy/state paths | action dispatch, logging, validation, cleanup, runtime defaults | works; still too large and contract-heavy |
 | `install.sh` | mutating lifecycle entrypoint | install/update/repair/migrate/uninstall args, current managed state | xray install/update, config creation, rollback, and composition over focused output/selection/xray-runtime helpers | works; much narrower after focused install module extraction |
 | `config.sh` | config and runtime apply builder | planner outputs, ports, keys, domains, transport settings | `config.json`, environment snapshot, validated runtime apply helpers | works; artifact-heavy logic was extracted into a focused module |
-| `service.sh` | service/runtime ops | existing managed install and systemd state | `status`, `logs`, `check-update`, and service-level orchestration over focused modules | works; narrower after uninstall extraction, but still larger than ideal |
+| `service.sh` | service/runtime ops | existing managed install and systemd state | `status`, `logs`, `check-update`, and service-level orchestration over focused modules | works; now mainly composes focused runtime and uninstall modules |
 | `health.sh` | health/diagnostics entry | runtime state, domain health data, timers | health script/timer content, diagnose helpers | works; heavy lifting now mostly delegated to modules |
 | `export.sh` | export entry helpers | generated clients/artifacts | export files and capability notes | works; most logic now lives in export module |
 
@@ -69,6 +69,7 @@ baseline commit: `c848ef7ca8ed3679d7e2cfe5ac6649ee21ff24f4`
 | `modules/install/output.sh` | install success summary, runtime-mode notice, and quick-start link rendering | works; meaningfully narrows `install.sh` while preserving install ux |
 | `modules/install/selection.sh` | strongest-default profile selection, count prompts, and manual override helpers | works; meaningfully narrows `install.sh` while preserving minimal install behavior |
 | `modules/install/xray_runtime.sh` | minisign fallback, xray archive download, and verified binary install helpers | works; isolates the noisiest install bootstrap logic from `install.sh` |
+| `modules/service/runtime.sh` | systemd unit creation, firewall apply, service startup, and runtime update helpers | works; meaningfully narrows `service.sh` while keeping service/runtime behavior cohesive |
 | `modules/service/uninstall.sh` | uninstall file removal, destructive path guards, account cleanup, and service teardown helpers | works; meaningfully narrows `service.sh` while preserving uninstall semantics |
 
 ## qa / release / lab scripts
@@ -96,7 +97,7 @@ baseline commit: `c848ef7ca8ed3679d7e2cfe5ac6649ee21ff24f4`
 
 | suite | role | current verdict |
 |---|---|---|
-| `tests/bats/*.bats` | unit/integration/validation/health/runtime contract suites | strong coverage: current `bats` total is 427 passing tests inside `make ci-full` |
+| `tests/bats/*.bats` | unit/integration/validation/health/runtime contract suites | strong coverage: current `bats` total is 428 passing tests inside `make ci-full` |
 | `tests/e2e/*.sh` | install/add/update/rollback/migrate contract scenarios | strong coverage for product paths and regressions |
 | `tests/lint.sh` | broader standalone lint harness | passes and currently covers all workflows, including self-hosted |
 

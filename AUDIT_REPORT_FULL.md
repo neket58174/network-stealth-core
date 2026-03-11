@@ -3,7 +3,7 @@
 date: 2026-03-11
 repository: `neket371/network-stealth-core`
 branch: `ubuntu`
-baseline commit: `c848ef7ca8ed3679d7e2cfe5ac6649ee21ff24f4`
+baseline snapshot: `ubuntu` working tree after service runtime extraction
 
 ## scope
 
@@ -11,7 +11,7 @@ this audit refresh covers the current `v7.1.0` baseline, not the old `4.2.x` she
 
 reviewed surfaces:
 
-- all repo-tracked files in `audit_coverage_matrix.md` (**127/127** including the new `modules/install/output.sh`, `modules/install/selection.sh`, and `modules/install/xray_runtime.sh` split modules)
+- all repo-tracked files in `audit_coverage_matrix.md` (**128/128** including the new `modules/service/runtime.sh` split module)
 - runtime entrypoints: `xray-reality.sh`, `lib.sh`, `install.sh`, `config.sh`, `service.sh`, `health.sh`, `export.sh`
 - runtime modules under `modules/*`
 - qa/release/lab/windows scripts under `scripts/*`
@@ -31,7 +31,7 @@ companion docs for this pass:
 ### local verification
 
 - `make ci-full` — **pass**
-  - bats: **427/427** pass
+  - bats: **428/428** pass
   - release consistency: pass (`7.1.0`)
   - dead-function check: pass
   - shell complexity check: pass
@@ -43,14 +43,11 @@ companion docs for this pass:
 
 ### hosted verification
 
-current `ubuntu` branch runs for `c848ef7ca8ed3679d7e2cfe5ac6649ee21ff24f4`:
+latest verified `ubuntu` branch runs before closing this audit pass were green for:
 
-- `ubuntu smoke / ubuntu / push` — success
-  `22927426019`
-- `packages / ubuntu / push` — success
-  `22927426031`
-- `ci / ubuntu / push` — success
-  `22927426065`
+- `ubuntu smoke / ubuntu / push`
+- `packages / ubuntu / push`
+- `ci / ubuntu / push`
 
 ### remote isolated verification
 
@@ -129,6 +126,7 @@ status: **good with contract debt**
 - capabilities/compatibility notes are honest
 - client artifact rendering/rebuild logic is now split out of `config.sh` into a focused module
 - uninstall/remove/account cleanup logic is now split out of `service.sh` into `modules/service/uninstall.sh`
+- systemd/firewall/start/update runtime logic is now split out of `service.sh` into `modules/service/runtime.sh`
 - install success/runtime-mode/quick-start rendering is now split out of `install.sh` into `modules/install/output.sh`
 - install strongest-default profile/count selection logic is now split out of `install.sh` into `modules/install/selection.sh`
 - install minisign/xray download and verification logic is now split out of `install.sh` into `modules/install/xray_runtime.sh`
@@ -172,21 +170,20 @@ status: **good**
 - severity: **p3**
 - type: maintainability
 - files:
-  - `lib.sh` — 2513 lines
-  - `config.sh` — 730 lines
-  - `service.sh` — 902 lines
+  - `lib.sh` — 2742 lines
+  - `config.sh` — 808 lines
 - impact:
   - slows review and safe refactoring
   - increases blast radius of small changes
   - keeps important contracts spread across very large files plus modules
 - verdict:
-  - not a correctness bug today, but still the biggest code-shape problem left after reducing `install.sh` to 595 lines and narrowing other root entrypoints in several focused passes
+  - not a correctness bug today, but still the biggest code-shape problem left after reducing `install.sh` to 595 lines, `service.sh` to 484 lines, and narrowing other root entrypoints in several focused passes
 
 ## closed in this audit refresh
 
 the previous audit docs themselves were stale. this pass closes that documentation gap by replacing the old baseline with a current `v7.1.0` audit set.
 
-in addition, `f-001` was closed during the first follow-up pass by aligning `make lint` workflow coverage with `tests/lint.sh`, and `f-002` was closed by moving the active planner seed surface to the neutral `transport_endpoints.map` contract while keeping grpc/http2 handling inside explicit legacy-only branches.
+in addition, `f-001` was closed during the first follow-up pass by aligning `make lint` workflow coverage with `tests/lint.sh`, and `f-002` was closed by moving the active planner seed surface to the neutral `transport_endpoints.map` contract while keeping grpc/http2 handling inside explicit legacy-only branches. `service.sh` also stopped being part of `f-003` after the runtime/uninstall extraction passes.
 
 ## conclusion
 

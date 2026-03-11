@@ -1,7 +1,7 @@
 # audit findings backlog
 
 date: 2026-03-11
-baseline commit: `c848ef7ca8ed3679d7e2cfe5ac6649ee21ff24f4`
+baseline snapshot: `ubuntu` working tree after service runtime extraction
 
 ## prioritized open items
 
@@ -13,10 +13,9 @@ baseline commit: `c848ef7ca8ed3679d7e2cfe5ac6649ee21ff24f4`
 - files:
   - `lib.sh`
   - `config.sh`
-  - `service.sh`
 - problem:
   - core orchestration files are still large and blend multiple responsibilities.
-  - `config.sh`, `service.sh`, and `install.sh` were already reduced by focused module extraction, but `lib.sh` remains the biggest orchestration hotspot and `service.sh` still has room to shrink further.
+  - `config.sh`, `service.sh`, and `install.sh` were already reduced by focused module extraction, but `lib.sh` remains the biggest orchestration hotspot and `config.sh` still carries a broad apply/build surface.
 - recommended fix direction:
   - keep moving behavior into modules by subsystem, not by arbitrary helper dumping.
   - prefer smaller action-focused files with explicit contracts.

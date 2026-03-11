@@ -3,8 +3,8 @@
 date: 2026-03-11
 repository: `neket371/network-stealth-core`
 branch: `ubuntu`
-baseline commit: `c848ef7ca8ed3679d7e2cfe5ac6649ee21ff24f4`
-total repo-tracked files reviewed: **123**
+baseline snapshot: `ubuntu` working tree after service runtime extraction
+total repo-tracked files reviewed: **128**
 
 review depth meanings:
 - `manual semantic` — file behavior and contracts were traced manually.
@@ -26,11 +26,11 @@ review depth meanings:
 | `.github/workflows/release.yml` | 307 | workflow | tagged release workflow | contract consistency | reviewed | — |
 | `.github/workflows/self-hosted-smoke.yml` | 49 | workflow | self-hosted smoke workflow | contract consistency | reviewed | — |
 | `.markdownlint.json` | 11 | repo meta | markdown lint policy | inventory-only | reviewed | — |
-| `AUDIT_COVERAGE_MATRIX.md` | 144 | doc | audit inventory and review coverage matrix | contract consistency | reviewed | — |
-| `AUDIT_FINDINGS_BACKLOG.md` | 80 | doc | prioritized audit backlog | contract consistency | reviewed | — |
-| `AUDIT_REPORT_FULL.md` | 242 | doc | full audit narrative and findings | contract consistency | reviewed | — |
-| `AUDIT_RUNTIME_MAP.md` | 145 | doc | per-script runtime responsibility map | contract consistency | reviewed | — |
-| `config.sh` | 730 | runtime entrypoint | config builder and config/runtime apply helpers | manual semantic | reviewed | client artifact logic moved into focused module; f-003 remains open elsewhere |
+| `AUDIT_COVERAGE_MATRIX.md` | 148 | doc | audit inventory and review coverage matrix | contract consistency | reviewed | — |
+| `AUDIT_FINDINGS_BACKLOG.md` | 39 | doc | prioritized audit backlog | contract consistency | reviewed | — |
+| `AUDIT_REPORT_FULL.md` | 198 | doc | full audit narrative and findings | contract consistency | reviewed | — |
+| `AUDIT_RUNTIME_MAP.md` | 150 | doc | per-script runtime responsibility map | contract consistency | reviewed | — |
+| `config.sh` | 808 | runtime entrypoint | config builder and config/runtime apply helpers | manual semantic | reviewed | client artifact logic moved into focused module; f-003 remains open elsewhere |
 | `data/domains/catalog.json` | 4618 | data contract | canonical domain metadata catalog | manual semantic | reviewed | planner still combines catalog with side maps and tier files |
 | `Dockerfile` | 50 | build/tooling | container packaging and smoke runtime image | manual semantic | reviewed | runtime bundle now ships neutral transport endpoint seed file |
 | `docs/en/ARCHITECTURE.md` | 152 | doc | english architecture doc | contract consistency | reviewed | — |
@@ -58,12 +58,13 @@ review depth meanings:
 | `transport_endpoints.map` | 202 | data contract | neutral legacy transport endpoint seed source for grpc/http2 compatibility | manual semantic | reviewed | active xhttp path no longer references grpc-named seed files |
 | `health.sh` | 719 | runtime entrypoint | health diagnostics and monitor entry helpers | manual semantic | reviewed | — |
 | `install.sh` | 595 | runtime entrypoint | install/update/repair/migrate/rollback entry flows | manual semantic | reviewed | install output/runtime-mode, profile/count selection, and xray/minisign runtime helpers moved into focused modules; f-003 remains open elsewhere |
-| `lib.sh` | 2513 | runtime entrypoint | global runtime orchestrator and action dispatcher | manual semantic | reviewed | f-003: file remains large |
+| `lib.sh` | 2742 | runtime entrypoint | global runtime orchestrator and action dispatcher | manual semantic | reviewed | f-003: file remains large |
 | `LICENSE` | 21 | repo meta | license text | inventory-only | reviewed | — |
 | `Makefile` | 75 | build/tooling | local qa and audit entrypoints | manual semantic | reviewed | — |
 | `modules/config/add_clients.sh` | 686 | runtime module | add-clients runtime flow | manual semantic | reviewed | — |
 | `modules/config/client_artifacts.sh` | 1146 | runtime module | client artifact rendering, json normalization, rebuild, and self-check readiness helpers | manual semantic | reviewed | extracted from `config.sh` to narrow root entrypoint scope |
 | `modules/config/domain_planner.sh` | 933 | runtime module | domain planning and profile generation helpers | manual semantic | reviewed | legacy transport seeds renamed; planner still has multi-source complexity |
+| `modules/service/runtime.sh` | 451 | runtime module | systemd unit creation, firewall apply, service startup, and runtime update helpers | manual semantic | reviewed | extracted from `service.sh` to narrow service runtime orchestration scope |
 | `modules/service/uninstall.sh` | 461 | runtime module | uninstall file removal, account cleanup, and destructive guard helpers | manual semantic | reviewed | extracted from `service.sh` to narrow root entrypoint scope |
 | `modules/config/shared_helpers.sh` | 162 | runtime module | transport/tier/helper formatting and compatibility helpers | manual semantic | reviewed | transport compatibility helpers are now transport-neutral where active |
 | `modules/export/capabilities.sh` | 141 | runtime module | export capability matrix and compatibility notes helpers | manual semantic | reviewed | — |
@@ -109,7 +110,7 @@ review depth meanings:
 | `scripts/release.sh` | 253 | qa/release script | release cut helper | manual semantic | reviewed | — |
 | `scripts/windows/detect-bash.ps1` | 112 | windows helper | windows bash discovery helper | manual semantic | reviewed | — |
 | `scripts/windows/run-validation.ps1` | 164 | windows helper | windows validation orchestrator | manual semantic | reviewed | — |
-| `service.sh` | 902 | runtime entrypoint | systemd status/logs/check-update service control and module composition | manual semantic | reviewed | uninstall cleanup moved into focused module; f-003 remains open elsewhere |
+| `service.sh` | 484 | runtime entrypoint | status/logs/check-update flows plus service runtime module composition | manual semantic | reviewed | service runtime and uninstall behavior now live in focused modules |
 | `sni_pools.map` | 202 | data contract | legacy sni pool source | manual semantic | reviewed | planner still uses multi-source domain contract alongside catalog |
 | `tests/bats/config_generation.bats` | 106 | bats test | bats suite: config_generation | manual semantic | reviewed | — |
 | `tests/bats/domain_loading.bats` | 350 | bats test | bats suite: domain_loading | manual semantic | reviewed | — |
@@ -120,9 +121,9 @@ review depth meanings:
 | `tests/bats/input_validation.bats` | 290 | bats test | bats suite: input_validation | manual semantic | reviewed | — |
 | `tests/bats/integration.bats` | 808 | bats test | bats suite: integration | manual semantic | reviewed | — |
 | `tests/bats/rollback.bats` | 53 | bats test | bats suite: rollback | manual semantic | reviewed | — |
-| `tests/bats/smoke.bats` | 28 | bats test | bats suite: smoke | manual semantic | reviewed | — |
+| `tests/bats/smoke.bats` | 34 | bats test | bats suite: smoke | manual semantic | reviewed | — |
 | `tests/bats/transport.bats` | 76 | bats test | bats suite: transport | manual semantic | reviewed | — |
-| `tests/bats/unit.bats` | 3599 | bats test | bats suite: unit | manual semantic | reviewed | — |
+| `tests/bats/unit.bats` | 3732 | bats test | bats suite: unit | manual semantic | reviewed | — |
 | `tests/bats/validation.bats` | 565 | bats test | bats suite: validation | manual semantic | reviewed | — |
 | `tests/e2e/add_clients_enospc_rollback.sh` | 114 | e2e test | e2e scenario: add_clients_enospc_rollback | manual semantic | reviewed | — |
 | `tests/e2e/broken_config_rollback_smoke.sh` | 125 | e2e test | e2e scenario: broken_config_rollback_smoke | manual semantic | reviewed | — |

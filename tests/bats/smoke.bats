@@ -14,6 +14,7 @@
     [ -f "modules/config/client_artifacts.sh" ]
     [ -f "modules/config/domain_planner.sh" ]
     [ -f "modules/service/uninstall.sh" ]
+    [ -f "modules/service/runtime.sh" ]
     [ -f "modules/install/bootstrap.sh" ]
     [ -f "modules/install/output.sh" ]
     [ -f "modules/install/selection.sh" ]
@@ -28,6 +29,6 @@
 
 @test "bash syntax is valid" {
     run bash -n xray-reality.sh lib.sh install.sh config.sh service.sh health.sh export.sh \
-        modules/lib/validation.sh modules/config/client_artifacts.sh modules/config/domain_planner.sh modules/service/uninstall.sh modules/install/bootstrap.sh modules/install/output.sh modules/install/selection.sh modules/install/xray_runtime.sh
+        modules/lib/validation.sh modules/config/client_artifacts.sh modules/config/domain_planner.sh modules/service/uninstall.sh modules/service/runtime.sh modules/install/bootstrap.sh modules/install/output.sh modules/install/selection.sh modules/install/xray_runtime.sh
     [ "$status" -eq 0 ]
 }

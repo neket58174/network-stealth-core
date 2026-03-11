@@ -125,7 +125,7 @@ fi
 
 check_present_fixed "atomic_write \"\$XRAY_ENV\" 0600" 'env file permissions' config.sh
 check_present_fixed 'curl_fetch_text_allowlist "https://api.github.com/repos/XTLS/Xray-core/releases/latest"' 'allowlist update check' service.sh
-check_present_fixed 'sanitize_systemd_value' 'systemd unit sanitization helper' service.sh
+check_present_fixed 'sanitize_systemd_value' 'systemd unit sanitization helper' modules/service/runtime.sh
 check_present_fixed "mapfile -t ports < <(tr ',[:space:]' '\\n' <<< \"\$REALITY_TEST_PORTS\" | awk 'NF')" 'health ports parser without split_list dependency' health.sh
 check_present_fixed "proto-redir '=https'" 'https-only redirects in curl flows' lib.sh
 

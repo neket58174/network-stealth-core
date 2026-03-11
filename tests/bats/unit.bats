@@ -1173,13 +1173,13 @@ EOF
 
 @test "update_xray backs up config and client artifacts before update" {
     run bash -eo pipefail -c '
-    grep -q '\''for artifact in'\'' ./service.sh
-    grep -q '\''"\$XRAY_CONFIG"'\'' ./service.sh
-    grep -q '\''"\$XRAY_KEYS/keys.txt"'\'' ./service.sh
-    grep -q '\''"\$XRAY_KEYS/clients.txt"'\'' ./service.sh
-    grep -q '\''"\$XRAY_KEYS/clients.json"'\'' ./service.sh
-    grep -q '\''backup_file "\$artifact"'\'' ./service.sh
-    grep -q '\''backup_file "\$XRAY_BIN"'\'' ./service.sh
+    grep -q '\''for artifact in'\'' ./modules/service/runtime.sh
+    grep -q '\''"\$XRAY_CONFIG"'\'' ./modules/service/runtime.sh
+    grep -q '\''"\$XRAY_KEYS/keys.txt"'\'' ./modules/service/runtime.sh
+    grep -q '\''"\$XRAY_KEYS/clients.txt"'\'' ./modules/service/runtime.sh
+    grep -q '\''"\$XRAY_KEYS/clients.json"'\'' ./modules/service/runtime.sh
+    grep -q '\''backup_file "\$artifact"'\'' ./modules/service/runtime.sh
+    grep -q '\''backup_file "\$XRAY_BIN"'\'' ./modules/service/runtime.sh
     echo "ok"
   '
     [ "$status" -eq 0 ]
@@ -1664,7 +1664,7 @@ EOF
     grep -q '\''record_firewall_rule_add "ufw" "\$port" "v6"'\'' ./modules/lib/firewall.sh
     grep -q '\''record_firewall_rule_add "firewalld" "\$port" "v6"'\'' ./modules/lib/firewall.sh
     grep -q '\''record_firewall_rule_add "ip6tables" "\$port" "v6"'\'' ./modules/lib/firewall.sh
-    grep -q '\''open_firewall_ports'\'' ./service.sh
+    grep -q '\''open_firewall_ports'\'' ./modules/service/runtime.sh
     echo "ok"
   '
     [ "$status" -eq 0 ]
@@ -1686,7 +1686,7 @@ EOF
     grep -q '\''systemctl_restart_xray_bounded()'\'' ./lib.sh
     grep -q '\''XRAY_SYSTEMCTL_RESTART_TIMEOUT'\'' ./lib.sh
     grep -q '\''timeout --signal=TERM --kill-after=15s'\'' ./lib.sh
-    grep -q '\''if ! systemctl_restart_xray_bounded restart_err; then'\'' ./service.sh
+    grep -q '\''if ! systemctl_restart_xray_bounded restart_err; then'\'' ./modules/service/runtime.sh
     grep -q '\''if ! systemctl_restart_xray_bounded; then'\'' ./modules/config/add_clients.sh
     grep -q '\''if systemctl_restart_xray_bounded; then'\'' ./modules/lib/lifecycle.sh
     ! grep -q '\''systemctl restart xray'\'' ./modules/config/add_clients.sh
@@ -1704,18 +1704,18 @@ EOF
     grep -Fq '\''printf -v "$out_err_var"'\'' ./lib.sh
     grep -Fq '\''XRAY_SYSTEMCTL_OP_TIMEOUT'\'' ./lib.sh
     grep -Fq '\''timeout --signal=TERM --kill-after=10s'\'' ./lib.sh
-    grep -Fq '\''systemctl_run_bounded --err-var daemon_reload_err daemon-reload'\'' ./service.sh
-    grep -Fq '\''systemctl_run_bounded --err-var enable_err enable xray'\'' ./service.sh
-    grep -Fq '\''if systemctl_run_bounded daemon-reload; then'\'' ./service.sh
+    grep -Fq '\''systemctl_run_bounded --err-var daemon_reload_err daemon-reload'\'' ./modules/service/runtime.sh
+    grep -Fq '\''systemctl_run_bounded --err-var enable_err enable xray'\'' ./modules/service/runtime.sh
+    grep -Fq '\''if systemctl_run_bounded daemon-reload; then'\'' ./modules/service/runtime.sh
     grep -Fq '\''if ! systemctl_run_bounded daemon-reload; then'\'' ./modules/lib/lifecycle.sh
     grep -Fq '\''if ! systemctl_run_bounded daemon-reload; then'\'' ./health.sh
     grep -Fq '\''if systemctl_run_bounded enable --now xray-health.timer; then'\'' ./health.sh
     grep -Fq '\''if ! systemctl_run_bounded daemon-reload; then'\'' ./modules/install/bootstrap.sh
     grep -Fq '\''if systemctl_run_bounded enable --now xray-auto-update.timer; then'\'' ./modules/install/bootstrap.sh
     grep -Fq '\''if ! systemctl_run_bounded disable --now xray-auto-update.timer; then'\'' ./modules/install/bootstrap.sh
-    ! grep -Fq '\''daemon_reload_err=$(systemctl daemon-reload 2>&1)'\'' ./service.sh
-    ! grep -Fq '\''enable_err=$(systemctl enable xray 2>&1)'\'' ./service.sh
-    ! grep -Fq '\''if systemctl daemon-reload > /dev/null 2>&1; then'\'' ./service.sh
+    ! grep -Fq '\''daemon_reload_err=$(systemctl daemon-reload 2>&1)'\'' ./modules/service/runtime.sh
+    ! grep -Fq '\''enable_err=$(systemctl enable xray 2>&1)'\'' ./modules/service/runtime.sh
+    ! grep -Fq '\''if systemctl daemon-reload > /dev/null 2>&1; then'\'' ./modules/service/runtime.sh
     echo "ok"
   '
     [ "$status" -eq 0 ]
@@ -3094,9 +3094,9 @@ EOF
 
 @test "create_systemd_service handles missing systemd dir in non-systemd mode" {
     run bash -eo pipefail -c '
-    grep -q '\''local systemd_dir="/etc/systemd/system"'\'' ./service.sh
-    grep -q '\''install -d -m 755 "\$systemd_dir"'\'' ./service.sh
-    grep -q '\''создание unit-файла пропущено'\'' ./service.sh
+    grep -q '\''local systemd_dir="/etc/systemd/system"'\'' ./modules/service/runtime.sh
+    grep -q '\''install -d -m 755 "\$systemd_dir"'\'' ./modules/service/runtime.sh
+    grep -q '\''создание unit-файла пропущено'\'' ./modules/service/runtime.sh
     echo "ok"
   '
     [ "$status" -eq 0 ]
@@ -3105,13 +3105,13 @@ EOF
 
 @test "create_systemd_service cleans conflicting xray drop-ins" {
     run bash -eo pipefail -c '
-    grep -q '\''cleanup_conflicting_xray_service_dropins'\'' ./service.sh
-    grep -q '\''/etc/systemd/system/xray.service.d'\'' ./service.sh
-    grep -q '\''runtime_override_regex='\'' ./service.sh
-    grep -q '\''Environment(File)?'\'' ./service.sh
-    grep -q '\''safe-mode'\'' ./service.sh
-    grep -Fq -- '\''-type f -o -type l'\'' ./service.sh
-    grep -q '\''Отключён конфликтный systemd drop-in'\'' ./service.sh
+    grep -q '\''cleanup_conflicting_xray_service_dropins'\'' ./modules/service/runtime.sh
+    grep -q '\''/etc/systemd/system/xray.service.d'\'' ./modules/service/runtime.sh
+    grep -q '\''runtime_override_regex='\'' ./modules/service/runtime.sh
+    grep -q '\''Environment(File)?'\'' ./modules/service/runtime.sh
+    grep -q '\''safe-mode'\'' ./modules/service/runtime.sh
+    grep -Fq -- '\''-type f -o -type l'\'' ./modules/service/runtime.sh
+    grep -q '\''Отключён конфликтный systemd drop-in'\'' ./modules/service/runtime.sh
     echo "ok"
   '
     [ "$status" -eq 0 ]
@@ -3120,15 +3120,15 @@ EOF
 
 @test "service systemd flows degrade on nonfatal systemctl errors" {
     run bash -eo pipefail -c '
-    grep -q '\''is_nonfatal_systemctl_error()'\'' ./service.sh
-    grep -q '\''local daemon_reload_rc=0'\'' ./service.sh
-    grep -q '\''local enable_rc=0'\'' ./service.sh
-    grep -q '\''if ((daemon_reload_rc != 0)); then'\'' ./service.sh
-    grep -q '\''if ((enable_rc != 0)); then'\'' ./service.sh
-    grep -q '\''if ! systemctl_restart_xray_bounded restart_err; then'\'' ./service.sh
-    grep -q '\''SYSTEMD_MANAGEMENT_DISABLED=true'\'' ./service.sh
-    grep -q '\''systemd недоступен для активации unit; продолжаем без enable'\'' ./service.sh
-    grep -q '\''systemd недоступен для restart xray; запуск сервисов пропущен'\'' ./service.sh
+    grep -q '\''is_nonfatal_systemctl_error()'\'' ./modules/service/runtime.sh
+    grep -q '\''local daemon_reload_rc=0'\'' ./modules/service/runtime.sh
+    grep -q '\''local enable_rc=0'\'' ./modules/service/runtime.sh
+    grep -q '\''if ((daemon_reload_rc != 0)); then'\'' ./modules/service/runtime.sh
+    grep -q '\''if ((enable_rc != 0)); then'\'' ./modules/service/runtime.sh
+    grep -q '\''if ! systemctl_restart_xray_bounded restart_err; then'\'' ./modules/service/runtime.sh
+    grep -q '\''SYSTEMD_MANAGEMENT_DISABLED=true'\'' ./modules/service/runtime.sh
+    grep -q '\''systemd недоступен для активации unit; продолжаем без enable'\'' ./modules/service/runtime.sh
+    grep -q '\''systemd недоступен для restart xray; запуск сервисов пропущен'\'' ./modules/service/runtime.sh
     echo "ok"
   '
     [ "$status" -eq 0 ]
@@ -3553,6 +3553,19 @@ EOF
     grep -Fq '\''source "$SERVICE_UNINSTALL_MODULE"'\'' ./service.sh
     grep -q '\''uninstall_all() {'\'' ./modules/service/uninstall.sh
     grep -q '\''uninstall_has_managed_artifacts() {'\'' ./modules/service/uninstall.sh
+    echo "ok"
+  '
+    [ "$status" -eq 0 ]
+    [ "$output" = "ok" ]
+}
+
+@test "service sources dedicated runtime module" {
+    run bash -eo pipefail -c '
+    grep -Fq '\''SERVICE_RUNTIME_MODULE="${SCRIPT_DIR:-$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)}/modules/service/runtime.sh"'\'' ./service.sh
+    grep -Fq '\''source "$SERVICE_RUNTIME_MODULE"'\'' ./service.sh
+    grep -q '\''create_systemd_service() {'\'' ./modules/service/runtime.sh
+    grep -q '\''start_services() {'\'' ./modules/service/runtime.sh
+    grep -q '\''update_xray() {'\'' ./modules/service/runtime.sh
     echo "ok"
   '
     [ "$status" -eq 0 ]
