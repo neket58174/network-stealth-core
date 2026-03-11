@@ -155,31 +155,13 @@ status: **good**
 
 ### docs and workflow surface
 
-status: **good with tooling gap**
+status: **good**
 
 - docs are broadly aligned
 - maintainer-only lab docs are correctly separated from user readmes
-- workflow/actionlint coverage between `make lint` and `tests/lint.sh` still differs
+- workflow/actionlint coverage is now aligned between `make lint` and `tests/lint.sh`
 
 ## findings
-
-### f-001 — workflow lint coverage gap between `make lint` and `tests/lint.sh`
-
-- severity: **p3**
-- type: tooling consistency
-- files:
-  - `Makefile`
-  - `tests/lint.sh`
-  - `.github/workflows/self-hosted-smoke.yml`
-- evidence:
-  - `Makefile` hardcodes `WORKFLOWS := ci.yml nightly-smoke.yml release.yml packages.yml os-matrix-smoke.yml`
-  - `self-hosted-smoke.yml` is missing there
-  - `tests/lint.sh` uses `.github/workflows/*.yml`, so it does lint that workflow
-- impact:
-  - `make ci-full` can stay green while one workflow escapes `actionlint`
-  - official lint entrypoints still differ in scope
-- verdict:
-  - not a runtime bug, but still a real audit finding
 
 ### f-002 — xhttp-first planner still depends on a legacy-named multi-source contract
 
@@ -228,6 +210,8 @@ status: **good with tooling gap**
 ## closed in this audit refresh
 
 the previous audit docs themselves were stale. this pass closes that documentation gap by replacing the old baseline with a current `v7.1.0` audit set.
+
+in addition, `f-001` was closed during the first follow-up pass by aligning `make lint` workflow coverage with `tests/lint.sh`.
 
 ## conclusion
 

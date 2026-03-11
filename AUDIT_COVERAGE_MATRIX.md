@@ -24,7 +24,7 @@ review depth meanings:
 | `.github/workflows/os-matrix-smoke.yml` | 55 | workflow | os support smoke workflow | contract consistency | reviewed | — |
 | `.github/workflows/packages.yml` | 91 | workflow | package/build workflow | contract consistency | reviewed | — |
 | `.github/workflows/release.yml` | 307 | workflow | tagged release workflow | contract consistency | reviewed | — |
-| `.github/workflows/self-hosted-smoke.yml` | 49 | workflow | self-hosted smoke workflow | contract consistency | reviewed | f-001: covered by tests/lint.sh, not by make actionlint set |
+| `.github/workflows/self-hosted-smoke.yml` | 49 | workflow | self-hosted smoke workflow | contract consistency | reviewed | — |
 | `.markdownlint.json` | 11 | repo meta | markdown lint policy | inventory-only | reviewed | — |
 | `AUDIT_COVERAGE_MATRIX.md` | 144 | doc | audit inventory and review coverage matrix | contract consistency | reviewed | — |
 | `AUDIT_FINDINGS_BACKLOG.md` | 80 | doc | prioritized audit backlog | contract consistency | reviewed | — |
@@ -60,7 +60,7 @@ review depth meanings:
 | `install.sh` | 1553 | runtime entrypoint | install/update/repair/migrate/rollback entry flows | manual semantic | reviewed | f-003: still large and action-dense |
 | `lib.sh` | 2720 | runtime entrypoint | global runtime orchestrator and action dispatcher | manual semantic | reviewed | f-002/f-003: legacy grpc-named contract still present; file remains large |
 | `LICENSE` | 21 | repo meta | license text | inventory-only | reviewed | — |
-| `Makefile` | 75 | build/tooling | local qa and audit entrypoints | manual semantic | reviewed | f-001: workflow lint set excludes self-hosted-smoke.yml |
+| `Makefile` | 75 | build/tooling | local qa and audit entrypoints | manual semantic | reviewed | — |
 | `modules/config/add_clients.sh` | 686 | runtime module | add-clients runtime flow | manual semantic | reviewed | — |
 | `modules/config/domain_planner.sh` | 933 | runtime module | domain planning and profile generation helpers | manual semantic | reviewed | f-002: planner still depends on legacy-named grpc map for xhttp payload seeds |
 | `modules/config/shared_helpers.sh` | 162 | runtime module | transport/tier/helper formatting and compatibility helpers | manual semantic | reviewed | f-002: transport compatibility helpers still expose legacy grpc naming |
@@ -134,11 +134,10 @@ review depth meanings:
 | `tests/e2e/minisign_fail_cleans_temp.sh` | 129 | e2e test | e2e scenario: minisign_fail_cleans_temp | manual semantic | reviewed | — |
 | `tests/e2e/nightly_smoke_install_add_update_uninstall.sh` | 271 | e2e test | e2e scenario: nightly_smoke_install_add_update_uninstall | manual semantic | reviewed | — |
 | `tests/e2e/os_matrix_smoke.sh` | 114 | e2e test | e2e scenario: os_matrix_smoke | manual semantic | reviewed | — |
-| `tests/lint.sh` | 177 | test helper | full lint entrypoint outside make | manual semantic | reviewed | f-001: broader workflow coverage than make lint |
+| `tests/lint.sh` | 177 | test helper | full lint entrypoint outside make | manual semantic | reviewed | — |
 | `xray-reality.sh` | 509 | runtime entrypoint | bootstrap wrapper and trusted module loader | manual semantic | reviewed | — |
 
 ## current audit-level findings referenced by matrix
 
-- `f-001` — `make lint` actionlint coverage misses `.github/workflows/self-hosted-smoke.yml`; `tests/lint.sh` catches it, so the two official lint entrypoints still differ.
 - `f-002` — xhttp-first runtime still depends on a legacy-named multi-source planner contract (`catalog.json` + `domains.tiers` + `sni_pools.map` + `grpc_services.map`).
 - `f-003` — core root entrypoints remain large enough to raise maintainability and refactor risk.

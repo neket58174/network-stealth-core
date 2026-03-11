@@ -3362,6 +3362,16 @@ EOF
     [ "$output" = "ok" ]
 }
 
+@test "make lint actionlints self-hosted smoke workflow" {
+    run bash -eo pipefail -c '
+    grep -q '\''^WORKFLOWS := .*\.github/workflows/self-hosted-smoke\.yml'\'' ./Makefile
+    grep -q '\''actionlint -oneline $(WORKFLOWS)'\'' ./Makefile
+    echo "ok"
+  '
+    [ "$status" -eq 0 ]
+    [ "$output" = "ok" ]
+}
+
 @test "lab scripts are wired into lint and self-hosted workflows" {
     run bash -eo pipefail -c '
     grep -q '\''scripts/lab/\*.sh'\'' ./Makefile

@@ -35,20 +35,6 @@ baseline commit: `c848ef7ca8ed3679d7e2cfe5ac6649ee21ff24f4`
 
 ### p3
 
-#### f-001 — unify workflow lint coverage between `make lint` and `tests/lint.sh`
-
-- type: tooling consistency
-- files:
-  - `Makefile`
-  - `tests/lint.sh`
-  - `.github/workflows/self-hosted-smoke.yml`
-- problem:
-  - `tests/lint.sh` actionlints all workflows; `make lint` skips `self-hosted-smoke.yml`.
-- recommended fix direction:
-  - make both official lint entrypoints use the same workflow set.
-- acceptance:
-  - no workflow can pass one official lint entrypoint while escaping the other.
-
 #### f-003 — continue decomposing oversized root entrypoints
 
 - type: maintainability
@@ -75,6 +61,7 @@ baseline commit: `c848ef7ca8ed3679d7e2cfe5ac6649ee21ff24f4`
 
 these older items are no longer open:
 
+- workflow lint coverage mismatch between `make lint` and `tests/lint.sh`
 - hardening `xray_data_dir` trust boundary
 - bashate policy mismatch between `make lint` and `tests/lint.sh`
 - dead-function checker false negatives from comment/string matches
