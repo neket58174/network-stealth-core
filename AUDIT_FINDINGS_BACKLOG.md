@@ -17,7 +17,7 @@ baseline commit: `c848ef7ca8ed3679d7e2cfe5ac6649ee21ff24f4`
   - `service.sh`
 - problem:
   - core orchestration files are still large and blend multiple responsibilities.
-  - `config.sh` and `service.sh` were already reduced by focused module extraction, but `lib.sh` and `install.sh` remain the largest orchestration hotspots and `service.sh` still has room to shrink further.
+  - `config.sh`, `service.sh`, and `install.sh` were already reduced by focused module extraction, but `lib.sh` and `install.sh` remain the largest orchestration hotspots and `service.sh` still has room to shrink further.
 - recommended fix direction:
   - keep moving behavior into modules by subsystem, not by arbitrary helper dumping.
   - prefer smaller action-focused files with explicit contracts.

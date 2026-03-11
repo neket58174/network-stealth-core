@@ -2228,7 +2228,7 @@ EOF
 }
 
 @test "install result prints russian quick start instead of dumping full links file" {
-    run bash -eo pipefail -c "grep -Fq 'build_install_quick_start_file()' ./install.sh; grep -Fq 'header_text=' ./install.sh; grep -Fq 'все ссылки: \${XRAY_KEYS}/clients-links.txt' ./install.sh; echo ok"
+    run bash -eo pipefail -c "grep -Fq 'INSTALL_OUTPUT_MODULE=\"\$SCRIPT_DIR/modules/install/output.sh\"' ./install.sh; grep -Fq 'source \"\$INSTALL_OUTPUT_MODULE\"' ./install.sh; grep -Fq 'build_install_quick_start_file()' ./modules/install/output.sh; grep -Fq 'header_text=' ./modules/install/output.sh; grep -Fq 'все ссылки: \${XRAY_KEYS}/clients-links.txt' ./modules/install/output.sh; echo ok"
     [ "$status" -eq 0 ]
     [ "$output" = "ok" ]
 }
@@ -2597,10 +2597,23 @@ JSON
 
 @test "show_install_result prints explicit runtime mode notice" {
     run bash -eo pipefail -c '
-    grep -Fq "print_install_runtime_mode_notice" ./install.sh
-    grep -Fq "РЕЖИМ: СТЕНД / COMPAT" ./install.sh
-    grep -Fq "РЕЖИМ: БОЕВОЙ СЕРВЕР" ./install.sh
+    grep -Fq "print_install_runtime_mode_notice" ./modules/install/output.sh
+    grep -Fq "РЕЖИМ: СТЕНД / COMPAT" ./modules/install/output.sh
+    grep -Fq "РЕЖИМ: БОЕВОЙ СЕРВЕР" ./modules/install/output.sh
+    grep -Fq "show_install_result" ./install.sh
     echo ok
+  '
+    [ "$status" -eq 0 ]
+    [ "$output" = "ok" ]
+}
+
+@test "install sources dedicated output module" {
+    run bash -eo pipefail -c '
+    grep -Fq '\''INSTALL_OUTPUT_MODULE="$SCRIPT_DIR/modules/install/output.sh"'\'' ./install.sh
+    grep -Fq '\''source "$INSTALL_OUTPUT_MODULE"'\'' ./install.sh
+    grep -q '\''show_install_result() {'\'' ./modules/install/output.sh
+    grep -q '\''print_install_links_summary() {'\'' ./modules/install/output.sh
+    echo "ok"
   '
     [ "$status" -eq 0 ]
     [ "$output" = "ok" ]

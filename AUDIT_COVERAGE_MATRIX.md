@@ -57,7 +57,7 @@ review depth meanings:
 | `export.sh` | 328 | runtime entrypoint | client export entry helpers | manual semantic | reviewed | — |
 | `transport_endpoints.map` | 202 | data contract | neutral legacy transport endpoint seed source for grpc/http2 compatibility | manual semantic | reviewed | active xhttp path no longer references grpc-named seed files |
 | `health.sh` | 719 | runtime entrypoint | health diagnostics and monitor entry helpers | manual semantic | reviewed | — |
-| `install.sh` | 1406 | runtime entrypoint | install/update/repair/migrate/rollback entry flows | manual semantic | reviewed | f-003: still large and action-dense |
+| `install.sh` | 1302 | runtime entrypoint | install/update/repair/migrate/rollback entry flows | manual semantic | reviewed | install output/runtime-mode helpers moved into focused module; f-003 remains open elsewhere |
 | `lib.sh` | 2513 | runtime entrypoint | global runtime orchestrator and action dispatcher | manual semantic | reviewed | f-003: file remains large |
 | `LICENSE` | 21 | repo meta | license text | inventory-only | reviewed | — |
 | `Makefile` | 75 | build/tooling | local qa and audit entrypoints | manual semantic | reviewed | — |
@@ -70,6 +70,7 @@ review depth meanings:
 | `modules/health/measurements.sh` | 312 | runtime module | measurement import/compare/prune helpers | manual semantic | reviewed | — |
 | `modules/health/self_check.sh` | 777 | runtime module | post-action transport-aware self-check engine | manual semantic | reviewed | — |
 | `modules/install/bootstrap.sh` | 427 | runtime module | install/update bootstrap staging helpers | manual semantic | reviewed | bootstrap now ships neutral transport endpoint seed file |
+| `modules/install/output.sh` | 277 | runtime module | install success summary, runtime-mode notice, and quick-start link rendering | manual semantic | reviewed | extracted from `install.sh` to narrow root entrypoint scope |
 | `modules/lib/cli.sh` | 531 | runtime module | cli parsing and runtime override resolution | manual semantic | reviewed | — |
 | `modules/lib/common_utils.sh` | 18 | runtime module | shared low-level helper primitives | manual semantic | reviewed | — |
 | `modules/lib/contract_gate.sh` | 91 | runtime module | legacy/pre-v7 mutating gate logic | manual semantic | reviewed | — |
@@ -141,4 +142,4 @@ review depth meanings:
 
 ## current audit-level findings referenced by matrix
 
-- `f-003` — core root entrypoints remain large enough to raise maintainability and refactor risk, though `config.sh` and `service.sh` were already reduced by focused module extraction.
+- `f-003` — core root entrypoints remain large enough to raise maintainability and refactor risk, though `config.sh`, `service.sh`, and `install.sh` were already reduced by focused module extraction.
