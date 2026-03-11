@@ -2655,6 +2655,18 @@ JSON
     [ "$output" = "ok" ]
 }
 
+@test "create_users precreates writable xray log files" {
+    run bash -eo pipefail -c '
+    grep -Fq "chmod 750 \"\$XRAY_LOGS\"" ./install.sh
+    grep -Fq "touch \"\$XRAY_LOGS/access.log\" \"\$XRAY_LOGS/error.log\"" ./install.sh
+    grep -Fq "chown \"\${XRAY_USER}:\${XRAY_GROUP}\" \"\$XRAY_LOGS/access.log\" \"\$XRAY_LOGS/error.log\"" ./install.sh
+    grep -Fq "chmod 640 \"\$XRAY_LOGS/access.log\" \"\$XRAY_LOGS/error.log\"" ./install.sh
+    echo ok
+  '
+    [ "$status" -eq 0 ]
+    [ "$output" = "ok" ]
+}
+
 @test "save_client_configs writes schema v3 strongest-direct variants when ipv6 is disabled" {
     run bash -eo pipefail -c '
     source ./lib.sh

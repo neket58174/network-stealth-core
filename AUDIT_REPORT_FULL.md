@@ -11,7 +11,7 @@ this audit refresh covers the current `v7.1.0` baseline, not the old `4.2.x` she
 
 reviewed surfaces:
 
-- all repo-tracked files in `audit_coverage_matrix.md` (**128/128** including the new `modules/service/runtime.sh` split module)
+- all repo-tracked files in `audit_coverage_matrix.md` (**129/129** including the new `modules/service/runtime.sh` split module)
 - runtime entrypoints: `xray-reality.sh`, `lib.sh`, `install.sh`, `config.sh`, `service.sh`, `health.sh`, `export.sh`
 - runtime modules under `modules/*`
 - qa/release/lab/windows scripts under `scripts/*`
@@ -31,7 +31,7 @@ companion docs for this pass:
 ### local verification
 
 - `make ci-full` — **pass**
-  - bats: **428/428** pass
+  - bats: **429/429** pass
   - release consistency: pass (`7.1.0`)
   - dead-function check: pass
   - shell complexity check: pass

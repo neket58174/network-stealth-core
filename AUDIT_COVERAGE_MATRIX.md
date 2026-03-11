@@ -4,7 +4,7 @@ date: 2026-03-11
 repository: `neket371/network-stealth-core`
 branch: `ubuntu`
 baseline snapshot: `ubuntu` working tree after service runtime extraction
-total repo-tracked files reviewed: **128**
+total repo-tracked files reviewed: **129**
 
 review depth meanings:
 - `manual semantic` — file behavior and contracts were traced manually.
@@ -57,7 +57,7 @@ review depth meanings:
 | `export.sh` | 328 | runtime entrypoint | client export entry helpers | manual semantic | reviewed | — |
 | `transport_endpoints.map` | 202 | data contract | neutral legacy transport endpoint seed source for grpc/http2 compatibility | manual semantic | reviewed | active xhttp path no longer references grpc-named seed files |
 | `health.sh` | 719 | runtime entrypoint | health diagnostics and monitor entry helpers | manual semantic | reviewed | — |
-| `install.sh` | 595 | runtime entrypoint | install/update/repair/migrate/rollback entry flows | manual semantic | reviewed | install output/runtime-mode, profile/count selection, and xray/minisign runtime helpers moved into focused modules; f-003 remains open elsewhere |
+| `install.sh` | 599 | runtime entrypoint | install/update/repair/migrate/rollback entry flows | manual semantic | reviewed | install output/runtime-mode, profile/count selection, and xray/minisign runtime helpers moved into focused modules; runtime log files are precreated with service ownership before first start |
 | `lib.sh` | 2742 | runtime entrypoint | global runtime orchestrator and action dispatcher | manual semantic | reviewed | f-003: file remains large |
 | `LICENSE` | 21 | repo meta | license text | inventory-only | reviewed | — |
 | `Makefile` | 75 | build/tooling | local qa and audit entrypoints | manual semantic | reviewed | — |
@@ -123,7 +123,7 @@ review depth meanings:
 | `tests/bats/rollback.bats` | 53 | bats test | bats suite: rollback | manual semantic | reviewed | — |
 | `tests/bats/smoke.bats` | 34 | bats test | bats suite: smoke | manual semantic | reviewed | — |
 | `tests/bats/transport.bats` | 76 | bats test | bats suite: transport | manual semantic | reviewed | — |
-| `tests/bats/unit.bats` | 3732 | bats test | bats suite: unit | manual semantic | reviewed | — |
+| `tests/bats/unit.bats` | 3744 | bats test | bats suite: unit | manual semantic | reviewed | — |
 | `tests/bats/validation.bats` | 565 | bats test | bats suite: validation | manual semantic | reviewed | — |
 | `tests/e2e/add_clients_enospc_rollback.sh` | 114 | e2e test | e2e scenario: add_clients_enospc_rollback | manual semantic | reviewed | — |
 | `tests/e2e/broken_config_rollback_smoke.sh` | 125 | e2e test | e2e scenario: broken_config_rollback_smoke | manual semantic | reviewed | — |

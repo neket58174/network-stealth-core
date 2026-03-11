@@ -115,6 +115,10 @@ create_users() {
 
     mkdir -p "$XRAY_HOME" "$XRAY_LOGS" "$XRAY_BACKUP" /etc/xray/private /etc/xray-reality
     chown -R "${XRAY_USER}:${XRAY_GROUP}" "$XRAY_HOME" "$XRAY_LOGS"
+    chmod 750 "$XRAY_LOGS"
+    touch "$XRAY_LOGS/access.log" "$XRAY_LOGS/error.log"
+    chown "${XRAY_USER}:${XRAY_GROUP}" "$XRAY_LOGS/access.log" "$XRAY_LOGS/error.log"
+    chmod 640 "$XRAY_LOGS/access.log" "$XRAY_LOGS/error.log"
     chown root:root "$XRAY_BACKUP"
     chmod 700 "$XRAY_BACKUP"
     chmod 750 /etc/xray/private

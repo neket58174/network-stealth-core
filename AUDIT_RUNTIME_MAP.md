@@ -97,7 +97,7 @@ baseline snapshot: `ubuntu` working tree after service runtime extraction
 
 | suite | role | current verdict |
 |---|---|---|
-| `tests/bats/*.bats` | unit/integration/validation/health/runtime contract suites | strong coverage: current `bats` total is 428 passing tests inside `make ci-full` |
+| `tests/bats/*.bats` | unit/integration/validation/health/runtime contract suites | strong coverage: current `bats` total is 429 passing tests inside `make ci-full` |
 | `tests/e2e/*.sh` | install/add/update/rollback/migrate contract scenarios | strong coverage for product paths and regressions |
 | `tests/lint.sh` | broader standalone lint harness | passes and currently covers all workflows, including self-hosted |
 
