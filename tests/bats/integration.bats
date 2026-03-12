@@ -603,6 +603,58 @@ EOF
     [ "$status" -eq 0 ]
 }
 
+@test "wrapper accepts legacy bootstrap trees without newer split lib modules" {
+    run bash -eo pipefail -c '
+    set -euo pipefail
+    tmp="$(mktemp -d)"
+    cp ./xray-reality.sh "$tmp/xray-reality.sh"
+    chmod +x "$tmp/xray-reality.sh"
+    mkdir -p "$tmp/mockbin"
+
+    cat > "$tmp/mockbin/git" << '"'"'EOF'"'"'
+#!/usr/bin/env bash
+set -euo pipefail
+if [[ "${1:-}" == "clone" ]]; then
+    target="${@: -1}"
+    mkdir -p "$target/modules/lib" "$target/modules/config" "$target/modules/install"
+    cat > "$target/lib.sh" << '"'"'LIBEOF'"'"'
+#!/usr/bin/env bash
+MODULE_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+main() { echo "wrapper-ok"; }
+LIBEOF
+    chmod +x "$target/lib.sh"
+    : > "$target/install.sh"
+    : > "$target/config.sh"
+    : > "$target/service.sh"
+    : > "$target/health.sh"
+    : > "$target/export.sh"
+    : > "$target/modules/lib/validation.sh"
+    : > "$target/modules/lib/globals_contract.sh"
+    : > "$target/modules/lib/firewall.sh"
+    : > "$target/modules/lib/lifecycle.sh"
+    : > "$target/modules/lib/common_utils.sh"
+    : > "$target/modules/lib/runtime_reuse.sh"
+    : > "$target/modules/lib/domain_sources.sh"
+    : > "$target/modules/config/domain_planner.sh"
+    : > "$target/modules/config/shared_helpers.sh"
+    : > "$target/modules/config/add_clients.sh"
+    : > "$target/modules/install/bootstrap.sh"
+    exit 0
+fi
+exit 0
+EOF
+    chmod +x "$tmp/mockbin/git"
+
+    PATH="$tmp/mockbin:$PATH" \
+        XRAY_BOOTSTRAP_REQUIRE_PIN=false \
+        XRAY_BOOTSTRAP_AUTO_PIN=false \
+        XRAY_REPO_REF=v5.1.0 \
+        bash "$tmp/xray-reality.sh" --help
+  '
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"wrapper-ok"* ]]
+}
+
 @test "wrapper can default to latest release tag when XRAY_BOOTSTRAP_DEFAULT_REF=release" {
     run bash -eo pipefail -c '
     set -euo pipefail

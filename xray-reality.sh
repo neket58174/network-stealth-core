@@ -19,20 +19,19 @@ BOOTSTRAP_DEFAULT_REF="${XRAY_BOOTSTRAP_DEFAULT_REF:-$CANONICAL_BOOTSTRAP_BRANCH
 INSTALL_DIR=""
 INSTALL_DIR_OWNED=false
 FORWARD_ARGS=()
-REQUIRED_MODULES=(
+# keep this list compatible with historical tags used by migrate-stealth coverage.
+# newer module splits must not make older pinned trees look invalid to the wrapper.
+REQUIRED_BOOTSTRAP_TREE_FILES=(
     install.sh
     config.sh
     service.sh
     health.sh
+    export.sh
     modules/lib/validation.sh
     modules/lib/globals_contract.sh
     modules/lib/firewall.sh
     modules/lib/lifecycle.sh
     modules/lib/common_utils.sh
-    modules/lib/ui_logging.sh
-    modules/lib/system_runtime.sh
-    modules/lib/downloads.sh
-    modules/lib/runtime_inputs.sh
     modules/lib/runtime_reuse.sh
     modules/lib/domain_sources.sh
     modules/config/domain_planner.sh
@@ -280,7 +279,7 @@ cleanup_install_dir() {
 module_dir_has_required_files() {
     local module_dir="$1"
     local rel
-    for rel in "${REQUIRED_MODULES[@]}"; do
+    for rel in "${REQUIRED_BOOTSTRAP_TREE_FILES[@]}"; do
         if [[ ! -f "$module_dir/$rel" ]]; then
             return 1
         fi

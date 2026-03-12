@@ -12,6 +12,7 @@ versioning: [semantic versioning](https://semver.org/spec/v2.0.0.html)
 - interactive `install` now always requires an explicit config count on the normal path; `--num-configs` remains the scripted override
 - raised the manual `global-50` config-count ceiling to `15` while keeping non-interactive auto defaults at `5`
 - made pinned bootstrap by commit the visually first-class quick-start path for real servers and added stronger wrapper hints for floating mutating bootstrap usage
+- kept wrapper bootstrap validation compatible with historical pinned tags used by `migrate-stealth` coverage instead of requiring newer split lib modules
 - decomposed `lib.sh` into focused ui/logging, system-runtime, downloads, and runtime-input modules
 - added sanitized `make vm-proof-pack` / `scripts/lab/generate-vm-proof-pack.sh` evidence bundles for vm-lab lifecycle runs
 - added public issue templates and a pull request template for cleaner bug/support/feature intake

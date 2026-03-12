@@ -12,6 +12,7 @@
 - интерактивный `install` теперь всегда требует явный ввод числа конфигов на обычном пути; `--num-configs` остаётся scripted-override
 - ручной потолок для `global-50` поднят до `15`, а non-interactive auto default оставлен на `5`
 - pinned bootstrap по commit теперь вынесен в visually first-class quick start для реальных серверов, а wrapper печатает более жёсткую подсказку при floating mutating bootstrap
+- wrapper bootstrap верификация сохранена совместимой с историческими pinned tag, которые используются в `migrate-stealth`, и больше не требует новые split lib modules
 - `lib.sh` дополнительно декомпозирован на focused-модули ui/logging, system-runtime, downloads и runtime-inputs
 - добавлен санитизированный `make vm-proof-pack` / `scripts/lab/generate-vm-proof-pack.sh` для evidence bundle из vm-lab lifecycle run
 - добавлены public issue templates и pull request template для более чистого bug/support/feature intake
