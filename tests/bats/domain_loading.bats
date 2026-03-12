@@ -27,6 +27,7 @@
     log() { :; }
     REUSE_EXISTING_CONFIG=false
     XRAY_TIERS_FILE="/nonexistent/path"
+    XRAY_DOMAIN_CATALOG_FILE="/nonexistent/catalog.json"
 
     if setup_domains; then
       echo "unexpected-success"
@@ -38,6 +39,51 @@
     [ "$status" -eq 0 ]
     [ "${lines[0]}" = "handled" ]
     [ "${lines[1]}" = "after" ]
+}
+
+@test "setup_domains uses catalog-first xhttp tier metadata without tiers or sni map files" {
+    run bash -eo pipefail -c '
+    source ./lib.sh
+    source ./config.sh
+    log() { :; }
+    REUSE_EXISTING_CONFIG=false
+    DOMAIN_CHECK=false
+    TRANSPORT=xhttp
+    DOMAIN_TIER=tier_ru
+    NUM_CONFIGS=1
+    XRAY_DOMAIN_CATALOG_FILE="./data/domains/catalog.json"
+    XRAY_TIERS_FILE="/nonexistent/path"
+    XRAY_SNI_POOLS_FILE="/nonexistent/sni_pools.map"
+    setup_domains
+    echo "tier=${DOMAIN_TIER}"
+    echo "catalog=${DOMAIN_TIER_USES_CATALOG}"
+    echo "domains=${#AVAILABLE_DOMAINS[@]}"
+    echo "sni=$(printf "%s" "${SNI_POOLS[yandex.ru]}")"
+  '
+    [ "$status" -eq 0 ]
+    [ "${lines[0]}" = "tier=tier_ru" ]
+    [ "${lines[1]}" = "catalog=true" ]
+    [[ "${lines[2]}" == domains=* ]]
+    [[ "${lines[3]}" == *"api.yandex.ru"* ]]
+}
+
+@test "setup_domains still requires legacy endpoint seeds for grpc migration coverage" {
+    run bash -eo pipefail -c '
+    source ./lib.sh
+    source ./config.sh
+    log() { :; }
+    REUSE_EXISTING_CONFIG=false
+    DOMAIN_CHECK=false
+    TRANSPORT=grpc
+    DOMAIN_TIER=tier_ru
+    NUM_CONFIGS=1
+    XRAY_DOMAIN_CATALOG_FILE="./data/domains/catalog.json"
+    XRAY_TIERS_FILE="/nonexistent/path"
+    XRAY_SNI_POOLS_FILE="/nonexistent/sni_pools.map"
+    XRAY_TRANSPORT_ENDPOINTS_FILE="/nonexistent/transport_endpoints.map"
+    setup_domains
+  '
+    [ "$status" -ne 0 ]
 }
 
 @test "tier_global_ms10 has 50 unique domains and full map coverage" {

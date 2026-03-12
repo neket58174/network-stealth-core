@@ -50,7 +50,7 @@ baseline snapshot: `ubuntu` working tree after maturity hardening wave
 | `modules/lib/cli.sh` | cli parsing, long-option normalization, runtime override resolution | works |
 | `modules/lib/common_utils.sh` | tiny shared utility wrapper layer | works; minimal surface |
 | `modules/lib/contract_gate.sh` | blocks invalid mutating flows on legacy/pre-v7 contracts | works; fresh install and legacy gating behave correctly |
-| `modules/lib/domain_sources.sh` | loads tiers/maps/catalog data | works; contributes to multi-source planner complexity |
+| `modules/lib/domain_sources.sh` | loads tiers/maps/catalog data | works; active xhttp tier planning is now catalog-first and the remaining side maps are fallback/compatibility inputs |
 | `modules/lib/downloads.sh` | allowlisted download, mirror, and https validation helpers | works; extracted from `lib.sh` and now carries the download trust contract clearly |
 | `modules/lib/firewall.sh` | ufw/iptables/nftables mutation helpers | works in tested paths |
 | `modules/lib/globals_contract.sh` | default globals and env contract | works; neutral transport-endpoint contract is primary, grpc alias is compatibility-only |
@@ -70,7 +70,7 @@ baseline snapshot: `ubuntu` working tree after maturity hardening wave
 |---|---|---|
 | `modules/config/add_clients.sh` | `add-clients` flow, append + artifact rebuild | works; rebuild-from-config behavior is correct |
 | `modules/config/client_artifacts.sh` | client artifact rendering, json normalization, rebuild, and self-check readiness | works; meaningfully narrows `config.sh` |
-| `modules/config/domain_planner.sh` | domain selection, provider diversity, path/service payload generation | works; xhttp path generation no longer depends on grpc-named seed files, but planner still spans multiple data inputs |
+| `modules/config/domain_planner.sh` | domain selection, provider diversity, path/service payload generation | works; xhttp path generation no longer depends on grpc-named seed files, and active xhttp tiers are now catalog-first |
 | `modules/config/shared_helpers.sh` | transport/tier labels and compatibility helpers | works; active helpers are transport-neutral, legacy labels remain scoped to grpc/http2 branches |
 | `modules/export/capabilities.sh` | capability matrix and compatibility notes generation | works; export honesty is good |
 | `modules/health/measurements.sh` | field report import/summary/prune helpers | works; measurement surface is present and coherent |
@@ -107,7 +107,7 @@ baseline snapshot: `ubuntu` working tree after maturity hardening wave
 
 | suite | role | current verdict |
 |---|---|---|
-| `tests/bats/*.bats` | unit/integration/validation/health/runtime contract suites | strong coverage: current `bats` total is 438 passing tests inside `make ci-full` |
+| `tests/bats/*.bats` | unit/integration/validation/health/runtime contract suites | strong coverage: current `bats` total is 441 passing tests inside `make ci-full` |
 | `tests/e2e/*.sh` | install/add/update/rollback/migrate contract scenarios | strong coverage for product paths and regressions |
 | `tests/lint.sh` | broader standalone lint harness | passes and currently covers all workflows, including self-hosted |
 
@@ -115,9 +115,9 @@ baseline snapshot: `ubuntu` working tree after maturity hardening wave
 
 | file | role | current verdict |
 |---|---|---|
-| `data/domains/catalog.json` | canonical domain metadata with provider-family awareness | works, but not yet the only planner source |
-| `domains.tiers` | tier domain fallback/source list | still active |
-| `sni_pools.map` | sni fallback/source list | still active |
+| `data/domains/catalog.json` | canonical domain metadata with provider-family awareness | works; active xhttp tier planning is now catalog-first |
+| `domains.tiers` | tier domain fallback/source list | fallback/compatibility only when canonical catalog metadata is unavailable |
+| `sni_pools.map` | sni fallback/source list | fallback/compatibility only when canonical catalog metadata is unavailable |
 | `transport_endpoints.map` | neutral legacy transport endpoint seed source for grpc/http2 compatibility | legacy-only, no longer part of active xhttp naming |
 | `Makefile` | primary local qa contract | works; workflow lint scope is aligned with `tests/lint.sh`, and vm proof-pack is now a first-class target |
 | `Dockerfile` | packaged smoke/runtime image | works; ships neutral transport endpoint seeds, not grpc-named planner inputs |
@@ -139,14 +139,14 @@ current verdict is strict:
 - no confirmed dead runtime functions in the current baseline
 - `scripts/check-dead-functions.sh` passes
 - no obvious orphaned public actions or unreachable e2e flows were found
-- the bigger issue is no longer root-script sprawl, but planner multi-source design cost and intentionally narrow platform scope
+- the bigger issue is no longer root-script sprawl, but a few still-broad focused modules and the intentionally narrow platform scope
 
 that means:
 
 - legacy transport endpoint seeds are **not dead today**
 - they still matter for grpc/http2 compatibility and migration helpers
 - but they are no longer the active xhttp naming contract
-- the remaining structural watch item is planner split across catalog + tiers + side maps
+- the remaining structural watch item is not planner source order anymore; it is the breadth of a few focused modules
 
 ## audit bottom line
 
@@ -156,5 +156,5 @@ that means:
 - public contract consistency: **good**
 - confirmed dead code: **none found in current active path**
 - biggest remaining watch items:
-  1. multi-source planner/data contract across catalog + tiers + side maps
-  2. broad-but-contained files such as `config.sh` and `modules/lib/runtime_inputs.sh`
+  1. broad-but-contained files such as `config.sh`, `modules/lib/runtime_inputs.sh`, and `modules/config/domain_planner.sh`
+  2. intentionally narrow support matrix centered on ubuntu 24.04

@@ -23,6 +23,12 @@ load_domain_list() {
     done < <(split_list "$list")
 }
 
+normalize_catalog_text() {
+    local value="${1:-}"
+    value="${value//$'\r'/}"
+    trim_ws "$value"
+}
+
 load_domains_from_file() {
     local file="$1"
     local -a result=()
@@ -99,7 +105,12 @@ load_tier_domains_from_catalog() {
     [[ -n "$file" && -f "$file" ]] || return 0
     command -v jq > /dev/null 2>&1 || return 0
 
-    jq -r --arg tier "$tier" '.tiers[$tier][]?.domain // empty' "$file" 2> /dev/null
+    local domain
+    while IFS= read -r domain; do
+        domain=$(normalize_catalog_text "$domain")
+        [[ -n "$domain" ]] || continue
+        printf '%s\n' "$domain"
+    done < <(jq -r --arg tier "$tier" '.tiers[$tier][]?.domain // empty' "$file" 2> /dev/null)
 }
 
 load_priority_domains_from_catalog() {
@@ -107,7 +118,12 @@ load_priority_domains_from_catalog() {
     [[ -n "$file" && -f "$file" ]] || return 0
     command -v jq > /dev/null 2>&1 || return 0
 
-    jq -r '.tiers.priority[]? // empty' "$file" 2> /dev/null
+    local domain
+    while IFS= read -r domain; do
+        domain=$(normalize_catalog_text "$domain")
+        [[ -n "$domain" ]] || continue
+        printf '%s\n' "$domain"
+    done < <(jq -r '.tiers.priority[]? // empty' "$file" 2> /dev/null)
 }
 
 populate_domain_metadata_from_catalog() {
@@ -128,18 +144,24 @@ populate_domain_metadata_from_catalog() {
     while IFS= read -r entry_json; do
         [[ -n "$entry_json" ]] || continue
         domain=$(jq -r '.domain // empty' <<< "$entry_json" 2> /dev/null || true)
+        domain=$(normalize_catalog_text "$domain")
         [[ -n "$domain" ]] || continue
 
         provider_family=$(jq -r '.provider_family // empty' <<< "$entry_json" 2> /dev/null || true)
+        provider_family=$(normalize_catalog_text "$provider_family")
         if [[ -z "$provider_family" || "$provider_family" == "null" ]]; then
             provider_family=$(derive_provider_family_from_domain "$domain")
         fi
 
         region=$(jq -r '.region // "ru"' <<< "$entry_json" 2> /dev/null || true)
+        region=$(normalize_catalog_text "$region")
         priority=$(jq -r '.priority // 0' <<< "$entry_json" 2> /dev/null || echo 0)
         risk=$(jq -r '.risk // "normal"' <<< "$entry_json" 2> /dev/null || echo "normal")
+        risk=$(normalize_catalog_text "$risk")
         port_csv=$(jq -r '(.ports // [443,8443]) | map(tostring) | join(",")' <<< "$entry_json" 2> /dev/null || echo "443,8443")
+        port_csv=$(normalize_catalog_text "$port_csv")
         sni_pool_csv=$(jq -r '(.sni_pool // []) | join(" ")' <<< "$entry_json" 2> /dev/null || true)
+        sni_pool_csv=$(normalize_catalog_text "$sni_pool_csv")
 
         DOMAIN_PROVIDER_FAMILIES["$domain"]="$provider_family"
         DOMAIN_REGIONS["$domain"]="$region"

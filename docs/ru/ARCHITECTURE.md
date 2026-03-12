@@ -45,6 +45,10 @@ managed client variants:
 2. canonical metadata в `data/domains/catalog.json`
 3. runtime health и история измерений
 
+для активного `xhttp`-planner path каталог теперь является основным источником metadata для canonical tier.
+`domains.tiers` и `sni_pools.map` остаются fallback/compatibility-источниками, а `transport_endpoints.map`
+используется только для legacy migration coverage.
+
 `catalog.json` даёт planner’у структурированные поля:
 
 - `tier`

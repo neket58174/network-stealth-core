@@ -26,14 +26,14 @@ review depth meanings:
 | `.github/workflows/release.yml` | 307 | workflow | tagged release workflow | contract consistency | reviewed | — |
 | `.github/workflows/self-hosted-smoke.yml` | 77 | workflow | self-hosted smoke workflow | contract consistency | reviewed | — |
 | `.markdownlint.json` | 11 | repo meta | markdown lint policy | inventory-only | reviewed | — |
-| `AUDIT_COVERAGE_MATRIX.md` | 148 | doc | audit inventory and review coverage matrix | contract consistency | reviewed | — |
-| `AUDIT_FINDINGS_BACKLOG.md` | 39 | doc | prioritized audit backlog | contract consistency | reviewed | — |
-| `AUDIT_REPORT_FULL.md` | 198 | doc | full audit narrative and findings | contract consistency | reviewed | — |
-| `AUDIT_RUNTIME_MAP.md` | 150 | doc | per-script runtime responsibility map | contract consistency | reviewed | — |
+| `AUDIT_COVERAGE_MATRIX.md` | 158 | doc | audit inventory and review coverage matrix | contract consistency | reviewed | — |
+| `AUDIT_FINDINGS_BACKLOG.md` | 38 | doc | prioritized audit backlog | contract consistency | reviewed | — |
+| `AUDIT_REPORT_FULL.md` | 217 | doc | full audit narrative and findings | contract consistency | reviewed | — |
+| `AUDIT_RUNTIME_MAP.md` | 160 | doc | per-script runtime responsibility map | contract consistency | reviewed | — |
 | `config.sh` | 808 | runtime entrypoint | config builder and config/runtime apply helpers | manual semantic | reviewed | client artifact logic moved into focused module; remaining complexity is now a watch item, not an active audit finding |
-| `data/domains/catalog.json` | 4618 | data contract | canonical domain metadata catalog | manual semantic | reviewed | planner still combines catalog with side maps and tier files |
+| `data/domains/catalog.json` | 4618 | data contract | canonical domain metadata catalog | manual semantic | reviewed | active xhttp planner tiers now read catalog-first; side maps remain fallback/legacy-only |
 | `Dockerfile` | 50 | build/tooling | container packaging and smoke runtime image | manual semantic | reviewed | runtime bundle now ships neutral transport endpoint seed file |
-| `docs/en/ARCHITECTURE.md` | 152 | doc | english architecture doc | contract consistency | reviewed | — |
+| `docs/en/ARCHITECTURE.md` | 156 | doc | english architecture doc | contract consistency | reviewed | — |
 | `docs/en/CHANGELOG.md` | 135 | doc | english changelog doc | contract consistency | reviewed | — |
 | `docs/en/COMMUNITY.md` | 56 | doc | english community doc | contract consistency | reviewed | — |
 | `docs/en/FAQ.md` | 109 | doc | english faq doc | contract consistency | reviewed | — |
@@ -43,7 +43,7 @@ review depth meanings:
 | `docs/en/OPERATIONS.md` | 250 | doc | english operations doc | contract consistency | reviewed | — |
 | `docs/en/ROADMAP.md` | 35 | doc | english roadmap doc | contract consistency | reviewed | — |
 | `docs/en/TROUBLESHOOTING.md` | 126 | doc | english troubleshooting doc | contract consistency | reviewed | — |
-| `docs/ru/ARCHITECTURE.md` | 152 | doc | russian architecture doc | contract consistency | reviewed | — |
+| `docs/ru/ARCHITECTURE.md` | 156 | doc | russian architecture doc | contract consistency | reviewed | — |
 | `docs/ru/CHANGELOG.md` | 122 | doc | russian changelog doc | contract consistency | reviewed | — |
 | `docs/ru/COMMUNITY.md` | 56 | doc | russian community doc | contract consistency | reviewed | — |
 | `docs/ru/FAQ.md` | 109 | doc | russian faq doc | contract consistency | reviewed | — |
@@ -53,7 +53,7 @@ review depth meanings:
 | `docs/ru/OPERATIONS.md` | 250 | doc | russian operations doc | contract consistency | reviewed | — |
 | `docs/ru/ROADMAP.md` | 35 | doc | russian roadmap doc | contract consistency | reviewed | — |
 | `docs/ru/TROUBLESHOOTING.md` | 126 | doc | russian troubleshooting doc | contract consistency | reviewed | — |
-| `domains.tiers` | 237 | data contract | legacy tier domain source | manual semantic | reviewed | planner still uses multi-source domain contract alongside catalog |
+| `domains.tiers` | 237 | data contract | legacy tier domain fallback source | manual semantic | reviewed | active xhttp planner tiers no longer require this file when catalog metadata is present |
 | `export.sh` | 328 | runtime entrypoint | client export entry helpers | manual semantic | reviewed | — |
 | `transport_endpoints.map` | 202 | data contract | neutral legacy transport endpoint seed source for grpc/http2 compatibility | manual semantic | reviewed | active xhttp path no longer references grpc-named seed files |
 | `health.sh` | 719 | runtime entrypoint | health diagnostics and monitor entry helpers | manual semantic | reviewed | — |
@@ -63,7 +63,7 @@ review depth meanings:
 | `Makefile` | 78 | build/tooling | local qa and audit entrypoints | manual semantic | reviewed | — |
 | `modules/config/add_clients.sh` | 686 | runtime module | add-clients runtime flow | manual semantic | reviewed | — |
 | `modules/config/client_artifacts.sh` | 1288 | runtime module | client artifact rendering, json normalization, rebuild, and self-check readiness helpers | manual semantic | reviewed | extracted from `config.sh` to narrow root entrypoint scope |
-| `modules/config/domain_planner.sh` | 933 | runtime module | domain planning and profile generation helpers | manual semantic | reviewed | legacy transport seeds renamed; planner still has multi-source complexity |
+| `modules/config/domain_planner.sh` | 961 | runtime module | domain planning and profile generation helpers | manual semantic | reviewed | active xhttp tier planning is now catalog-first; side maps remain scoped to fallback and legacy coverage |
 | `modules/service/runtime.sh` | 485 | runtime module | systemd unit creation, firewall apply, service startup, and runtime update helpers | manual semantic | reviewed | extracted from `service.sh` to narrow service runtime orchestration scope |
 | `modules/service/uninstall.sh` | 461 | runtime module | uninstall file removal, account cleanup, and destructive guard helpers | manual semantic | reviewed | extracted from `service.sh` to narrow root entrypoint scope |
 | `modules/config/shared_helpers.sh` | 162 | runtime module | transport/tier/helper formatting and compatibility helpers | manual semantic | reviewed | transport compatibility helpers are now transport-neutral where active |
@@ -77,7 +77,7 @@ review depth meanings:
 | `modules/lib/cli.sh` | 533 | runtime module | cli parsing and runtime override resolution | manual semantic | reviewed | — |
 | `modules/lib/common_utils.sh` | 18 | runtime module | shared low-level helper primitives | manual semantic | reviewed | — |
 | `modules/lib/contract_gate.sh` | 91 | runtime module | legacy/pre-v7 mutating gate logic | manual semantic | reviewed | — |
-| `modules/lib/domain_sources.sh` | 348 | runtime module | domain/map loading helpers | manual semantic | reviewed | — |
+| `modules/lib/domain_sources.sh` | 370 | runtime module | domain/map loading helpers | manual semantic | reviewed | normalizes catalog values and now supports catalog-first active tier loading cleanly on windows line endings too |
 | `modules/lib/firewall.sh` | 203 | runtime module | firewall mutation helpers | manual semantic | reviewed | — |
 | `modules/lib/globals_contract.sh` | 218 | runtime module | global variable defaults and contracts | manual semantic | reviewed | transport endpoint seed contract now has neutral primary naming |
 | `modules/lib/lifecycle.sh` | 216 | runtime module | backup/rollback/cleanup helpers | manual semantic | reviewed | — |
@@ -111,9 +111,9 @@ review depth meanings:
 | `scripts/windows/detect-bash.ps1` | 112 | windows helper | windows bash discovery helper | manual semantic | reviewed | — |
 | `scripts/windows/run-validation.ps1` | 164 | windows helper | windows validation orchestrator | manual semantic | reviewed | — |
 | `service.sh` | 484 | runtime entrypoint | status/logs/check-update flows plus service runtime module composition | manual semantic | reviewed | service runtime and uninstall behavior now live in focused modules |
-| `sni_pools.map` | 202 | data contract | legacy sni pool source | manual semantic | reviewed | planner still uses multi-source domain contract alongside catalog |
+| `sni_pools.map` | 202 | data contract | sni pool fallback source | manual semantic | reviewed | active xhttp planner tiers no longer require this file when catalog metadata is present |
 | `tests/bats/config_generation.bats` | 106 | bats test | bats suite: config_generation | manual semantic | reviewed | — |
-| `tests/bats/domain_loading.bats` | 350 | bats test | bats suite: domain_loading | manual semantic | reviewed | — |
+| `tests/bats/domain_loading.bats` | 396 | bats test | bats suite: domain_loading | manual semantic | reviewed | covers catalog-first active tier loading and legacy endpoint-seed fallback behavior |
 | `tests/bats/download.bats` | 172 | bats test | bats suite: download | manual semantic | reviewed | — |
 | `tests/bats/error_handling.bats` | 213 | bats test | bats suite: error_handling | manual semantic | reviewed | — |
 | `tests/bats/health.bats` | 598 | bats test | bats suite: health | manual semantic | reviewed | — |
@@ -155,5 +155,4 @@ review depth meanings:
 
 ## current audit-level watch items referenced by matrix
 
-- `w-001` — planner/data inputs still span catalog + tiers + side maps.
 - `w-002` — `config.sh`, `modules/lib/runtime_inputs.sh`, and `modules/config/domain_planner.sh` remain broad enough to watch as future growth hotspots.

@@ -108,7 +108,7 @@ sudo xray-reality.sh install --advanced
 managed install держит синхронными такие файлы:
 
 - `/etc/xray-reality/policy.json` — source of truth для strongest-direct policy
-- `data/domains/catalog.json` — canonical metadata доменов для planner
+- `data/domains/catalog.json` — canonical metadata planner’а для активных xhttp tier; `domains.tiers` и `sni_pools.map` остаются fallback/compatibility-источниками
 - `/etc/xray/private/keys/clients.txt` — человекочитаемое summary по конфигам и variant’ам
 - `/etc/xray/private/keys/clients-links.txt` — быстрые vless-ссылки: сначала основная, затем запасная
 - `/etc/xray/private/keys/clients.json` — клиентский инвентарь schema v3

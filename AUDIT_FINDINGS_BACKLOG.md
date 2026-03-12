@@ -11,23 +11,6 @@ there is no confirmed open `p0`–`p3` runtime or release-blocking finding in th
 
 these are real future maintenance costs, but they are **not** proven defects in the current baseline:
 
-### w-001 — planner data contract is still multi-source
-
-- type: maintainability / design cost
-- files:
-  - `data/domains/catalog.json`
-  - `domains.tiers`
-  - `sni_pools.map`
-  - `transport_endpoints.map`
-  - `modules/lib/domain_sources.sh`
-  - `modules/config/domain_planner.sh`
-- problem:
-  - active planning still combines the canonical catalog with legacy side maps and tier sources.
-  - this is manageable today, but it keeps planner reasoning and future cleanup more expensive than necessary.
-- recommended direction:
-  - keep shrinking active planner reads toward the catalog-first contract.
-  - preserve side maps only where migration or explicit compatibility still needs them.
-
 ### w-002 — a few focused modules are still broad enough to deserve future decomposition if scope grows
 
 - type: maintainability
@@ -48,6 +31,7 @@ these older items are no longer open:
 - `f-001` — workflow lint coverage mismatch between `make lint` and `tests/lint.sh`
 - `f-002` — active xhttp planner dependency on grpc-named seed contracts
 - `f-003` — oversized root entrypoint sprawl; this wave cut `lib.sh` below 1000 lines and moved orchestration behavior into focused modules
+- `w-001` — active planner reads are now catalog-first for canonical xhttp tiers; `domains.tiers`/`sni_pools.map` remain fallback/compatibility and `transport_endpoints.map` stays legacy-only
 - pinned bootstrap being visually secondary to floating bootstrap in user docs
 - missing public issue/pr intake templates
 - missing reusable vm-lab proof-pack artifact flow

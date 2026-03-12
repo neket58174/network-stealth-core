@@ -45,6 +45,10 @@ planner decisions come from three layers:
 2. canonical metadata in `data/domains/catalog.json`
 3. runtime health and measurement history
 
+for active `xhttp` planning, the catalog is now the primary metadata source for canonical tiers.
+`domains.tiers` and `sni_pools.map` are fallback/compatibility inputs, and `transport_endpoints.map`
+stays legacy-only for migration coverage.
+
 `catalog.json` gives the planner structured metadata such as:
 
 - `tier`

@@ -13,6 +13,7 @@
 - ручной потолок для `global-50` поднят до `15`, а non-interactive auto default оставлен на `5`
 - pinned bootstrap по commit теперь вынесен в visually first-class quick start для реальных серверов, а wrapper печатает более жёсткую подсказку при floating mutating bootstrap
 - wrapper bootstrap верификация сохранена совместимой с историческими pinned tag, которые используются в `migrate-stealth`, и больше не требует новые split lib modules
+- активные canonical xhttp tier теперь читают metadata из catalog в первую очередь, а `domains.tiers`/`sni_pools.map` стали fallback/compatibility-источниками; значения catalog при этом нормально нормализуются и на windows line endings
 - `lib.sh` дополнительно декомпозирован на focused-модули ui/logging, system-runtime, downloads и runtime-inputs
 - добавлен санитизированный `make vm-proof-pack` / `scripts/lab/generate-vm-proof-pack.sh` для evidence bundle из vm-lab lifecycle run
 - добавлены public issue templates и pull request template для более чистого bug/support/feature intake

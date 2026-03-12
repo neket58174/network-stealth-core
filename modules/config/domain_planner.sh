@@ -21,10 +21,6 @@ setup_domains() {
     fi
 
     local tiers_file="$XRAY_TIERS_FILE"
-    if [[ -z "$tiers_file" || ! -f "$tiers_file" ]]; then
-        log ERROR "Файл tiers не найден: $tiers_file"
-        return 1
-    fi
 
     local selected_tier
     selected_tier="${DOMAIN_TIER:-tier_ru}"
@@ -39,13 +35,20 @@ setup_domains() {
     declare -gA DOMAIN_RISK_MAP=()
     declare -gA DOMAIN_PORT_HINTS=()
     declare -gA DOMAIN_SNI_POOL_OVERRIDES=()
+    declare -g DOMAIN_TIER_USES_CATALOG=false
 
     local -a tier_domains=()
+    local used_catalog_tier=false
     if [[ "$selected_tier" != "custom" ]]; then
         if catalog_supports_tier "${XRAY_DOMAIN_CATALOG_FILE:-}" "$selected_tier"; then
             mapfile -t tier_domains < <(load_tier_domains_from_catalog "$XRAY_DOMAIN_CATALOG_FILE" "$selected_tier")
             populate_domain_metadata_from_catalog "$XRAY_DOMAIN_CATALOG_FILE" "$selected_tier" || true
+            used_catalog_tier=true
         else
+            if [[ -z "$tiers_file" || ! -f "$tiers_file" ]]; then
+                log ERROR "Файл tiers не найден: $tiers_file"
+                return 1
+            fi
             mapfile -t tier_domains < <(load_tier_domains_from_file "$tiers_file" "$selected_tier")
         fi
         if [[ ${#tier_domains[@]} -eq 0 && "$selected_tier" != "tier_ru" ]]; then
@@ -55,8 +58,14 @@ setup_domains() {
             if catalog_supports_tier "${XRAY_DOMAIN_CATALOG_FILE:-}" "tier_ru"; then
                 mapfile -t tier_domains < <(load_tier_domains_from_catalog "$XRAY_DOMAIN_CATALOG_FILE" "tier_ru")
                 populate_domain_metadata_from_catalog "$XRAY_DOMAIN_CATALOG_FILE" "tier_ru" || true
+                used_catalog_tier=true
             else
+                if [[ -z "$tiers_file" || ! -f "$tiers_file" ]]; then
+                    log ERROR "Файл tiers не найден: $tiers_file"
+                    return 1
+                fi
                 mapfile -t tier_domains < <(load_tier_domains_from_file "$tiers_file" "tier_ru")
+                used_catalog_tier=false
             fi
         fi
     fi
@@ -71,8 +80,10 @@ setup_domains() {
     if [[ ${#custom_domains[@]} -gt 0 ]]; then
         AVAILABLE_DOMAINS=("${custom_domains[@]}")
         DOMAIN_TIER="custom"
+        DOMAIN_TIER_USES_CATALOG=false
     else
         AVAILABLE_DOMAINS=("${tier_domains[@]}")
+        DOMAIN_TIER_USES_CATALOG="$used_catalog_tier"
     fi
     seed_domain_metadata_from_list "${AVAILABLE_DOMAINS[@]}"
 
@@ -91,9 +102,9 @@ setup_domains() {
 
     declare -gA SNI_POOLS=()
     declare -gA TRANSPORT_ENDPOINT_SEEDS=()
-    if [[ -n "$XRAY_SNI_POOLS_FILE" && -f "$XRAY_SNI_POOLS_FILE" ]]; then
+    if [[ "$DOMAIN_TIER_USES_CATALOG" != "true" && -n "$XRAY_SNI_POOLS_FILE" && -f "$XRAY_SNI_POOLS_FILE" ]]; then
         load_map_file "$XRAY_SNI_POOLS_FILE" SNI_POOLS || return 1
-    else
+    elif [[ "$DOMAIN_TIER_USES_CATALOG" != "true" ]]; then
         log WARN "SNI pools file не найден: $XRAY_SNI_POOLS_FILE"
     fi
     local sni_domain
@@ -240,14 +251,24 @@ validate_domain_map_coverage() {
     fi
 
     if [[ ${#missing_sni[@]} -gt 0 ]]; then
-        log WARN "Домены без SNI pool: ${missing_sni[*]}"
+        if [[ "${DOMAIN_TIER_USES_CATALOG:-false}" == "true" ]]; then
+            log WARN "Домены без SNI pool в catalog/fallback sources: ${missing_sni[*]}"
+        else
+            log WARN "Домены без SNI pool: ${missing_sni[*]}"
+        fi
     fi
     if [[ ${#missing_legacy_endpoints[@]} -gt 0 ]]; then
         log WARN "Домены без legacy transport endpoint seeds: ${missing_legacy_endpoints[*]}"
     fi
 
     if [[ "$strict" == "true" ]]; then
-        log ERROR "Неполное покрытие map-файлов для ${DOMAIN_TIER}. Исправьте sni_pools.map и transport_endpoints.map только для legacy migration coverage."
+        if [[ ${#missing_legacy_endpoints[@]} -gt 0 ]]; then
+            log ERROR "Неполное покрытие legacy migration metadata для ${DOMAIN_TIER}. Исправьте transport_endpoints.map для legacy transport coverage."
+        elif [[ "${DOMAIN_TIER_USES_CATALOG:-false}" == "true" ]]; then
+            log ERROR "Неполное покрытие planner metadata для ${DOMAIN_TIER}. Исправьте catalog.json (и fallback sources только при необходимости compatibility)."
+        else
+            log ERROR "Неполное покрытие planner sources для ${DOMAIN_TIER}. Исправьте sni_pools.map и transport_endpoints.map только для legacy migration coverage."
+        fi
         return 1
     fi
 }
@@ -258,13 +279,20 @@ load_priority_domains() {
         mapfile -t priority < <(load_priority_domains_from_catalog "$XRAY_DOMAIN_CATALOG_FILE")
     fi
     if [[ ${#priority[@]} -eq 0 ]] && [[ -n "${XRAY_DOMAIN_CATALOG_FILE:-}" && -f "${XRAY_DOMAIN_CATALOG_FILE:-}" ]] && command -v jq > /dev/null 2>&1; then
-        mapfile -t priority < <(jq -r '
-            [.tiers.tier_ru[]?, .tiers.tier_global_ms10[]?]
-            | flatten
-            | map(select((.priority // 0) > 0))
-            | sort_by(-(.priority // 0), .domain)
-            | .[].domain
-        ' "$XRAY_DOMAIN_CATALOG_FILE" 2> /dev/null || true)
+        mapfile -t priority < <(
+            jq -r '
+                [.tiers.tier_ru[]?, .tiers.tier_global_ms10[]?]
+                | flatten
+                | map(select((.priority // 0) > 0))
+                | sort_by(-(.priority // 0), .domain)
+                | .[].domain
+            ' "$XRAY_DOMAIN_CATALOG_FILE" 2> /dev/null |
+                while IFS= read -r domain; do
+                    domain=$(normalize_catalog_text "$domain")
+                    [[ -n "$domain" ]] || continue
+                    printf '%s\n' "$domain"
+                done
+        )
     fi
     if [[ -n "$XRAY_TIERS_FILE" && -f "$XRAY_TIERS_FILE" ]]; then
         if [[ ${#priority[@]} -eq 0 ]]; then

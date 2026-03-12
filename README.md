@@ -108,7 +108,7 @@ sudo xray-reality.sh install --advanced
 managed installs now keep these files in sync:
 
 - `/etc/xray-reality/policy.json` — strongest-direct policy source of truth
-- `data/domains/catalog.json` — canonical domain metadata used by the planner
+- `data/domains/catalog.json` — canonical planner metadata for active xhttp tiers; `domains.tiers` and `sni_pools.map` remain fallback/compatibility inputs
 - `/etc/xray/private/keys/clients.txt` — human-readable summary of configs and variants
 - `/etc/xray/private/keys/clients-links.txt` — quick-copy vless links with a primary and fallback order
 - `/etc/xray/private/keys/clients.json` — schema v3 client inventory

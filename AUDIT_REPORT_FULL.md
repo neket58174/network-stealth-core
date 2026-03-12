@@ -31,7 +31,7 @@ companion docs for this pass:
 ### local verification
 
 - `make ci-full` — **pass**
-  - bats: **438/438** pass
+  - bats: **441/441** pass
   - release consistency: pass (`7.1.0`)
   - dead-function check: pass
   - shell complexity check: pass
@@ -87,7 +87,7 @@ on `185.218.204.206`:
 
 ### what is not broken but still costly
 
-- planner/runtime data is still split across catalog + tiers + side maps
+- planner still has fallback/compatibility side inputs, but active xhttp tier planning is now catalog-first
 - `config.sh` and `modules/lib/runtime_inputs.sh` still hold broad contracts and will remain the next likely maintenance hotspots if the product grows further
 - support matrix is still intentionally narrow: ubuntu 24.04 is the supported and ci-validated platform
 
@@ -135,7 +135,7 @@ status: **good with bounded complexity**
 - client artifact rendering/rebuild logic is split out of `config.sh` into a focused module
 - install success/runtime-mode, selection, and xray/minisign bootstrap logic are split out of `install.sh` into focused modules
 - service runtime and uninstall behavior are split out of `service.sh` into focused modules
-- planner data still spans catalog + tier + side-map inputs, which is now a watch item rather than an active defect
+- planner keeps fallback/compatibility side inputs, but active xhttp tier planning is now catalog-first rather than hard-wired to tiers and sni maps
 
 ### service/firewall/monitoring
 
@@ -185,7 +185,7 @@ the older open maintainability item around oversized root entrypoints is conside
 
 remaining concerns are now watch items, not active defects:
 
-- planner/data contract is still multi-source
+- planner still keeps fallback/compatibility side inputs even though active xhttp tier planning is now catalog-first
 - `config.sh` and `modules/lib/runtime_inputs.sh` are still broad enough to deserve future refactors if scope expands
 - ubuntu 24.04 remains the intentionally narrow supported matrix
 
@@ -198,6 +198,7 @@ in addition, this refresh closes the older follow-up items by evidence rather th
 - `f-001` — workflow lint coverage now matches between `make lint` and `tests/lint.sh`
 - `f-002` — active planner seed naming is neutralized through `transport_endpoints.map`; grpc/http2 handling is explicit legacy-only coverage
 - `f-003` — oversized root orchestration scripts were cut down enough that the issue is no longer an active backlog item for this wave
+- `w-001` — active xhttp tier planning is now catalog-first; `domains.tiers`/`sni_pools.map` were reduced to fallback/compatibility inputs and `transport_endpoints.map` stays legacy-only
 - pinned bootstrap is now first-class in user-facing docs
 - vm proof-pack exists as a reproducible public evidence artifact
 - public issue/pr intake templates exist
