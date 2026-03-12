@@ -21,8 +21,11 @@ XRAY_CONFIG="${XRAY_CONFIG:-/etc/xray/config.json}"
 XRAY_KEYS_DIR="${XRAY_KEYS_DIR:-/etc/xray/private/keys}"
 KEYS_FILE="${XRAY_KEYS_DIR}/keys.txt"
 CLIENTS_FILE="${XRAY_KEYS_DIR}/clients.txt"
+CLIENTS_LINKS_FILE="${XRAY_KEYS_DIR}/clients-links.txt"
 CLIENTS_JSON="${XRAY_KEYS_DIR}/clients.json"
 STATUS_FILE="/tmp/xru-nightly-status.txt"
+E2E_PROOF_DIR="${E2E_PROOF_DIR:-}"
+declare -a PROOF_STEPS=()
 
 require_vm_systemd() {
     local pid1
@@ -66,6 +69,132 @@ hash_file() {
     hash_as_root "$file"
 }
 
+proof_enabled() {
+    [[ -n "${E2E_PROOF_DIR:-}" ]]
+}
+
+proof_prepare_dir() {
+    proof_enabled || return 0
+    mkdir -p "$E2E_PROOF_DIR"
+}
+
+proof_record_step() {
+    proof_enabled || return 0
+    PROOF_STEPS+=("${1}:ok")
+}
+
+proof_capture_optional_file() {
+    local src="$1"
+    local dest="$2"
+    proof_enabled || return 0
+    if run_root test -f "$src"; then
+        run_root cat "$src" > "$dest"
+    fi
+}
+
+proof_capture_runtime_evidence() {
+    proof_enabled || return 0
+
+    mkdir -p "$E2E_PROOF_DIR"
+    run_root bash "$SCRIPT_PATH" status --verbose > "${E2E_PROOF_DIR}/status-verbose.txt"
+    run_root bash "$SCRIPT_PATH" diagnose > "${E2E_PROOF_DIR}/diagnose.txt" || true
+
+    proof_capture_optional_file "/var/lib/xray/self-check.json" "${E2E_PROOF_DIR}/self-check.json"
+    proof_capture_optional_file "/var/lib/xray/measurements/latest-summary.json" "${E2E_PROOF_DIR}/measurement-summary.json"
+    proof_capture_optional_file "${XRAY_KEYS_DIR}/export/capabilities.json" "${E2E_PROOF_DIR}/capabilities.json"
+    proof_capture_optional_file "${XRAY_KEYS_DIR}/export/canary/manifest.json" "${E2E_PROOF_DIR}/canary-manifest.json"
+
+    local inventory_tsv="${E2E_PROOF_DIR}/artifact-inventory.tsv"
+    : > "$inventory_tsv"
+
+    local path mode size sha sensitive
+    for path in \
+        "$XRAY_CONFIG" \
+        "/etc/xray-reality/config.env" \
+        "/etc/xray-reality/policy.json" \
+        "$KEYS_FILE" \
+        "$CLIENTS_FILE" \
+        "$CLIENTS_LINKS_FILE" \
+        "$CLIENTS_JSON" \
+        "${XRAY_KEYS_DIR}/export/capabilities.json" \
+        "${XRAY_KEYS_DIR}/export/raw-xray-index.json" \
+        "${XRAY_KEYS_DIR}/export/canary/manifest.json" \
+        "/var/lib/xray/self-check.json" \
+        "/var/lib/xray/measurements/latest-summary.json"; do
+        if ! run_root test -f "$path"; then
+            continue
+        fi
+        mode="$(run_root stat -c '%a' "$path")"
+        size="$(run_root stat -c '%s' "$path")"
+        sha="$(run_root sha256sum "$path" | awk '{print $1}')"
+        sensitive="false"
+        case "$path" in
+            "$XRAY_CONFIG" | "/etc/xray-reality/config.env" | "/etc/xray-reality/policy.json" | "$KEYS_FILE" | "$CLIENTS_FILE" | "$CLIENTS_LINKS_FILE" | "$CLIENTS_JSON" | "${XRAY_KEYS_DIR}/export/raw-xray-index.json")
+                sensitive="true"
+                ;;
+            *)
+                sensitive="false"
+                ;;
+        esac
+        printf '%s\t%s\t%s\t%s\t%s\n' "$path" "$mode" "$size" "$sha" "$sensitive" >> "$inventory_tsv"
+    done
+
+    python3 - "$inventory_tsv" "${E2E_PROOF_DIR}/artifact-inventory.json" << 'PY'
+import json
+import sys
+from pathlib import Path
+
+src = Path(sys.argv[1])
+dst = Path(sys.argv[2])
+items = []
+if src.exists():
+    for line in src.read_text(encoding="utf-8").splitlines():
+        path, mode, size, sha256, sensitive = line.split("\t")
+        items.append(
+            {
+                "path": path,
+                "mode": mode,
+                "size_bytes": int(size),
+                "sha256": sha256,
+                "contains_sensitive_material": sensitive == "true",
+            }
+        )
+dst.write_text(json.dumps(items, indent=2) + "\n", encoding="utf-8")
+PY
+}
+
+proof_write_lifecycle_manifest() {
+    proof_enabled || return 0
+
+    local steps_file="${E2E_PROOF_DIR}/lifecycle.json"
+    python3 - "$steps_file" "$INSTALL_VERSION" "$UPDATE_VERSION" "$version_before" "$version_after" "$backup_dir" "${PROOF_STEPS[@]}" << 'PY'
+import json
+import sys
+from pathlib import Path
+
+dst = Path(sys.argv[1])
+install_version = sys.argv[2] or None
+update_version = sys.argv[3] or None
+version_before = sys.argv[4] or None
+version_after = sys.argv[5] or None
+backup_dir = sys.argv[6] or None
+steps = []
+for item in sys.argv[7:]:
+    name, status = item.split(":", 1)
+    steps.append({"step": name, "status": status})
+
+payload = {
+    "install_version": install_version,
+    "update_version": update_version,
+    "version_before_update": version_before,
+    "version_after_update": version_after,
+    "rollback_source": backup_dir,
+    "steps": steps,
+}
+dst.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+PY
+}
+
 latest_backup_dir() {
     run_root find /var/backups/xray -mindepth 1 -maxdepth 1 -type d -printf '%T@ %p\n' |
         sort -nr |
@@ -100,6 +229,7 @@ trap cleanup_on_exit EXIT
 
 echo "==> pre-clean"
 cleanup_state
+proof_prepare_dir
 
 echo "==> verify vm systemd runtime"
 if ! require_vm_systemd; then
@@ -134,6 +264,7 @@ fi
 run_root env \
     "${install_env[@]}" \
     bash "$SCRIPT_PATH" install
+proof_record_step install
 
 echo "==> add-clients"
 run_root env \
@@ -141,6 +272,7 @@ run_root env \
     ASSUME_YES=true \
     ALLOW_INSECURE_SHA256="$E2E_ALLOW_INSECURE_SHA256" \
     bash "$SCRIPT_PATH" add-clients "$ADD_CONFIGS"
+proof_record_step add-clients
 
 assert_service_active xray
 
@@ -150,6 +282,7 @@ run_root env \
     ASSUME_YES=true \
     ALLOW_INSECURE_SHA256="$E2E_ALLOW_INSECURE_SHA256" \
     bash "$SCRIPT_PATH" repair
+proof_record_step repair
 
 assert_service_active xray
 
@@ -182,6 +315,7 @@ fi
 run_root env \
     "${update_env[@]}" \
     bash "$SCRIPT_PATH" update
+proof_record_step update
 
 assert_service_active xray
 version_after="$(xray_version)"
@@ -223,6 +357,7 @@ run_root env \
     ASSUME_YES=true \
     bash "$SCRIPT_PATH" rollback "$backup_dir"
 assert_service_active xray
+proof_record_step rollback
 
 echo "==> verify rollback restored original artifacts"
 for file in "$XRAY_CONFIG" "$KEYS_FILE" "$CLIENTS_FILE" "$CLIENTS_JSON"; do
@@ -238,6 +373,8 @@ done
 echo "==> status"
 run_root bash "$SCRIPT_PATH" status --verbose > "$STATUS_FILE"
 grep -q "Inbounds:" "$STATUS_FILE"
+proof_record_step status
+proof_capture_runtime_evidence
 
 inbound_count="$(run_root jq '.inbounds | length' "$XRAY_CONFIG")"
 expected_min=$((INITIAL_CONFIGS + ADD_CONFIGS))
@@ -254,6 +391,7 @@ fi
 
 echo "==> uninstall"
 run_root bash "$SCRIPT_PATH" uninstall --yes --non-interactive
+proof_record_step uninstall
 
 echo "==> post-checks"
 assert_path_absent /etc/xray
@@ -266,6 +404,8 @@ for port in "${ports_before_uninstall[@]}"; do
 done
 
 assert_user_absent xray
+proof_record_step post-checks
+proof_write_lifecycle_manifest
 
 trap - EXIT
 echo "e2e nightly smoke lifecycle check passed."

@@ -33,7 +33,7 @@ use only the official repository:
 
 ## quick start
 
-### recommended install
+### pinned bootstrap by commit (recommended on real servers)
 
 default `install` is opinionated and minimal.
 it selects the strongest-direct contract automatically:
@@ -44,17 +44,21 @@ it selects the strongest-direct contract automatically:
 
 ```bash
 curl -fL https://raw.githubusercontent.com/neket371/network-stealth-core/ubuntu/xray-reality.sh -o /tmp/xray-reality.sh
+sudo XRAY_REPO_COMMIT=<full_commit_sha> bash /tmp/xray-reality.sh install
+```
+
+for production-like installs, pin the bootstrap wrapper to an exact repo commit.
+
+### convenience floating bootstrap
+
+the floating branch bootstrap stays available for convenience, but it is not the visually preferred production path:
+
+```bash
+curl -fL https://raw.githubusercontent.com/neket371/network-stealth-core/ubuntu/xray-reality.sh -o /tmp/xray-reality.sh
 sudo bash /tmp/xray-reality.sh install
 ```
 
 ### fully unattended install
-
-```bash
-curl -fL https://raw.githubusercontent.com/neket371/network-stealth-core/ubuntu/xray-reality.sh -o /tmp/xray-reality.sh
-sudo bash /tmp/xray-reality.sh install --non-interactive --yes
-```
-
-### pinned bootstrap by commit
 
 ```bash
 curl -fL https://raw.githubusercontent.com/neket371/network-stealth-core/ubuntu/xray-reality.sh -o /tmp/xray-reality.sh
@@ -212,7 +216,7 @@ see [.github/SECURITY.md](.github/SECURITY.md) for the full policy.
 
 ## supported platform
 
-primary and ci-validated platform:
+supported and ci-validated platform:
 
 - `ubuntu-24.04` (lts)
 

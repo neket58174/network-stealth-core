@@ -11,7 +11,7 @@ jobs:
     timeout-minutes: 90
     steps:
       - name: Checkout
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Runner mode
         run: |
           if [[ "${{ vars.XRAY_ENABLE_SELF_HOSTED_ACTIONS }}" == "true" ]]; then
@@ -47,3 +47,31 @@ jobs:
           else
             make lab-smoke
           fi
+      - name: Generate vm proof-pack
+        if: ${{ success() }}
+        run: |
+          set -euo pipefail
+          if [[ ! -c /dev/kvm ]]; then
+            echo "no /dev/kvm; skipping vm proof-pack generation"
+            exit 0
+          fi
+
+          make vm-proof-pack
+          proof_env="$(bash -lc 'source scripts/lab/common.sh; lab_vm_latest_proof_env')"
+          if [[ -f "$proof_env" ]]; then
+            # shellcheck disable=SC1090
+            source "$proof_env"
+            {
+              echo "LAB_VM_PROOF_PACK_DIR=${LAB_VM_PROOF_PACK_DIR}"
+              echo "LAB_VM_PROOF_PACK_TAR=${LAB_VM_PROOF_PACK_TAR}"
+              echo "LAB_VM_PROOF_PACK_MANIFEST=${LAB_VM_PROOF_PACK_MANIFEST}"
+            } >> "$GITHUB_ENV"
+          fi
+      - name: Upload vm proof-pack
+        if: ${{ env.LAB_VM_PROOF_PACK_TAR != '' }}
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: self-hosted-vm-proof-pack
+          path: |
+            ${{ env.LAB_VM_PROOF_PACK_TAR }}
+            ${{ env.LAB_VM_PROOF_PACK_MANIFEST }}

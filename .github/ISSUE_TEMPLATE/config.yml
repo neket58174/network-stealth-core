@@ -1,0 +1,9 @@
+blank_issues_enabled: false
+contact_links:
+  - name: discussions
+    url: https://github.com/neket371/network-stealth-core/discussions
+    about: use discussions for design questions, roadmap ideas, and broad deployment trade-offs
+  - name: security policy
+    url: https://github.com/neket371/network-stealth-core/blob/ubuntu/.github/SECURITY.md
+    about: use private disclosure for vulnerabilities instead of public issues
+

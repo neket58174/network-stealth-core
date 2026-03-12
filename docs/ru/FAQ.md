@@ -9,6 +9,11 @@
 
 поэтому normal path убирает prompt’ы про transport и profile.
 
+## какой bootstrap path брать на реальном сервере?
+
+предпочитай pinned bootstrap path с `XRAY_REPO_COMMIT=<full_commit_sha>`.
+floating raw bootstrap оставлен для удобства, но не должен быть первым production-like путём.
+
 ## когда использовать `install --advanced`?
 
 только когда тебе сознательно нужен ручной prompt выбора профиля доменов.

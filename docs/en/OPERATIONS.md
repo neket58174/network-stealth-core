@@ -16,6 +16,8 @@ strongest-direct defaults:
 
 ## install
 
+for the first bootstrap on a real server, prefer the pinned bootstrap path from the readme (`XRAY_REPO_COMMIT=<full_commit_sha>`).
+
 ### normal path
 
 ```bash

@@ -5,7 +5,7 @@
 используй поверхности репозитория по назначению:
 
 - **discussions** — для design-вопросов, идей roadmap и deployment trade-off’ов
-- **issues** — для воспроизводимых багов и несовпадений контракта
+- **issues** — для воспроизводимых багов, несовпадений контракта и redacted support bundles через шаблоны в `.github/ISSUE_TEMPLATE/`
 - **security reporting** — только для уязвимостей и только через private disclosure
 
 ## что делает запрос на поддержку хорошим
@@ -16,11 +16,13 @@
 
 - точную команду, которую ты запускал
 - текущую версию или commit
+- был ли это fresh install, `migrate-stealth`, vm-lab или host-safe lab
 - вывод `sudo xray-reality.sh status --verbose`
 - вывод `sudo xray-reality.sh diagnose`
 - какой это узел: legacy, migrated или fresh strongest-direct
 - релевантный вывод `scripts/measure-stealth.sh` для проблем на реальных сетях
 - потребовался ли `emergency` на проверяемой сети
+- manifest или summary из `make vm-proof-pack`, если кейс пришёл из vm-lab
 
 ## что нужно редактировать перед публикацией
 

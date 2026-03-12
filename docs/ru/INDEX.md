@@ -30,7 +30,7 @@ managed install теперь целится в strongest-direct baseline:
 | [ARCHITECTURE.md](ARCHITECTURE.md) | strongest-direct контракт, state files и модульная структура |
 | [OPERATIONS.md](OPERATIONS.md) | runbook для install и day-2 операций |
 | [FAQ.md](FAQ.md) | продуктовый и операторский faq |
-| [MAINTAINER-LAB.md](MAINTAINER-LAB.md) | только для сопровождающих: изолированные smoke и vm-lab flow |
+| [MAINTAINER-LAB.md](MAINTAINER-LAB.md) | только для сопровождающих: изолированные smoke, vm-lab flow и proof-pack |
 | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | анализ сбоев и точные next-step команды |
 | [COMMUNITY.md](COMMUNITY.md) | как просить помощь и контрибьютить |
 | [ROADMAP.md](ROADMAP.md) | направление после v7.1.0 |

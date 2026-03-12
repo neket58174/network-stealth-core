@@ -9,6 +9,11 @@ the project is optimized for two things at once:
 
 that is why the normal path avoids transport and profile prompts.
 
+## which bootstrap path should i use on a real server?
+
+prefer the pinned bootstrap path with `XRAY_REPO_COMMIT=<full_commit_sha>`.
+the floating raw bootstrap stays available for convenience, but it should not be your first production-like path.
+
 ## when should i use `install --advanced`?
 
 only when you explicitly want the manual domain-profile prompt.

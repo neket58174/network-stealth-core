@@ -1,9 +1,9 @@
 # full audit report
 
-date: 2026-03-11
+date: 2026-03-12
 repository: `neket371/network-stealth-core`
 branch: `ubuntu`
-baseline snapshot: `ubuntu` working tree after service runtime extraction
+baseline snapshot: `ubuntu` working tree after maturity hardening wave
 
 ## scope
 
@@ -11,7 +11,7 @@ this audit refresh covers the current `v7.1.0` baseline, not the old `4.2.x` she
 
 reviewed surfaces:
 
-- all repo-tracked files in `audit_coverage_matrix.md` (**129/129** including the new `modules/service/runtime.sh` split module)
+- all repo-tracked files in `audit_coverage_matrix.md` (**139/139** including the new `modules/lib/*` extraction, vm proof-pack tooling, and public issue/pr templates)
 - runtime entrypoints: `xray-reality.sh`, `lib.sh`, `install.sh`, `config.sh`, `service.sh`, `health.sh`, `export.sh`
 - runtime modules under `modules/*`
 - qa/release/lab/windows scripts under `scripts/*`
@@ -31,7 +31,7 @@ companion docs for this pass:
 ### local verification
 
 - `make ci-full` — **pass**
-  - bats: **429/429** pass
+  - bats: **438/438** pass
   - release consistency: pass (`7.1.0`)
   - dead-function check: pass
   - shell complexity check: pass
@@ -40,6 +40,7 @@ companion docs for this pass:
   - docs command contracts: pass
   - advisory shellcheck: pass
 - `bash tests/lint.sh` — **pass**
+- `pwsh scripts/windows/run-validation.ps1 -SkipRemote` — **pass**
 
 ### hosted verification
 
@@ -48,6 +49,8 @@ latest verified `ubuntu` branch runs before closing this audit pass were green f
 - `ubuntu smoke / ubuntu / push`
 - `packages / ubuntu / push`
 - `ci / ubuntu / push`
+
+the workflow set was also refreshed to node24-safe pinned action shas, removing the previous node 20 deprecation maintenance noise.
 
 ### remote isolated verification
 
@@ -68,6 +71,7 @@ on `185.218.204.206`:
   - `self-check verdict (install): ok`
   - uninstall cleanup restored guest to `inactive` and `config_absent`
 - host production `xray` after vm-lab testing stayed `active`
+- vm-lab proof source artifacts were collected and can now be packaged through `make vm-proof-pack`
 
 ## executive verdict
 
@@ -78,18 +82,20 @@ on `185.218.204.206`:
 - test surface is unusually strong for a shell project
 - isolated vm-lab testing is now real and useful, not fake smoke
 - docs are broadly aligned with current product behavior
+- pinned bootstrap is now visually first-class in user-facing docs for real-server installs
+- public repo hygiene is better: issue templates, pr template, and proof-pack guidance exist
 
 ### what is not broken but still costly
 
-- active xhttp planning no longer depends on grpc-named endpoint seed files
-- planner data contract is still split across multiple sources, even after neutral endpoint seed naming cleanup
-- root runtime entrypoints are still large enough to slow future maintenance and review
+- planner/runtime data is still split across catalog + tiers + side maps
+- `config.sh` and `modules/lib/runtime_inputs.sh` still hold broad contracts and will remain the next likely maintenance hotspots if the product grows further
+- support matrix is still intentionally narrow: ubuntu 24.04 is the supported and ci-validated platform
 
 ### dead code verdict
 
 - no confirmed dead runtime code was found in the current active product path
 - current dead-function guard passes
-- the stronger problem is stale naming / compatibility debt, not obviously unreachable code
+- the stronger problem is design cost and support surface, not obviously unreachable code
 
 ## subsystem verdicts
 
@@ -99,15 +105,17 @@ status: **good**
 
 - trusted source resolution and pinning behavior are explicit
 - bootstrap wrapper remains one of the stronger parts of the project
-- no new hardening regression was found in this pass
+- pinned bootstrap by commit is now the visually preferred quick-start path for real servers
+- wrapper warnings are stronger for floating mutating bootstrap usage
 
 ### cli and public contract
 
 status: **good**
 
-- install-first long-option parsing is now correct
+- install-first long-option parsing is correct
 - public command surface matches usage/help and docs
 - current v7 contract gate behaves correctly for fresh vs legacy managed installs
+- interactive install now requires explicit config count input unless the count is provided via cli/env or non-interactive path
 
 ### install/update/repair/rollback lifecycle
 
@@ -119,18 +127,15 @@ status: **good**
 
 ### config generation and exports
 
-status: **good with contract debt**
+status: **good with bounded complexity**
 
 - generated strongest-direct configs pass runtime checks
 - exports and raw-xray artifacts are coherent
 - capabilities/compatibility notes are honest
-- client artifact rendering/rebuild logic is now split out of `config.sh` into a focused module
-- uninstall/remove/account cleanup logic is now split out of `service.sh` into `modules/service/uninstall.sh`
-- systemd/firewall/start/update runtime logic is now split out of `service.sh` into `modules/service/runtime.sh`
-- install success/runtime-mode/quick-start rendering is now split out of `install.sh` into `modules/install/output.sh`
-- install strongest-default profile/count selection logic is now split out of `install.sh` into `modules/install/selection.sh`
-- install minisign/xray download and verification logic is now split out of `install.sh` into `modules/install/xray_runtime.sh`
-- however, planner data still spans catalog + tier + side-map inputs
+- client artifact rendering/rebuild logic is split out of `config.sh` into a focused module
+- install success/runtime-mode, selection, and xray/minisign bootstrap logic are split out of `install.sh` into focused modules
+- service runtime and uninstall behavior are split out of `service.sh` into focused modules
+- planner data still spans catalog + tier + side-map inputs, which is now a watch item rather than an active defect
 
 ### service/firewall/monitoring
 
@@ -138,6 +143,7 @@ status: **good**
 
 - systemd and cleanup behavior passed current smoke coverage
 - uninstall cleanup is strong and complete in tested flows
+- runtime log-file preparation is hardened before service start and restart
 
 ### health/self-check/measurement
 
@@ -146,6 +152,7 @@ status: **good**
 - bounded self-check behavior is correct in current tests
 - vm-lab raw interactive install reached `self-check=ok`
 - measurement surface exists and is internally coherent
+- proof-pack generation gives operators a sanitized shareable evidence path without leaking secrets
 
 ### lab/vm infrastructure
 
@@ -154,6 +161,7 @@ status: **good**
 - busy host remained untouched at runtime boundary
 - vm-lab is now the right way to do full-fidelity testing on the shared server
 - interactive prompt behavior was validated inside the isolated guest
+- proof-pack generation turns vm-lab runs into reproducible operator evidence instead of hand-wavy trust
 
 ### docs and workflow surface
 
@@ -161,29 +169,39 @@ status: **good**
 
 - docs are broadly aligned
 - maintainer-only lab docs are correctly separated from user readmes
-- workflow/actionlint coverage is now aligned between `make lint` and `tests/lint.sh`
+- workflow/actionlint coverage is aligned with local qa
+- official workflow pins were refreshed to node24-safe revisions
 
 ## findings
 
-### f-003 — core root scripts remain oversized after modularization
+no active `p0`–`p3` finding remains from this audit pass.
 
-- severity: **p3**
-- type: maintainability
-- files:
-  - `lib.sh` — 2742 lines
-  - `config.sh` — 808 lines
-- impact:
-  - slows review and safe refactoring
-  - increases blast radius of small changes
-  - keeps important contracts spread across very large files plus modules
-- verdict:
-  - not a correctness bug today, but still the biggest code-shape problem left after reducing `install.sh` to 595 lines, `service.sh` to 484 lines, and narrowing other root entrypoints in several focused passes
+the older open maintainability item around oversized root entrypoints is considered **closed for this wave** because:
+
+- `lib.sh` dropped to **939** lines from the previous 2700+ monolith
+- `install.sh` dropped to **605** lines
+- `service.sh` dropped to **484** lines
+- behavior now lives in focused modules for ui/logging, downloads, runtime inputs, system runtime, install output, install selection, xray bootstrap, service runtime, and uninstall cleanup
+
+remaining concerns are now watch items, not active defects:
+
+- planner/data contract is still multi-source
+- `config.sh` and `modules/lib/runtime_inputs.sh` are still broad enough to deserve future refactors if scope expands
+- ubuntu 24.04 remains the intentionally narrow supported matrix
 
 ## closed in this audit refresh
 
-the previous audit docs themselves were stale. this pass closes that documentation gap by replacing the old baseline with a current `v7.1.0` audit set.
+the previous audit docs themselves were stale. this pass closes that documentation gap by replacing the old baseline with a current maturity-hardened audit set.
 
-in addition, `f-001` was closed during the first follow-up pass by aligning `make lint` workflow coverage with `tests/lint.sh`, and `f-002` was closed by moving the active planner seed surface to the neutral `transport_endpoints.map` contract while keeping grpc/http2 handling inside explicit legacy-only branches. `service.sh` also stopped being part of `f-003` after the runtime/uninstall extraction passes.
+in addition, this refresh closes the older follow-up items by evidence rather than by promise:
+
+- `f-001` — workflow lint coverage now matches between `make lint` and `tests/lint.sh`
+- `f-002` — active planner seed naming is neutralized through `transport_endpoints.map`; grpc/http2 handling is explicit legacy-only coverage
+- `f-003` — oversized root orchestration scripts were cut down enough that the issue is no longer an active backlog item for this wave
+- pinned bootstrap is now first-class in user-facing docs
+- vm proof-pack exists as a reproducible public evidence artifact
+- public issue/pr intake templates exist
+- workflow pins were refreshed away from node 20 deprecation noise
 
 ## conclusion
 
@@ -193,6 +211,6 @@ current product verdict:
 - safety/rollback behavior: **good**
 - test and smoke coverage: **strong**
 - dead code situation: **no confirmed active dead runtime code found**
-- biggest remaining debt: **multi-source planner inputs and still-large orchestration files**
+- maintainer maturity: **meaningfully stronger than the previous v7 audit baseline**
 
-there is no p0/p1 finding from this pass.
+there is no proven `p0`/`p1`/`p2`/`p3` runtime finding from this pass.

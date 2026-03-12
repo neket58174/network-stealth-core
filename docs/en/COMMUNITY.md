@@ -5,7 +5,7 @@
 use the repository discussion and issue surfaces appropriately:
 
 - **discussions** for design questions, roadmap ideas, and deployment trade-offs
-- **issues** for reproducible bugs and contract mismatches
+- **issues** for reproducible bugs, contract mismatches, and redacted support bundles through the templates in `.github/ISSUE_TEMPLATE/`
 - **security reporting** for vulnerabilities, using private disclosure only
 
 ## what makes a good support request
@@ -16,11 +16,13 @@ good reports include:
 
 - exact command that was run
 - current version or commit
+- whether this was a fresh install, `migrate-stealth`, vm-lab, or host-safe lab
 - output of `sudo xray-reality.sh status --verbose`
 - output of `sudo xray-reality.sh diagnose`
 - whether the node is legacy, migrated, or fresh strongest-direct
 - relevant `scripts/measure-stealth.sh` output for real-network problems
 - whether `emergency` was needed on the tested network
+- `make vm-proof-pack` manifest or summary when the report comes from vm-lab
 
 ## redact before posting
 

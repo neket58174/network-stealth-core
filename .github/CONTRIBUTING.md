@@ -63,6 +63,11 @@ git fetch upstream
 | `tests/e2e/` | lifecycle and migration scenarios |
 | `docs/` | bilingual documentation |
 
+github issue and pull-request templates live under:
+
+- `.github/ISSUE_TEMPLATE/`
+- `.github/PULL_REQUEST_TEMPLATE.md`
+
 ## mandatory local checks
 
 run before push:
@@ -87,6 +92,10 @@ pwsh ./scripts/windows/run-validation.ps1 -SkipRemote
 maintainer-only smoke and busy-host lifecycle docs live here:
 
 - `docs/en/MAINTAINER-LAB.md`
+
+when a lifecycle bug is reproduced through vm-lab, also attach:
+
+- `make vm-proof-pack`
 
 ## coding standards
 

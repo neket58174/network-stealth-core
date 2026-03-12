@@ -33,7 +33,7 @@
 
 ## быстрый старт
 
-### рекомендуемая установка
+### bootstrap с pin по commit — рекомендуемый путь для реальных серверов
 
 обычный `install` opinionated и минимальный.
 он автоматически выбирает strongest-direct контракт:
@@ -44,17 +44,21 @@
 
 ```bash
 curl -fL https://raw.githubusercontent.com/neket371/network-stealth-core/ubuntu/xray-reality.sh -o /tmp/xray-reality.sh
+sudo XRAY_REPO_COMMIT=<full_commit_sha> bash /tmp/xray-reality.sh install
+```
+
+для production-like установки лучше сразу pin'ить bootstrap wrapper на точный commit репозитория.
+
+### convenience-путь с плавающей веткой
+
+floating bootstrap оставлен для удобства, но это уже не visually preferred путь для реального сервера:
+
+```bash
+curl -fL https://raw.githubusercontent.com/neket371/network-stealth-core/ubuntu/xray-reality.sh -o /tmp/xray-reality.sh
 sudo bash /tmp/xray-reality.sh install
 ```
 
 ### полностью unattended установка
-
-```bash
-curl -fL https://raw.githubusercontent.com/neket371/network-stealth-core/ubuntu/xray-reality.sh -o /tmp/xray-reality.sh
-sudo bash /tmp/xray-reality.sh install --non-interactive --yes
-```
-
-### bootstrap с pin по commit
 
 ```bash
 curl -fL https://raw.githubusercontent.com/neket371/network-stealth-core/ubuntu/xray-reality.sh -o /tmp/xray-reality.sh
@@ -212,7 +216,7 @@ sudo bash scripts/measure-stealth.sh prune \
 
 ## поддерживаемая платформа
 
-основная и ci-валидируемая платформа:
+поддерживаемая и ci-валидируемая платформа:
 
 - `ubuntu-24.04` (lts)
 

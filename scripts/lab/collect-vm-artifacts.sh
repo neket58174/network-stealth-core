@@ -69,6 +69,7 @@ summary = {
     "guest_ip": guest_ip or None,
     "ssh_port": None,
     "smoke_status": int(smoke_status) if smoke_status not in ("", None) else None,
+    "proof_dir": None,
 }
 
 env_file = Path(env_path)
@@ -81,6 +82,8 @@ if env_file.exists():
             summary["vm_name"] = value
         elif key == "LAB_VM_SSH_PORT":
             summary["ssh_port"] = value
+        elif key == "LAB_VM_PROOF_DIR":
+            summary["proof_dir"] = value or None
 
 Path(summary_json).write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
 Path(summary_md).write_text(
@@ -92,6 +95,7 @@ Path(summary_md).write_text(
             f"- guest ip: `{summary['guest_ip'] or 'unknown'}`",
             f"- ssh port: `{summary['ssh_port'] or 'unknown'}`",
             f"- smoke status: `{summary['smoke_status']}`",
+            f"- proof dir: `{summary['proof_dir'] or 'none'}`",
             "",
             "artifacts:",
             f"- {summary_json}",

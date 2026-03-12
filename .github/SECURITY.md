@@ -43,7 +43,7 @@ response targets:
 - allowlisted critical hosts via `DOWNLOAD_HOST_ALLOWLIST`
 - artifact integrity checks with `sha256` and optional strict `REQUIRE_MINISIGN=true`
 - pinned minisign trust anchor with fingerprint check via `MINISIGN_KEY`
-- bootstrap pin control through `XRAY_REPO_COMMIT`
+- bootstrap pin control through `XRAY_REPO_COMMIT`; prefer the pinned bootstrap path on real servers
 - wrapper code-source trust boundary for `XRAY_DATA_DIR`, enabled only with `XRAY_ALLOW_CUSTOM_DATA_DIR=true`
 
 current pinned minisign key fingerprint (`sha256` of `MINISIGN_KEY` content):
@@ -131,7 +131,7 @@ these flags weaken default guarantees and should stay temporary:
 
 ## operational recommendations
 
-1. prefer tagged releases for production-like deployments
+1. prefer the pinned bootstrap path with `XRAY_REPO_COMMIT=<full_commit_sha>` on real servers; treat the floating raw bootstrap as a convenience path
 2. migrate managed legacy or pre-v7 installs promptly with `migrate-stealth`
 3. monitor `status --verbose`, `diagnose`, and self-check history after every change
 4. use `scripts/measure-stealth.sh run|compare|summarize` when comparing real-network behavior

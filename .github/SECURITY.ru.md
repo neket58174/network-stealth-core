@@ -43,7 +43,7 @@
 - allowlist критичных host через `DOWNLOAD_HOST_ALLOWLIST`
 - проверки целостности артефактов через `sha256` и optional strict `REQUIRE_MINISIGN=true`
 - pinned minisign trust anchor с fingerprint check через `MINISIGN_KEY`
-- bootstrap pin control через `XRAY_REPO_COMMIT`
+- bootstrap pin control через `XRAY_REPO_COMMIT`; на реальных серверах предпочитай именно pinned bootstrap path
 - wrapper trust boundary для `XRAY_DATA_DIR`, включаемая только через `XRAY_ALLOW_CUSTOM_DATA_DIR=true`
 
 текущий pinned minisign key fingerprint (`sha256` содержимого `MINISIGN_KEY`):
@@ -131,7 +131,7 @@ project units применяют такие controls:
 
 ## операционные рекомендации
 
-1. для production-like deployment предпочитай tagged releases
+1. на реальных серверах предпочитай pinned bootstrap path с `XRAY_REPO_COMMIT=<full_commit_sha>`; floating raw bootstrap считай convenience-путём
 2. managed legacy и pre-v7 install как можно быстрее переводи через `migrate-stealth`
 3. после каждого изменения проверяй `status --verbose`, `diagnose` и историю self-check
 4. используй `scripts/measure-stealth.sh run|compare|summarize` для сравнения поведения на реальных сетях

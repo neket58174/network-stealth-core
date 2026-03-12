@@ -37,6 +37,7 @@ when you need the real `systemd` lifecycle without touching the busy host namesp
 ```bash
 make vm-lab-prepare
 make vm-lab-smoke
+make vm-proof-pack
 ```
 
 or run the scripts directly:
@@ -45,6 +46,7 @@ or run the scripts directly:
 bash scripts/lab/prepare-vm-smoke.sh
 bash scripts/lab/run-vm-lifecycle-smoke.sh
 bash scripts/lab/enter-vm-smoke.sh
+bash scripts/lab/generate-vm-proof-pack.sh
 ```
 
 this flow:
@@ -56,6 +58,7 @@ this flow:
 - copies the current repo into the guest
 - runs the full nightly lifecycle smoke there, including `install`, `add-clients`, `repair`, `update`, `rollback`, `status`, and `uninstall`
 - collects guest logs back into the vm-lab log directory
+- copies a sanitized proof source bundle back into the vm-lab artifacts directory
 
 default guest-side smoke values:
 
@@ -87,9 +90,39 @@ helper reference:
 - `nsc-vm-install-latest` — downloads the latest bootstrap script and runs install with the guest ipv4 pinned into `server_ip`
 - `nsc-vm-install-repo` — runs the repo-local script from `~/repo` with the guest ipv4 pinned into `server_ip`
 
+## proof-pack generation
+
+after a successful vm-lab lifecycle run, generate a sanitized proof bundle:
+
+```bash
+make vm-proof-pack
+```
+
+or:
+
+```bash
+bash scripts/lab/generate-vm-proof-pack.sh
+```
+
+the proof-pack contains:
+
+- lifecycle verdicts and version transitions
+- sanitized `status --verbose` / `diagnose` outputs
+- self-check and measurement summaries when present
+- a hash inventory of generated artifacts without copying secret-bearing client material
+- sanitized vm-lab logs
+
+the proof-pack intentionally excludes:
+
+- private keys
+- raw client json
+- live `vless://` links
+- reusable `uuid`, `short_id`, or `public_key` values
+
 ## when to use which layer
 
 - use `make ci-fast` and `make ci-full` for local repo validation
 - use `make lab-smoke` for a safe first smoke on a busy host
 - use `make vm-lab-smoke` for the full prod-like lifecycle on that same busy host
+- use `make vm-proof-pack` when you need a shareable maintainer/operator evidence bundle from that vm-lab run
 - use canary bundle exports for testing from another machine or another network

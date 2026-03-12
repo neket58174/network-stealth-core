@@ -1,0 +1,41 @@
+name: feature request
+description: propose a scoped product or tooling change
+title: "[feature] "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        use this for concrete, scoped improvements.
+        requests that weaken the strongest-direct contract, add extra install prompts, or revive legacy transports will be reviewed more strictly.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: problem statement
+      description: what real operator or maintainer problem exists today
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed_change
+    attributes:
+      label: proposed change
+    validations:
+      required: true
+
+  - type: textarea
+    id: contract_impact
+    attributes:
+      label: contract impact
+      description: explain whether this changes install behavior, artifacts, migration boundaries, or supported platforms
+    validations:
+      required: true
+
+  - type: textarea
+    id: validation
+    attributes:
+      label: expected validation
+      description: what tests, docs, or operator evidence would be needed
+

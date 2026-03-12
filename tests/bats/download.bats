@@ -152,8 +152,8 @@ load 'helpers/mocks'
 
 @test "download_file_allowlist uses randomized temp files" {
     run bash -eo pipefail -c '
-    grep -Fq '\''mktemp -d "${TMPDIR:-/tmp}/xray-dl.XXXXXX"'\'' ./lib.sh
-    ! grep -Fq '\''tmp_file="${out_file}.part.$$"'\'' ./lib.sh
+    grep -Fq '\''mktemp -d "${TMPDIR:-/tmp}/xray-dl.XXXXXX"'\'' ./modules/lib/downloads.sh
+    ! grep -Fq '\''tmp_file="${out_file}.part.$$"'\'' ./modules/lib/downloads.sh
     echo "ok"
   '
 
@@ -163,7 +163,7 @@ load 'helpers/mocks'
 
 @test "download_file_allowlist cleans temp files on interrupts" {
     run bash -eo pipefail -c '
-    grep -Fq "trap '\''rm -f \"\${tmp_file:-}\"; rm -rf \"\${tmp_dir:-}\"'\'' EXIT INT TERM" ./lib.sh
+    grep -Fq "trap '\''rm -f \"\${tmp_file:-}\"; rm -rf \"\${tmp_dir:-}\"'\'' EXIT INT TERM" ./modules/lib/downloads.sh
     echo "ok"
   '
 

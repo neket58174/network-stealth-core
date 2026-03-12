@@ -3,8 +3,8 @@
 date: 2026-03-11
 repository: `neket371/network-stealth-core`
 branch: `ubuntu`
-baseline snapshot: `ubuntu` working tree after service runtime extraction
-total repo-tracked files reviewed: **129**
+baseline snapshot: `ubuntu` working tree after maturity hardening wave
+total repo-tracked files reviewed: **139**
 
 review depth meanings:
 - `manual semantic` — file behavior and contracts were traced manually.
@@ -15,95 +15,95 @@ review depth meanings:
 |---|---:|---|---|---|---|---|
 | `.dockerignore` | 6 | repo meta | docker build exclusion rules | inventory-only | reviewed | — |
 | `.gitattributes` | 8 | repo meta | git attribute rules | inventory-only | reviewed | — |
-| `.github/CONTRIBUTING.md` | 127 | doc | english maintainer/contributor doc | contract consistency | reviewed | — |
-| `.github/CONTRIBUTING.ru.md` | 127 | doc | russian maintainer/contributor doc | contract consistency | reviewed | — |
+| `.github/CONTRIBUTING.md` | 136 | doc | english maintainer/contributor doc | contract consistency | reviewed | — |
+| `.github/CONTRIBUTING.ru.md` | 136 | doc | russian maintainer/contributor doc | contract consistency | reviewed | — |
 | `.github/SECURITY.md` | 152 | doc | english security policy doc | contract consistency | reviewed | — |
 | `.github/SECURITY.ru.md` | 152 | doc | russian security policy doc | contract consistency | reviewed | — |
 | `.github/workflows/ci.yml` | 296 | workflow | primary ci workflow | contract consistency | reviewed | — |
-| `.github/workflows/nightly-smoke.yml` | 83 | workflow | nightly smoke workflow | contract consistency | reviewed | — |
+| `.github/workflows/nightly-smoke.yml` | 111 | workflow | nightly smoke workflow | contract consistency | reviewed | — |
 | `.github/workflows/os-matrix-smoke.yml` | 55 | workflow | os support smoke workflow | contract consistency | reviewed | — |
 | `.github/workflows/packages.yml` | 91 | workflow | package/build workflow | contract consistency | reviewed | — |
 | `.github/workflows/release.yml` | 307 | workflow | tagged release workflow | contract consistency | reviewed | — |
-| `.github/workflows/self-hosted-smoke.yml` | 49 | workflow | self-hosted smoke workflow | contract consistency | reviewed | — |
+| `.github/workflows/self-hosted-smoke.yml` | 77 | workflow | self-hosted smoke workflow | contract consistency | reviewed | — |
 | `.markdownlint.json` | 11 | repo meta | markdown lint policy | inventory-only | reviewed | — |
 | `AUDIT_COVERAGE_MATRIX.md` | 148 | doc | audit inventory and review coverage matrix | contract consistency | reviewed | — |
 | `AUDIT_FINDINGS_BACKLOG.md` | 39 | doc | prioritized audit backlog | contract consistency | reviewed | — |
 | `AUDIT_REPORT_FULL.md` | 198 | doc | full audit narrative and findings | contract consistency | reviewed | — |
 | `AUDIT_RUNTIME_MAP.md` | 150 | doc | per-script runtime responsibility map | contract consistency | reviewed | — |
-| `config.sh` | 808 | runtime entrypoint | config builder and config/runtime apply helpers | manual semantic | reviewed | client artifact logic moved into focused module; f-003 remains open elsewhere |
+| `config.sh` | 808 | runtime entrypoint | config builder and config/runtime apply helpers | manual semantic | reviewed | client artifact logic moved into focused module; remaining complexity is now a watch item, not an active audit finding |
 | `data/domains/catalog.json` | 4618 | data contract | canonical domain metadata catalog | manual semantic | reviewed | planner still combines catalog with side maps and tier files |
 | `Dockerfile` | 50 | build/tooling | container packaging and smoke runtime image | manual semantic | reviewed | runtime bundle now ships neutral transport endpoint seed file |
 | `docs/en/ARCHITECTURE.md` | 152 | doc | english architecture doc | contract consistency | reviewed | — |
-| `docs/en/CHANGELOG.md` | 130 | doc | english changelog doc | contract consistency | reviewed | — |
-| `docs/en/COMMUNITY.md` | 54 | doc | english community doc | contract consistency | reviewed | — |
-| `docs/en/FAQ.md` | 104 | doc | english faq doc | contract consistency | reviewed | — |
+| `docs/en/CHANGELOG.md` | 135 | doc | english changelog doc | contract consistency | reviewed | — |
+| `docs/en/COMMUNITY.md` | 56 | doc | english community doc | contract consistency | reviewed | — |
+| `docs/en/FAQ.md` | 109 | doc | english faq doc | contract consistency | reviewed | — |
 | `docs/en/GLOSSARY.md` | 82 | doc | english glossary doc | contract consistency | reviewed | — |
 | `docs/en/INDEX.md` | 57 | doc | english index doc | contract consistency | reviewed | — |
-| `docs/en/MAINTAINER-LAB.md` | 95 | doc | english maintainer-lab doc | contract consistency | reviewed | — |
-| `docs/en/OPERATIONS.md` | 241 | doc | english operations doc | contract consistency | reviewed | — |
+| `docs/en/MAINTAINER-LAB.md` | 128 | doc | english maintainer-lab doc | contract consistency | reviewed | — |
+| `docs/en/OPERATIONS.md` | 250 | doc | english operations doc | contract consistency | reviewed | — |
 | `docs/en/ROADMAP.md` | 35 | doc | english roadmap doc | contract consistency | reviewed | — |
-| `docs/en/TROUBLESHOOTING.md` | 125 | doc | english troubleshooting doc | contract consistency | reviewed | — |
+| `docs/en/TROUBLESHOOTING.md` | 126 | doc | english troubleshooting doc | contract consistency | reviewed | — |
 | `docs/ru/ARCHITECTURE.md` | 152 | doc | russian architecture doc | contract consistency | reviewed | — |
-| `docs/ru/CHANGELOG.md` | 117 | doc | russian changelog doc | contract consistency | reviewed | — |
-| `docs/ru/COMMUNITY.md` | 54 | doc | russian community doc | contract consistency | reviewed | — |
-| `docs/ru/FAQ.md` | 104 | doc | russian faq doc | contract consistency | reviewed | — |
+| `docs/ru/CHANGELOG.md` | 122 | doc | russian changelog doc | contract consistency | reviewed | — |
+| `docs/ru/COMMUNITY.md` | 56 | doc | russian community doc | contract consistency | reviewed | — |
+| `docs/ru/FAQ.md` | 109 | doc | russian faq doc | contract consistency | reviewed | — |
 | `docs/ru/GLOSSARY.md` | 82 | doc | russian glossary doc | contract consistency | reviewed | — |
 | `docs/ru/INDEX.md` | 57 | doc | russian index doc | contract consistency | reviewed | — |
-| `docs/ru/MAINTAINER-LAB.md` | 95 | doc | russian maintainer-lab doc | contract consistency | reviewed | — |
-| `docs/ru/OPERATIONS.md` | 241 | doc | russian operations doc | contract consistency | reviewed | — |
+| `docs/ru/MAINTAINER-LAB.md` | 128 | doc | russian maintainer-lab doc | contract consistency | reviewed | — |
+| `docs/ru/OPERATIONS.md` | 250 | doc | russian operations doc | contract consistency | reviewed | — |
 | `docs/ru/ROADMAP.md` | 35 | doc | russian roadmap doc | contract consistency | reviewed | — |
-| `docs/ru/TROUBLESHOOTING.md` | 125 | doc | russian troubleshooting doc | contract consistency | reviewed | — |
+| `docs/ru/TROUBLESHOOTING.md` | 126 | doc | russian troubleshooting doc | contract consistency | reviewed | — |
 | `domains.tiers` | 237 | data contract | legacy tier domain source | manual semantic | reviewed | planner still uses multi-source domain contract alongside catalog |
 | `export.sh` | 328 | runtime entrypoint | client export entry helpers | manual semantic | reviewed | — |
 | `transport_endpoints.map` | 202 | data contract | neutral legacy transport endpoint seed source for grpc/http2 compatibility | manual semantic | reviewed | active xhttp path no longer references grpc-named seed files |
 | `health.sh` | 719 | runtime entrypoint | health diagnostics and monitor entry helpers | manual semantic | reviewed | — |
-| `install.sh` | 599 | runtime entrypoint | install/update/repair/migrate/rollback entry flows | manual semantic | reviewed | install output/runtime-mode, profile/count selection, and xray/minisign runtime helpers moved into focused modules; runtime log files are precreated with service ownership before first start |
-| `lib.sh` | 2742 | runtime entrypoint | global runtime orchestrator and action dispatcher | manual semantic | reviewed | f-003: file remains large |
+| `install.sh` | 605 | runtime entrypoint | install/update/repair/migrate/rollback entry flows | manual semantic | reviewed | install output/runtime-mode, profile/count selection, and xray/minisign runtime helpers moved into focused modules; runtime log files are precreated with service ownership before first start |
+| `lib.sh` | 939 | runtime entrypoint | global runtime orchestrator and action dispatcher | manual semantic | reviewed | materially reduced from the former monolith; now mainly composes focused lib modules |
 | `LICENSE` | 21 | repo meta | license text | inventory-only | reviewed | — |
-| `Makefile` | 75 | build/tooling | local qa and audit entrypoints | manual semantic | reviewed | — |
+| `Makefile` | 78 | build/tooling | local qa and audit entrypoints | manual semantic | reviewed | — |
 | `modules/config/add_clients.sh` | 686 | runtime module | add-clients runtime flow | manual semantic | reviewed | — |
-| `modules/config/client_artifacts.sh` | 1146 | runtime module | client artifact rendering, json normalization, rebuild, and self-check readiness helpers | manual semantic | reviewed | extracted from `config.sh` to narrow root entrypoint scope |
+| `modules/config/client_artifacts.sh` | 1288 | runtime module | client artifact rendering, json normalization, rebuild, and self-check readiness helpers | manual semantic | reviewed | extracted from `config.sh` to narrow root entrypoint scope |
 | `modules/config/domain_planner.sh` | 933 | runtime module | domain planning and profile generation helpers | manual semantic | reviewed | legacy transport seeds renamed; planner still has multi-source complexity |
-| `modules/service/runtime.sh` | 451 | runtime module | systemd unit creation, firewall apply, service startup, and runtime update helpers | manual semantic | reviewed | extracted from `service.sh` to narrow service runtime orchestration scope |
+| `modules/service/runtime.sh` | 485 | runtime module | systemd unit creation, firewall apply, service startup, and runtime update helpers | manual semantic | reviewed | extracted from `service.sh` to narrow service runtime orchestration scope |
 | `modules/service/uninstall.sh` | 461 | runtime module | uninstall file removal, account cleanup, and destructive guard helpers | manual semantic | reviewed | extracted from `service.sh` to narrow root entrypoint scope |
 | `modules/config/shared_helpers.sh` | 162 | runtime module | transport/tier/helper formatting and compatibility helpers | manual semantic | reviewed | transport compatibility helpers are now transport-neutral where active |
 | `modules/export/capabilities.sh` | 141 | runtime module | export capability matrix and compatibility notes helpers | manual semantic | reviewed | — |
 | `modules/health/measurements.sh` | 312 | runtime module | measurement import/compare/prune helpers | manual semantic | reviewed | — |
 | `modules/health/self_check.sh` | 777 | runtime module | post-action transport-aware self-check engine | manual semantic | reviewed | — |
-| `modules/install/bootstrap.sh` | 427 | runtime module | install/update bootstrap staging helpers | manual semantic | reviewed | bootstrap now ships neutral transport endpoint seed file |
+| `modules/install/bootstrap.sh` | 438 | runtime module | install/update bootstrap staging helpers | manual semantic | reviewed | bootstrap now ships neutral transport endpoint seed file |
 | `modules/install/output.sh` | 277 | runtime module | install success summary, runtime-mode notice, and quick-start link rendering | manual semantic | reviewed | extracted from `install.sh` to narrow root entrypoint scope |
-| `modules/install/selection.sh` | 244 | runtime module | install profile/count selection and strongest-default auto-selection helpers | manual semantic | reviewed | extracted from `install.sh` to narrow root entrypoint scope |
+| `modules/install/selection.sh` | 234 | runtime module | install profile/count selection and strongest-default auto-selection helpers | manual semantic | reviewed | extracted from `install.sh` to narrow root entrypoint scope |
 | `modules/install/xray_runtime.sh` | 523 | runtime module | minisign fallback, xray download, signature verification, and binary install helpers | manual semantic | reviewed | extracted from `install.sh` to narrow root entrypoint scope |
-| `modules/lib/cli.sh` | 531 | runtime module | cli parsing and runtime override resolution | manual semantic | reviewed | — |
+| `modules/lib/cli.sh` | 533 | runtime module | cli parsing and runtime override resolution | manual semantic | reviewed | — |
 | `modules/lib/common_utils.sh` | 18 | runtime module | shared low-level helper primitives | manual semantic | reviewed | — |
 | `modules/lib/contract_gate.sh` | 91 | runtime module | legacy/pre-v7 mutating gate logic | manual semantic | reviewed | — |
 | `modules/lib/domain_sources.sh` | 348 | runtime module | domain/map loading helpers | manual semantic | reviewed | — |
 | `modules/lib/firewall.sh` | 203 | runtime module | firewall mutation helpers | manual semantic | reviewed | — |
-| `modules/lib/globals_contract.sh` | 198 | runtime module | global variable defaults and contracts | manual semantic | reviewed | transport endpoint seed contract now has neutral primary naming |
+| `modules/lib/globals_contract.sh` | 218 | runtime module | global variable defaults and contracts | manual semantic | reviewed | transport endpoint seed contract now has neutral primary naming |
 | `modules/lib/lifecycle.sh` | 216 | runtime module | backup/rollback/cleanup helpers | manual semantic | reviewed | — |
 | `modules/lib/policy.sh` | 225 | runtime module | policy.json load/save helpers | manual semantic | reviewed | — |
 | `modules/lib/runtime_reuse.sh` | 266 | runtime module | runtime reuse and existing-config extraction | manual semantic | reviewed | — |
 | `modules/lib/tty.sh` | 359 | runtime module | interactive tty normalization and yes/no prompts | manual semantic | reviewed | — |
 | `modules/lib/usage.sh` | 83 | runtime module | public help text contract | manual semantic | reviewed | — |
 | `modules/lib/validation.sh` | 189 | runtime module | input validation helpers | manual semantic | reviewed | — |
-| `README.md` | 240 | doc | english user-facing entry doc | contract consistency | reviewed | — |
-| `README.ru.md` | 240 | doc | russian user-facing entry doc | contract consistency | reviewed | — |
-| `scripts/check-dead-functions.sh` | 162 | qa/release script | dead function guard | manual semantic | reviewed | — |
-| `scripts/check-docs-commands.sh` | 67 | qa/release script | docs command contract guard | manual semantic | reviewed | — |
+| `README.md` | 244 | doc | english user-facing entry doc | contract consistency | reviewed | — |
+| `README.ru.md` | 244 | doc | russian user-facing entry doc | contract consistency | reviewed | — |
+| `scripts/check-dead-functions.sh` | 163 | qa/release script | dead function guard | manual semantic | reviewed | — |
+| `scripts/check-docs-commands.sh` | 92 | qa/release script | docs command contract guard | manual semantic | reviewed | — |
 | `scripts/check-release-consistency.sh` | 154 | qa/release script | release/changelog consistency guard | manual semantic | reviewed | — |
 | `scripts/check-security-baseline.sh` | 150 | qa/release script | security baseline guard | manual semantic | reviewed | — |
 | `scripts/check-shell-complexity.sh` | 135 | qa/release script | shell complexity gate | manual semantic | reviewed | — |
 | `scripts/check-shellcheck-advisory.sh` | 36 | qa/release script | advisory shellcheck pass | manual semantic | reviewed | — |
 | `scripts/check-workflow-pinning.sh` | 46 | qa/release script | workflow action pinning guard | manual semantic | reviewed | — |
 | `scripts/lab/collect-container-artifacts.sh` | 95 | lab script | container lab artifact collector | manual semantic | reviewed | — |
-| `scripts/lab/collect-vm-artifacts.sh` | 105 | lab script | vm lab artifact collector | manual semantic | reviewed | — |
-| `scripts/lab/common.sh` | 265 | lab script | shared lab helpers and defaults | manual semantic | reviewed | — |
+| `scripts/lab/collect-vm-artifacts.sh` | 109 | lab script | vm lab artifact collector | manual semantic | reviewed | — |
+| `scripts/lab/common.sh` | 276 | lab script | shared lab helpers and defaults | manual semantic | reviewed | — |
 | `scripts/lab/enter-vm-smoke.sh` | 79 | lab script | vm guest entry helper | manual semantic | reviewed | — |
-| `scripts/lab/guest-vm-lifecycle.sh` | 201 | lab script | vm guest bootstrap and helper installation | manual semantic | reviewed | — |
+| `scripts/lab/guest-vm-lifecycle.sh` | 202 | lab script | vm guest bootstrap and helper installation | manual semantic | reviewed | — |
 | `scripts/lab/prepare-host-safe-smoke.sh` | 46 | lab script | busy-host safe container prep | manual semantic | reviewed | — |
 | `scripts/lab/prepare-vm-smoke.sh` | 131 | lab script | vm lab image and state prep | manual semantic | reviewed | — |
 | `scripts/lab/run-container-smoke.sh` | 160 | lab script | host-safe container smoke runner | manual semantic | reviewed | — |
-| `scripts/lab/run-vm-lifecycle-smoke.sh` | 299 | lab script | full vm lifecycle smoke runner | manual semantic | reviewed | — |
+| `scripts/lab/run-vm-lifecycle-smoke.sh` | 346 | lab script | full vm lifecycle smoke runner | manual semantic | reviewed | — |
 | `scripts/markdownlint.ps1` | 67 | qa/release script | windows markdown lint wrapper | manual semantic | reviewed | — |
 | `scripts/measure-stealth.sh` | 519 | qa/release script | field measurement operator tool | manual semantic | reviewed | — |
 | `scripts/release-policy-gate.sh` | 98 | qa/release script | release artifact policy gate | manual semantic | reviewed | — |
@@ -119,12 +119,12 @@ review depth meanings:
 | `tests/bats/health.bats` | 598 | bats test | bats suite: health | manual semantic | reviewed | — |
 | `tests/bats/helpers/mocks.bash` | 61 | bats test | shared bats mocks | manual semantic | reviewed | — |
 | `tests/bats/input_validation.bats` | 290 | bats test | bats suite: input_validation | manual semantic | reviewed | — |
-| `tests/bats/integration.bats` | 808 | bats test | bats suite: integration | manual semantic | reviewed | — |
+| `tests/bats/integration.bats` | 903 | bats test | bats suite: integration | manual semantic | reviewed | — |
 | `tests/bats/rollback.bats` | 53 | bats test | bats suite: rollback | manual semantic | reviewed | — |
-| `tests/bats/smoke.bats` | 34 | bats test | bats suite: smoke | manual semantic | reviewed | — |
+| `tests/bats/smoke.bats` | 39 | bats test | bats suite: smoke | manual semantic | reviewed | — |
 | `tests/bats/transport.bats` | 76 | bats test | bats suite: transport | manual semantic | reviewed | — |
-| `tests/bats/unit.bats` | 3744 | bats test | bats suite: unit | manual semantic | reviewed | — |
-| `tests/bats/validation.bats` | 565 | bats test | bats suite: validation | manual semantic | reviewed | — |
+| `tests/bats/unit.bats` | 3872 | bats test | bats suite: unit | manual semantic | reviewed | — |
+| `tests/bats/validation.bats` | 636 | bats test | bats suite: validation | manual semantic | reviewed | — |
 | `tests/e2e/add_clients_enospc_rollback.sh` | 114 | e2e test | e2e scenario: add_clients_enospc_rollback | manual semantic | reviewed | — |
 | `tests/e2e/broken_config_rollback_smoke.sh` | 125 | e2e test | e2e scenario: broken_config_rollback_smoke | manual semantic | reviewed | — |
 | `tests/e2e/download_failure_preserves_binary.sh` | 69 | e2e test | e2e scenario: download_failure_preserves_binary | manual semantic | reviewed | — |
@@ -135,14 +135,25 @@ review depth meanings:
 | `tests/e2e/ipv6_install_add_uninstall.sh` | 107 | e2e test | e2e scenario: ipv6_install_add_uninstall | manual semantic | reviewed | — |
 | `tests/e2e/lib.sh` | 147 | e2e test | shared e2e helper library | manual semantic | reviewed | — |
 | `tests/e2e/migrate_legacy_transport_to_xhttp.sh` | 130 | e2e test | e2e scenario: migrate_legacy_transport_to_xhttp | manual semantic | reviewed | — |
-| `tests/e2e/minimal_install_contract.sh` | 131 | e2e test | e2e scenario: minimal_install_contract | manual semantic | reviewed | — |
+| `tests/e2e/minimal_install_contract.sh` | 137 | e2e test | e2e scenario: minimal_install_contract | manual semantic | reviewed | — |
 | `tests/e2e/minisign_bootstrap_allow_unverified.sh` | 83 | e2e test | e2e scenario: minisign_bootstrap_allow_unverified | manual semantic | reviewed | — |
 | `tests/e2e/minisign_fail_cleans_temp.sh` | 129 | e2e test | e2e scenario: minisign_fail_cleans_temp | manual semantic | reviewed | — |
-| `tests/e2e/nightly_smoke_install_add_update_uninstall.sh` | 271 | e2e test | e2e scenario: nightly_smoke_install_add_update_uninstall | manual semantic | reviewed | — |
+| `tests/e2e/nightly_smoke_install_add_update_uninstall.sh` | 411 | e2e test | e2e scenario: nightly_smoke_install_add_update_uninstall | manual semantic | reviewed | — |
 | `tests/e2e/os_matrix_smoke.sh` | 114 | e2e test | e2e scenario: os_matrix_smoke | manual semantic | reviewed | — |
 | `tests/lint.sh` | 177 | test helper | full lint entrypoint outside make | manual semantic | reviewed | — |
-| `xray-reality.sh` | 509 | runtime entrypoint | bootstrap wrapper and trusted module loader | manual semantic | reviewed | — |
+| `xray-reality.sh` | 551 | runtime entrypoint | bootstrap wrapper and trusted module loader | manual semantic | reviewed | — |
+| `.github/ISSUE_TEMPLATE/bug_report.yml` | 96 | repo meta | bug-report issue template | contract consistency | reviewed | new public hygiene template for reproducible bug reports |
+| `.github/ISSUE_TEMPLATE/config.yml` | 9 | repo meta | issue template chooser config | contract consistency | reviewed | disables blank issues and links users toward discussions/docs |
+| `.github/ISSUE_TEMPLATE/feature_request.yml` | 41 | repo meta | feature-request issue template | contract consistency | reviewed | new public hygiene template for scoped proposals |
+| `.github/ISSUE_TEMPLATE/support_request.yml` | 63 | repo meta | support-request issue template | contract consistency | reviewed | new public hygiene template for operator/support cases |
+| `.github/PULL_REQUEST_TEMPLATE.md` | 21 | doc | pull request template | contract consistency | reviewed | new public hygiene template for contribution quality |
+| `modules/lib/downloads.sh` | 219 | runtime module | allowlisted download and mirror helpers | manual semantic | reviewed | extracted from `lib.sh` to narrow bootstrap/download responsibility |
+| `modules/lib/runtime_inputs.sh` | 957 | runtime module | runtime env/config loading and strict range normalization helpers | manual semantic | reviewed | extracted from `lib.sh` to narrow runtime input handling |
+| `modules/lib/system_runtime.sh` | 139 | runtime module | systemd/listening/runtime inspection helpers | manual semantic | reviewed | extracted from `lib.sh` to narrow runtime/system helpers |
+| `modules/lib/ui_logging.sh` | 591 | runtime module | log rendering, progress, tty-safe output, and logging backend helpers | manual semantic | reviewed | extracted from `lib.sh` to narrow orchestration ui/logging |
+| `scripts/lab/generate-vm-proof-pack.sh` | 194 | lab script | sanitized vm proof-pack generator | manual semantic | reviewed | packages vm-lab lifecycle evidence without shipping secrets |
 
-## current audit-level findings referenced by matrix
+## current audit-level watch items referenced by matrix
 
-- `f-003` — core root entrypoints remain large enough to raise maintainability and refactor risk, though `config.sh`, `service.sh`, and `install.sh` were already reduced by focused module extraction.
+- `w-001` — planner/data inputs still span catalog + tiers + side maps.
+- `w-002` — `config.sh`, `modules/lib/runtime_inputs.sh`, and `modules/config/domain_planner.sh` remain broad enough to watch as future growth hotspots.

@@ -29,6 +29,10 @@ REQUIRED_MODULES=(
     modules/lib/firewall.sh
     modules/lib/lifecycle.sh
     modules/lib/common_utils.sh
+    modules/lib/ui_logging.sh
+    modules/lib/system_runtime.sh
+    modules/lib/downloads.sh
+    modules/lib/runtime_inputs.sh
     modules/lib/runtime_reuse.sh
     modules/lib/domain_sources.sh
     modules/config/domain_planner.sh
@@ -212,6 +216,43 @@ has_forwarded_arg() {
         fi
     done
     return 1
+}
+
+wrapper_requested_action() {
+    local arg
+    for arg in "${FORWARD_ARGS[@]}"; do
+        case "$arg" in
+            install | add-clients | add-keys | update | repair | migrate-stealth | rollback | uninstall | status | logs | diagnose | check-update)
+                printf '%s\n' "$arg"
+                return 0
+                ;;
+            --)
+                break
+                ;;
+            *) ;;
+        esac
+    done
+    return 1
+}
+
+wrapper_is_mutating_action() {
+    case "${1:-}" in
+        install | add-clients | add-keys | update | repair | migrate-stealth | rollback | uninstall)
+            return 0
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+}
+
+print_bootstrap_pin_warning() {
+    local action="${1:-}"
+    if wrapper_is_mutating_action "$action"; then
+        echo "WARN: bootstrap source is not pinned for mutating action '$action'; prefer XRAY_REPO_COMMIT=<full_commit_sha> on real servers" >&2
+        return 0
+    fi
+    echo "WARN: bootstrap source is not pinned; set XRAY_REPO_COMMIT (or XRAY_BOOTSTRAP_AUTO_PIN=true) to harden install source" >&2
 }
 
 require_safe_repo_url() {
@@ -471,7 +512,8 @@ if [[ -z "$LIB_PATH" ]] || { [[ -z "$SCRIPT_DIR" || ! -f "$SCRIPT_DIR/config.sh"
     if [[ -n "$REPO_COMMIT" ]]; then
         verify_pinned_commit "$INSTALL_DIR" "$REPO_COMMIT"
     else
-        echo "WARN: bootstrap source is not pinned; set XRAY_REPO_COMMIT (or XRAY_BOOTSTRAP_AUTO_PIN=true) to harden install source" >&2
+        requested_action="$(wrapper_requested_action || true)"
+        print_bootstrap_pin_warning "$requested_action"
     fi
     SCRIPT_DIR="$INSTALL_DIR"
     LIB_PATH="$INSTALL_DIR/lib.sh"

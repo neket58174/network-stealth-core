@@ -43,7 +43,7 @@ while IFS=: read -r file line text; do
     echo "docs command contract fail: unresolved xray-reality command at ${file}:${line}" >&2
     echo "  ${text}" >&2
     fail=1
-done < <(search_docs_regex '(^|[[:space:]`])(sudo[[:space:]]+)?bash[[:space:]].*xray-reality\.sh')
+done < <(search_docs_regex '(^|[[:space:]`])(sudo[[:space:]]+)?([A-Za-z_][A-Za-z0-9_]*=[^[:space:]]+[[:space:]]+)*bash[[:space:]].*xray-reality\.sh')
 
 declare -A make_targets=()
 while IFS= read -r target; do
@@ -59,6 +59,31 @@ while IFS=: read -r file line text; do
         fi
     done < <(grep -oE 'make[[:space:]]+[A-Za-z0-9_.-]+' <<< "$text" | awk '{print $2}')
 done < <(search_docs_regex 'make[[:space:]]+[A-Za-z0-9_.-]+')
+
+if ((fail != 0)); then
+    exit 1
+fi
+
+check_pinned_bootstrap_order() {
+    local file="$1"
+    local pinned_line floating_line
+    pinned_line="$(grep -n 'XRAY_REPO_COMMIT=<full_commit_sha>' "$file" | head -n1 | cut -d: -f1 || true)"
+    floating_line="$(grep -n '^sudo bash /tmp/xray-reality.sh install$' "$file" | head -n1 | cut -d: -f1 || true)"
+
+    if [[ -z "$pinned_line" || -z "$floating_line" ]]; then
+        echo "docs command contract fail: missing bootstrap examples in ${file}" >&2
+        fail=1
+        return 0
+    fi
+
+    if ((pinned_line > floating_line)); then
+        echo "docs command contract fail: pinned bootstrap must appear before floating bootstrap in ${file}" >&2
+        fail=1
+    fi
+}
+
+check_pinned_bootstrap_order README.md
+check_pinned_bootstrap_order README.ru.md
 
 if ((fail != 0)); then
     exit 1

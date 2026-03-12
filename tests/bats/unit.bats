@@ -1685,9 +1685,9 @@ EOF
 
 @test "bounded restart helper is centralized and reused across flows" {
     run bash -eo pipefail -c '
-    grep -q '\''systemctl_restart_xray_bounded()'\'' ./lib.sh
-    grep -q '\''XRAY_SYSTEMCTL_RESTART_TIMEOUT'\'' ./lib.sh
-    grep -q '\''timeout --signal=TERM --kill-after=15s'\'' ./lib.sh
+    grep -q '\''systemctl_restart_xray_bounded()'\'' ./modules/lib/system_runtime.sh
+    grep -q '\''XRAY_SYSTEMCTL_RESTART_TIMEOUT'\'' ./modules/lib/system_runtime.sh
+    grep -q '\''timeout --signal=TERM --kill-after=15s'\'' ./modules/lib/system_runtime.sh
     grep -q '\''if ! systemctl_restart_xray_bounded restart_err; then'\'' ./modules/service/runtime.sh
     grep -q '\''if ! systemctl_restart_xray_bounded; then'\'' ./modules/config/add_clients.sh
     grep -q '\''if systemctl_restart_xray_bounded; then'\'' ./modules/lib/lifecycle.sh
@@ -1701,11 +1701,11 @@ EOF
 
 @test "common bounded systemctl helper is used for daemon-reload and timers" {
     run bash -eo pipefail -c '
-    grep -Fq '\''systemctl_run_bounded()'\'' ./lib.sh
-    grep -Fq '\''if [[ $# -ge 2 && "$1" == "--err-var" ]]; then'\'' ./lib.sh
-    grep -Fq '\''printf -v "$out_err_var"'\'' ./lib.sh
-    grep -Fq '\''XRAY_SYSTEMCTL_OP_TIMEOUT'\'' ./lib.sh
-    grep -Fq '\''timeout --signal=TERM --kill-after=10s'\'' ./lib.sh
+    grep -Fq '\''systemctl_run_bounded()'\'' ./modules/lib/system_runtime.sh
+    grep -Fq '\''if [[ $# -ge 2 && "$1" == "--err-var" ]]; then'\'' ./modules/lib/system_runtime.sh
+    grep -Fq '\''printf -v "$out_err_var"'\'' ./modules/lib/system_runtime.sh
+    grep -Fq '\''XRAY_SYSTEMCTL_OP_TIMEOUT'\'' ./modules/lib/system_runtime.sh
+    grep -Fq '\''timeout --signal=TERM --kill-after=10s'\'' ./modules/lib/system_runtime.sh
     grep -Fq '\''systemctl_run_bounded --err-var daemon_reload_err daemon-reload'\'' ./modules/service/runtime.sh
     grep -Fq '\''systemctl_run_bounded --err-var enable_err enable xray'\'' ./modules/service/runtime.sh
     grep -Fq '\''if systemctl_run_bounded daemon-reload; then'\'' ./modules/service/runtime.sh
@@ -3235,8 +3235,8 @@ EOF
 
 @test "systemd_running disables service management in isolated root contexts" {
     run bash -eo pipefail -c '
-    grep -q '\''running_in_isolated_root_context'\'' ./lib.sh
-    grep -q '\''/proc/1/root/'\'' ./lib.sh
+    grep -q '\''running_in_isolated_root_context'\'' ./modules/lib/system_runtime.sh
+    grep -q '\''/proc/1/root/'\'' ./modules/lib/system_runtime.sh
     echo "ok"
   '
     [ "$status" -eq 0 ]
@@ -3407,6 +3407,22 @@ EOF
     [ "$output" = "ok" ]
 }
 
+@test "docs command checker enforces pinned bootstrap before floating bootstrap" {
+    run bash -eo pipefail -c '
+    grep -q '\''check_pinned_bootstrap_order README.md'\'' ./scripts/check-docs-commands.sh
+    grep -q '\''check_pinned_bootstrap_order README.ru.md'\'' ./scripts/check-docs-commands.sh
+    pinned_en="$(grep -n '\''XRAY_REPO_COMMIT=<full_commit_sha>'\'' ./README.md | head -n1 | cut -d: -f1)"
+    floating_en="$(grep -n '\''^sudo bash /tmp/xray-reality.sh install$'\'' ./README.md | head -n1 | cut -d: -f1)"
+    pinned_ru="$(grep -n '\''XRAY_REPO_COMMIT=<full_commit_sha>'\'' ./README.ru.md | head -n1 | cut -d: -f1)"
+    floating_ru="$(grep -n '\''^sudo bash /tmp/xray-reality.sh install$'\'' ./README.ru.md | head -n1 | cut -d: -f1)"
+    test -n "$pinned_en" -a -n "$floating_en" -a "$pinned_en" -lt "$floating_en"
+    test -n "$pinned_ru" -a -n "$floating_ru" -a "$pinned_ru" -lt "$floating_ru"
+    echo "ok"
+  '
+    [ "$status" -eq 0 ]
+    [ "$output" = "ok" ]
+}
+
 @test "user-facing docs do not embed vm helper commands" {
     run bash -eo pipefail -c '
     ! grep -R -n -E "nsc-vm-install-(latest|repo)" \
@@ -3434,6 +3450,7 @@ EOF
     grep -q "^lab-smoke:" ./Makefile
     grep -q "^vm-lab-prepare:" ./Makefile
     grep -q "^vm-lab-smoke:" ./Makefile
+    grep -q "^vm-proof-pack:" ./Makefile
     echo "ok"
   '
     [ "$status" -eq 0 ]
@@ -3469,6 +3486,102 @@ EOF
     grep -q '\''make lab-smoke'\'' ./.github/workflows/self-hosted-smoke.yml
     grep -q '\''make vm-lab-smoke'\'' ./.github/workflows/nightly-smoke.yml
     grep -q '\''make lab-smoke'\'' ./.github/workflows/nightly-smoke.yml
+    echo "ok"
+  '
+    [ "$status" -eq 0 ]
+    [ "$output" = "ok" ]
+}
+
+@test "vm proof-pack target and workflow artifact upload are wired" {
+    run bash -eo pipefail -c '
+    grep -q '\''bash scripts/lab/generate-vm-proof-pack.sh'\'' ./Makefile
+    grep -q '\''Generate vm proof-pack'\'' ./.github/workflows/self-hosted-smoke.yml
+    grep -q '\''Upload vm proof-pack'\'' ./.github/workflows/self-hosted-smoke.yml
+    grep -q '\''Generate vm proof-pack'\'' ./.github/workflows/nightly-smoke.yml
+    grep -q '\''Upload vm proof-pack'\'' ./.github/workflows/nightly-smoke.yml
+    grep -q '\''nightly-self-hosted-vm-proof-pack'\'' ./.github/workflows/nightly-smoke.yml
+    grep -q '\''self-hosted-vm-proof-pack'\'' ./.github/workflows/self-hosted-smoke.yml
+    echo "ok"
+  '
+    [ "$status" -eq 0 ]
+    [ "$output" = "ok" ]
+}
+
+@test "generate-vm-proof-pack builds sanitized bundle from latest vm run" {
+    run bash -eo pipefail -c '
+    set -euo pipefail
+    tmp="$(mktemp -d)"
+    trap "rm -rf \"$tmp\"" EXIT
+    ts="20260312T010203Z"
+    proof_src="$tmp/vm/artifacts/proof-$ts"
+    mkdir -p "$tmp/vm/workspace" "$tmp/vm/logs" "$proof_src"
+
+    cat > "$tmp/vm/workspace/latest-vm-run.env" << EOF
+LAB_VM_TIMESTAMP=$ts
+LAB_VM_PROOF_DIR=$proof_src
+LAB_VM_NAME=nsc-vm-2404
+LAB_VM_SSH_PORT=10022
+EOF
+
+    cat > "$proof_src/lifecycle.json" << EOF
+{"steps":[{"step":"install","status":"ok"}]}
+EOF
+    cat > "$proof_src/status-verbose.txt" << EOF
+vless://123e4567-e89b-12d3-a456-426614174000@test-host:443?pbk=secret&sid=beef
+EOF
+    cat > "$tmp/vm/logs/vm-smoke-$ts.log" << EOF
+raw log vless://123e4567-e89b-12d3-a456-426614174000@test-host:443?pbk=secret&sid=beef
+EOF
+    cat > "$tmp/vm/workspace/lab-vm-summary-$ts.json" << EOF
+{"timestamp":"$ts","vm_name":"nsc-vm-2404"}
+EOF
+
+    output="$(LAB_HOST_ROOT="$tmp" bash ./scripts/lab/generate-vm-proof-pack.sh)"
+    archive="$output"
+    manifest="$tmp/vm/proof-pack/$ts/manifest.json"
+    bundle_dir="$tmp/vm/proof-pack/$ts/bundle"
+    latest_env="$tmp/vm/workspace/latest-proof-pack.env"
+
+    test -f "$archive"
+    test -f "$manifest"
+    test -f "$latest_env"
+    test -f "$bundle_dir/logs/vm-smoke.log"
+    test -f "$bundle_dir/evidence/lifecycle.json"
+    grep -q "VLESS-REDACTED" "$bundle_dir/logs/vm-smoke.log"
+    ! grep -q "vless://" "$bundle_dir/logs/vm-smoke.log"
+    jq -e ".timestamp == \"$ts\"" "$manifest" > /dev/null
+    jq -e "any(.files[]; .path == \"logs/vm-smoke.log\")" "$manifest" > /dev/null
+    grep -q "LAB_VM_PROOF_PACK_TAR=$archive" "$latest_env"
+    echo "ok"
+  '
+    [ "$status" -eq 0 ]
+    [ "$output" = "ok" ]
+}
+
+@test "public repo hygiene templates exist" {
+    run bash -eo pipefail -c '
+    test -f ./.github/ISSUE_TEMPLATE/bug_report.yml
+    test -f ./.github/ISSUE_TEMPLATE/support_request.yml
+    test -f ./.github/ISSUE_TEMPLATE/feature_request.yml
+    test -f ./.github/ISSUE_TEMPLATE/config.yml
+    test -f ./.github/PULL_REQUEST_TEMPLATE.md
+    grep -q '\''proof-pack or lab evidence'\'' ./.github/PULL_REQUEST_TEMPLATE.md
+    echo "ok"
+  '
+    [ "$status" -eq 0 ]
+    [ "$output" = "ok" ]
+}
+
+@test "lib sources extracted ui runtime download and input modules" {
+    run bash -eo pipefail -c '
+    grep -q '\''LIB_UI_LOGGING_MODULE='\'' ./lib.sh
+    grep -q '\''LIB_SYSTEM_RUNTIME_MODULE='\'' ./lib.sh
+    grep -q '\''LIB_DOWNLOADS_MODULE='\'' ./lib.sh
+    grep -q '\''LIB_RUNTIME_INPUTS_MODULE='\'' ./lib.sh
+    grep -q '\''source "$LIB_UI_LOGGING_MODULE"'\'' ./lib.sh
+    grep -q '\''source "$LIB_SYSTEM_RUNTIME_MODULE"'\'' ./lib.sh
+    grep -q '\''source "$LIB_DOWNLOADS_MODULE"'\'' ./lib.sh
+    grep -q '\''source "$LIB_RUNTIME_INPUTS_MODULE"'\'' ./lib.sh
     echo "ok"
   '
     [ "$status" -eq 0 ]

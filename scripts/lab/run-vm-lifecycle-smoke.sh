@@ -161,6 +161,45 @@ collect_guest_logs() {
         'sudo journalctl --no-pager -u xray-health 2>/dev/null || true' > "$(lab_vm_logs_dir)/journal-xray-health-${timestamp}.log" || true
 }
 
+collect_guest_proof_artifacts() {
+    local timestamp="$1"
+    local ssh_key host_key_file guest_user ssh_port
+    ssh_key="$(lab_vm_ssh_key_path)"
+    host_key_file="$(lab_vm_host_key_file)"
+    guest_user="$(lab_vm_guest_user)"
+    ssh_port="$(lab_vm_ssh_port)"
+
+    local proof_dir
+    proof_dir="$(lab_vm_artifacts_dir)/proof-${timestamp}"
+    rm -rf "$proof_dir"
+    mkdir -p "$proof_dir"
+
+    if ! ssh \
+        -i "$ssh_key" \
+        -o UserKnownHostsFile="$host_key_file" \
+        -o StrictHostKeyChecking=accept-new \
+        -o LogLevel=ERROR \
+        -p "$ssh_port" \
+        "${guest_user}@127.0.0.1" \
+        'test -d ~/vm-proof'; then
+        rm -rf "$proof_dir"
+        return 0
+    fi
+
+    scp -q -r \
+        -i "$ssh_key" \
+        -o UserKnownHostsFile="$host_key_file" \
+        -o StrictHostKeyChecking=accept-new \
+        -o LogLevel=ERROR \
+        -P "$ssh_port" \
+        "${guest_user}@127.0.0.1:vm-proof/." \
+        "$proof_dir/" || true
+
+    if [[ -z "$(find "$proof_dir" -mindepth 1 -print -quit 2> /dev/null || true)" ]]; then
+        rm -rf "$proof_dir"
+    fi
+}
+
 lab_prepare_dirs
 lab_prepare_vm_dirs
 bash "$SCRIPT_DIR/prepare-vm-smoke.sh"
@@ -266,6 +305,12 @@ smoke_status=$?
 set -e
 
 collect_guest_logs "$timestamp"
+collect_guest_proof_artifacts "$timestamp"
+
+proof_dir="$(lab_vm_artifacts_dir)/proof-${timestamp}"
+if [[ ! -d "$proof_dir" ]]; then
+    proof_dir=""
+fi
 
 cat > "$summary_file" << EOF
 LAB_VM_TIMESTAMP=${timestamp}
@@ -275,6 +320,7 @@ LAB_VM_GUEST_USER=${guest_user}
 LAB_VM_GUEST_IP=$(lab_vm_guest_ipv4)
 LAB_VM_SMOKE_STATUS=${smoke_status}
 LAB_VM_LOG=${run_log}
+LAB_VM_PROOF_DIR=${proof_dir}
 EOF
 
 result_json="$(bash "$SCRIPT_DIR/collect-vm-artifacts.sh" --timestamp "$timestamp" --guest-ip "$(lab_vm_guest_ipv4)" --smoke-status "$smoke_status")"
@@ -292,6 +338,7 @@ ssh: ${guest_user}@127.0.0.1:${ssh_port}
 logs: $(lab_vm_logs_dir)
 artifacts: $(lab_vm_artifacts_dir)
 summary: ${result_json}
+proof dir: ${proof_dir:-none}
 guest tips:
   bash scripts/lab/enter-vm-smoke.sh
   nsc-vm-install-latest --num-configs 3

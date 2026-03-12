@@ -185,6 +185,7 @@ main() {
         E2E_DOMAIN_CHECK="${E2E_DOMAIN_CHECK:-false}"
         E2E_SKIP_REALITY_CHECK="${E2E_SKIP_REALITY_CHECK:-false}"
         E2E_ALLOW_INSECURE_SHA256="${E2E_ALLOW_INSECURE_SHA256:-true}"
+        E2E_PROOF_DIR="${HOME}/vm-proof"
         XRAY_CUSTOM_DOMAINS="${XRAY_CUSTOM_DOMAINS:-vk.com,yoomoney.ru,cdek.ru}"
     )
 

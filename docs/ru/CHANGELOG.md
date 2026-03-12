@@ -11,6 +11,11 @@
 
 - интерактивный `install` теперь всегда требует явный ввод числа конфигов на обычном пути; `--num-configs` остаётся scripted-override
 - ручной потолок для `global-50` поднят до `15`, а non-interactive auto default оставлен на `5`
+- pinned bootstrap по commit теперь вынесен в visually first-class quick start для реальных серверов, а wrapper печатает более жёсткую подсказку при floating mutating bootstrap
+- `lib.sh` дополнительно декомпозирован на focused-модули ui/logging, system-runtime, downloads и runtime-inputs
+- добавлен санитизированный `make vm-proof-pack` / `scripts/lab/generate-vm-proof-pack.sh` для evidence bundle из vm-lab lifecycle run
+- добавлены public issue templates и pull request template для более чистого bug/support/feature intake
+- pinned github actions обновлены до node24-safe upstream shas, а self-hosted/nightly vm-lab workflow теперь выгружает proof-pack artifacts
 
 ## [7.1.0] - 2026-03-07
 

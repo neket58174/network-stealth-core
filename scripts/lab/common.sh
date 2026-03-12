@@ -67,6 +67,14 @@ lab_vm_workspace_dir() {
     printf '%s/workspace\n' "$(lab_vm_root_dir)"
 }
 
+lab_vm_proof_dir() {
+    printf '%s/proof-pack\n' "$(lab_vm_root_dir)"
+}
+
+lab_vm_latest_proof_env() {
+    printf '%s/latest-proof-pack.env\n' "$(lab_vm_workspace_dir)"
+}
+
 lab_container_name() {
     printf '%s\n' "${LAB_CONTAINER_NAME:-nsc-lab-2404}"
 }
@@ -154,7 +162,8 @@ lab_prepare_vm_dirs() {
         "$(lab_vm_state_dir)" \
         "$(lab_vm_logs_dir)" \
         "$(lab_vm_artifacts_dir)" \
-        "$(lab_vm_workspace_dir)"
+        "$(lab_vm_workspace_dir)" \
+        "$(lab_vm_proof_dir)"
 }
 
 lab_detect_runtime() {
@@ -243,6 +252,7 @@ LAB_VM_STATE_DIR=$(lab_vm_state_dir)
 LAB_VM_LOGS_DIR=$(lab_vm_logs_dir)
 LAB_VM_ARTIFACTS_DIR=$(lab_vm_artifacts_dir)
 LAB_VM_WORKSPACE_DIR=$(lab_vm_workspace_dir)
+LAB_VM_PROOF_DIR=$(lab_vm_proof_dir)
 LAB_VM_NAME=$(lab_vm_name)
 LAB_VM_GUEST_USER=$(lab_vm_guest_user)
 LAB_VM_SSH_PORT=$(lab_vm_ssh_port)
@@ -260,6 +270,7 @@ LAB_VM_PID_FILE=$(lab_vm_pid_file)
 LAB_VM_SERIAL_LOG=$(lab_vm_serial_log)
 LAB_VM_HOST_KEY_FILE=$(lab_vm_host_key_file)
 LAB_VM_SSH_KEY_PATH=$(lab_vm_ssh_key_path)
+LAB_VM_LATEST_PROOF_ENV=$(lab_vm_latest_proof_env)
 LAB_REPO_ROOT=${LAB_ROOT_DIR}
 EOF
 }

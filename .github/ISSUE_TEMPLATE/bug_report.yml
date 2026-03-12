@@ -1,0 +1,96 @@
+name: bug report
+description: report a reproducible functional bug or contract mismatch
+title: "[bug] "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        report reproducible runtime or contract bugs here.
+        redact secrets before posting: no private keys, full client links, raw xray client json, or identifying private node data.
+
+  - type: input
+    id: version
+    attributes:
+      label: version or commit
+      description: release version or exact repo commit
+      placeholder: v7.1.0 / ee34247 / ubuntu@<sha>
+    validations:
+      required: true
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: platform
+      description: supported and ci-validated platform is ubuntu 24.04
+      options:
+        - ubuntu 24.04
+        - other linux
+        - docker/ghcr
+        - vm-lab
+        - host-safe lab smoke
+    validations:
+      required: true
+
+  - type: dropdown
+    id: install_path
+    attributes:
+      label: install path
+      options:
+        - fresh strongest-direct install
+        - migrate-stealth from legacy/pre-v7
+        - update/repair on an existing managed node
+        - vm-lab guest helper path
+        - host-safe container lab path
+    validations:
+      required: true
+
+  - type: input
+    id: exact_command
+    attributes:
+      label: exact command
+      placeholder: sudo xray-reality.sh install --non-interactive --yes
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: expected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: actual behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: reproduction steps
+      placeholder: |
+        1. ...
+        2. ...
+        3. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: redacted diagnostics
+      description: include `status --verbose`, `diagnose`, and relevant self-check or measurement output
+      render: shell
+    validations:
+      required: true
+
+  - type: textarea
+    id: proof_pack
+    attributes:
+      label: proof-pack or lab evidence (optional)
+      description: link or summarize `make vm-proof-pack` output if this came from vm-lab
+

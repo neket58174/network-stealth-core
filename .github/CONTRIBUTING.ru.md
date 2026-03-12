@@ -63,6 +63,11 @@ git fetch upstream
 | `tests/e2e/` | lifecycle и migration scenarios |
 | `docs/` | двуязычная документация |
 
+github issue и pull-request templates лежат здесь:
+
+- `.github/ISSUE_TEMPLATE/`
+- `.github/PULL_REQUEST_TEMPLATE.md`
+
 ## обязательные локальные проверки
 
 перед push:
@@ -87,6 +92,10 @@ pwsh ./scripts/windows/run-validation.ps1 -SkipRemote
 документация по smoke-проверкам для сопровождающих и busy-host lifecycle лежит здесь:
 
 - `docs/ru/MAINTAINER-LAB.md`
+
+если lifecycle bug воспроизводится через vm-lab, приложи ещё и:
+
+- `make vm-proof-pack`
 
 ## coding standards
 

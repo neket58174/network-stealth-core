@@ -37,6 +37,7 @@ bash scripts/lab/collect-container-artifacts.sh
 ```bash
 make vm-lab-prepare
 make vm-lab-smoke
+make vm-proof-pack
 ```
 
 или запускай скрипты напрямую:
@@ -45,6 +46,7 @@ make vm-lab-smoke
 bash scripts/lab/prepare-vm-smoke.sh
 bash scripts/lab/run-vm-lifecycle-smoke.sh
 bash scripts/lab/enter-vm-smoke.sh
+bash scripts/lab/generate-vm-proof-pack.sh
 ```
 
 этот сценарий:
@@ -56,6 +58,7 @@ bash scripts/lab/enter-vm-smoke.sh
 - копирует текущий репозиторий в гостя
 - гоняет там полный nightly lifecycle smoke: `install`, `add-clients`, `repair`, `update`, `rollback`, `status`, `uninstall`
 - возвращает guest-логи обратно в vm-lab log directory
+- копирует обратно в vm-lab artifacts directory санитизированный proof source bundle
 
 дефолтные guest-side значения:
 
@@ -87,9 +90,39 @@ raw `curl ... xray-reality.sh` install внутри гостя не исполь
 - `nsc-vm-install-latest` — скачивает latest bootstrap script и запускает install с guest ipv4 в `server_ip`
 - `nsc-vm-install-repo` — запускает repo-local script из `~/repo` с guest ipv4 в `server_ip`
 
+## генерация proof-pack
+
+после успешного vm-lab lifecycle run собери санитизированный proof bundle:
+
+```bash
+make vm-proof-pack
+```
+
+или:
+
+```bash
+bash scripts/lab/generate-vm-proof-pack.sh
+```
+
+в proof-pack входят:
+
+- lifecycle verdicts и переходы версий
+- санитизированные `status --verbose` / `diagnose`
+- self-check и measurement summaries, если они есть
+- hash inventory generated artifacts без копирования чувствительного client material
+- санитизированные vm-lab логи
+
+proof-pack намеренно не включает:
+
+- private keys
+- raw client json
+- live `vless://` links
+- переиспользуемые `uuid`, `short_id` или `public_key`
+
 ## какой слой когда использовать
 
 - `make ci-fast` и `make ci-full` — локальная валидация репозитория
 - `make lab-smoke` — безопасный первый smoke на занятом хосте
 - `make vm-lab-smoke` — полный prod-like lifecycle на том же занятом хосте
+- `make vm-proof-pack` — shareable maintainer/operator evidence bundle из последнего vm-lab run
 - canary bundle exports — проверка с другой машины или другой сети

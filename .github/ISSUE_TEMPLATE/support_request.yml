@@ -1,0 +1,63 @@
+name: support request
+description: ask for operator help with a redacted support bundle
+title: "[support] "
+labels:
+  - support
+body:
+  - type: markdown
+    attributes:
+      value: |
+        use this for operator help, not private vulnerability disclosure.
+        if your question is broad or design-oriented, prefer discussions first.
+
+  - type: dropdown
+    id: node_state
+    attributes:
+      label: node state
+      options:
+        - fresh strongest-direct install
+        - migrated from legacy/pre-v7
+        - long-running managed node
+        - vm-lab guest
+        - host-safe lab smoke
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: version or commit
+      placeholder: v7.1.0 / ubuntu@<sha>
+    validations:
+      required: true
+
+  - type: input
+    id: exact_command
+    attributes:
+      label: exact command or action
+      placeholder: sudo xray-reality.sh repair --non-interactive --yes
+    validations:
+      required: true
+
+  - type: textarea
+    id: question
+    attributes:
+      label: what do you need help with
+    validations:
+      required: true
+
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: redacted diagnostics
+      description: include `status --verbose`, `diagnose`, relevant logs, and field-measurement context if available
+      render: shell
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: evidence bundle (optional)
+      description: include a proof-pack manifest path, canary summary, or vm-lab artifact summary when available
+

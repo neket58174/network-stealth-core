@@ -1,39 +1,54 @@
 # audit findings backlog
 
-date: 2026-03-11
-baseline snapshot: `ubuntu` working tree after service runtime extraction
+date: 2026-03-12
+baseline snapshot: `ubuntu` working tree after maturity hardening wave
 
-## prioritized open items
+## active backlog
 
-### p3
+there is no confirmed open `p0`–`p3` runtime or release-blocking finding in this audit pass.
 
-#### f-003 — continue decomposing oversized root entrypoints
+## watch items
+
+these are real future maintenance costs, but they are **not** proven defects in the current baseline:
+
+### w-001 — planner data contract is still multi-source
+
+- type: maintainability / design cost
+- files:
+  - `data/domains/catalog.json`
+  - `domains.tiers`
+  - `sni_pools.map`
+  - `transport_endpoints.map`
+  - `modules/lib/domain_sources.sh`
+  - `modules/config/domain_planner.sh`
+- problem:
+  - active planning still combines the canonical catalog with legacy side maps and tier sources.
+  - this is manageable today, but it keeps planner reasoning and future cleanup more expensive than necessary.
+- recommended direction:
+  - keep shrinking active planner reads toward the catalog-first contract.
+  - preserve side maps only where migration or explicit compatibility still needs them.
+
+### w-002 — a few focused modules are still broad enough to deserve future decomposition if scope grows
 
 - type: maintainability
 - files:
-  - `lib.sh`
   - `config.sh`
+  - `modules/lib/runtime_inputs.sh`
+  - `modules/config/domain_planner.sh`
 - problem:
-  - core orchestration files are still large and blend multiple responsibilities.
-  - `config.sh`, `service.sh`, and `install.sh` were already reduced by focused module extraction, but `lib.sh` remains the biggest orchestration hotspot and `config.sh` still carries a broad apply/build surface.
-- recommended fix direction:
-  - keep moving behavior into modules by subsystem, not by arbitrary helper dumping.
-  - prefer smaller action-focused files with explicit contracts.
-- acceptance:
-  - root files mostly dispatch and compose, while behavior lives in focused modules.
+  - the root-script sprawl problem was materially reduced, but a few remaining files still carry broad contracts and could become the next hotspots if new product scope is added carelessly.
+- recommended direction:
+  - keep new behavior out of the root entrypoints.
+  - prefer subsystem-focused extractions before these files start growing sharply again.
 
-## not confirmed as open bugs in this pass
-
-- no p0/p1 runtime defect was proven
-- no active dead runtime function was proven
-- no release-blocking security regression was found in the audited baseline
-
-## resolved since the older audit baseline
+## resolved in this wave
 
 these older items are no longer open:
 
-- xhttp planner dependency on a grpc-named active data contract
-- workflow lint coverage mismatch between `make lint` and `tests/lint.sh`
-- hardening `xray_data_dir` trust boundary
-- bashate policy mismatch between `make lint` and `tests/lint.sh`
-- dead-function checker false negatives from comment/string matches
+- `f-001` — workflow lint coverage mismatch between `make lint` and `tests/lint.sh`
+- `f-002` — active xhttp planner dependency on grpc-named seed contracts
+- `f-003` — oversized root entrypoint sprawl; this wave cut `lib.sh` below 1000 lines and moved orchestration behavior into focused modules
+- pinned bootstrap being visually secondary to floating bootstrap in user docs
+- missing public issue/pr intake templates
+- missing reusable vm-lab proof-pack artifact flow
+- workflow maintenance noise from node 20 deprecation warnings in pinned actions

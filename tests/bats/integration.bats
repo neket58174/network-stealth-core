@@ -169,6 +169,65 @@
     [[ "$output" == *"XRAY_BOOTSTRAP_REQUIRE_PIN=true"* ]]
 }
 
+@test "wrapper warns when mutating action bootstrap is not pinned" {
+    run bash -eo pipefail -c '
+    set -euo pipefail
+    tmp="$(mktemp -d)"
+    cp ./xray-reality.sh "$tmp/xray-reality.sh"
+    chmod +x "$tmp/xray-reality.sh"
+    mkdir -p "$tmp/mockbin"
+
+    cat > "$tmp/mockbin/git" << '"'"'EOF'"'"'
+#!/usr/bin/env bash
+set -euo pipefail
+if [[ "${1:-}" == "clone" ]]; then
+    target="${@: -1}"
+    mkdir -p "$target"
+    cat > "$target/lib.sh" << '"'"'LIBEOF'"'"'
+#!/usr/bin/env bash
+MODULE_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+main() { echo "wrapper-ok"; }
+LIBEOF
+    chmod +x "$target/lib.sh"
+    : > "$target/install.sh"
+    : > "$target/config.sh"
+    : > "$target/service.sh"
+    : > "$target/health.sh"
+    : > "$target/export.sh"
+    mkdir -p "$target/modules/lib" "$target/modules/config" "$target/modules/install"
+    : > "$target/modules/lib/validation.sh"
+    : > "$target/modules/lib/common_utils.sh"
+    : > "$target/modules/lib/ui_logging.sh"
+    : > "$target/modules/lib/system_runtime.sh"
+    : > "$target/modules/lib/downloads.sh"
+    : > "$target/modules/lib/runtime_inputs.sh"
+    : > "$target/modules/lib/globals_contract.sh"
+    : > "$target/modules/lib/firewall.sh"
+    : > "$target/modules/lib/lifecycle.sh"
+    : > "$target/modules/lib/runtime_reuse.sh"
+    : > "$target/modules/lib/domain_sources.sh"
+    : > "$target/modules/config/domain_planner.sh"
+    : > "$target/modules/config/add_clients.sh"
+    : > "$target/modules/config/shared_helpers.sh"
+    : > "$target/modules/install/bootstrap.sh"
+    exit 0
+fi
+exit 0
+EOF
+    chmod +x "$tmp/mockbin/git"
+
+    PATH="$tmp/mockbin:$PATH" \
+        XRAY_BOOTSTRAP_REQUIRE_PIN=false \
+        XRAY_BOOTSTRAP_AUTO_PIN=false \
+        bash "$tmp/xray-reality.sh" install > "$tmp/out.txt" 2> "$tmp/err.txt"
+
+    grep -q "wrapper-ok" "$tmp/out.txt"
+    grep -q "mutating action '\''install'\''" "$tmp/err.txt"
+    grep -q "XRAY_REPO_COMMIT=<full_commit_sha>" "$tmp/err.txt"
+  '
+    [ "$status" -eq 0 ]
+}
+
 @test "wrapper ignores untrusted MODULE_DIR env and sources modules from trusted paths" {
     run bash -eo pipefail -c '
     set -euo pipefail
@@ -200,6 +259,10 @@ LIBEOF
     mkdir -p "$target/modules/lib" "$target/modules/config" "$target/modules/install"
     : > "$target/modules/lib/validation.sh"
     : > "$target/modules/lib/common_utils.sh"
+    : > "$target/modules/lib/ui_logging.sh"
+    : > "$target/modules/lib/system_runtime.sh"
+    : > "$target/modules/lib/downloads.sh"
+    : > "$target/modules/lib/runtime_inputs.sh"
     : > "$target/modules/lib/globals_contract.sh"
     : > "$target/modules/lib/firewall.sh"
     : > "$target/modules/lib/lifecycle.sh"
@@ -268,6 +331,10 @@ EOF
     : > "$custom/export.sh"
     : > "$custom/modules/lib/validation.sh"
     : > "$custom/modules/lib/common_utils.sh"
+    : > "$custom/modules/lib/ui_logging.sh"
+    : > "$custom/modules/lib/system_runtime.sh"
+    : > "$custom/modules/lib/downloads.sh"
+    : > "$custom/modules/lib/runtime_inputs.sh"
     : > "$custom/modules/lib/globals_contract.sh"
     : > "$custom/modules/lib/firewall.sh"
     : > "$custom/modules/lib/lifecycle.sh"
@@ -321,6 +388,10 @@ EOF
     : > "$custom/export.sh"
     : > "$custom/modules/lib/validation.sh"
     : > "$custom/modules/lib/common_utils.sh"
+    : > "$custom/modules/lib/ui_logging.sh"
+    : > "$custom/modules/lib/system_runtime.sh"
+    : > "$custom/modules/lib/downloads.sh"
+    : > "$custom/modules/lib/runtime_inputs.sh"
     : > "$custom/modules/lib/globals_contract.sh"
     : > "$custom/modules/lib/firewall.sh"
     : > "$custom/modules/lib/lifecycle.sh"
@@ -373,6 +444,10 @@ EOF
     : > "$tmp/export.sh"
     : > "$tmp/modules/lib/validation.sh"
     : > "$tmp/modules/lib/common_utils.sh"
+    : > "$tmp/modules/lib/ui_logging.sh"
+    : > "$tmp/modules/lib/system_runtime.sh"
+    : > "$tmp/modules/lib/downloads.sh"
+    : > "$tmp/modules/lib/runtime_inputs.sh"
     : > "$tmp/modules/lib/globals_contract.sh"
     : > "$tmp/modules/lib/firewall.sh"
     : > "$tmp/modules/lib/lifecycle.sh"
@@ -427,6 +502,10 @@ LIBEOF
     mkdir -p "$target/modules/lib" "$target/modules/config" "$target/modules/install"
     : > "$target/modules/lib/validation.sh"
     : > "$target/modules/lib/common_utils.sh"
+    : > "$target/modules/lib/ui_logging.sh"
+    : > "$target/modules/lib/system_runtime.sh"
+    : > "$target/modules/lib/downloads.sh"
+    : > "$target/modules/lib/runtime_inputs.sh"
     : > "$target/modules/lib/globals_contract.sh"
     : > "$target/modules/lib/firewall.sh"
     : > "$target/modules/lib/lifecycle.sh"
@@ -490,6 +569,10 @@ LIBEOF
     mkdir -p "$target/modules/lib" "$target/modules/config" "$target/modules/install"
     : > "$target/modules/lib/validation.sh"
     : > "$target/modules/lib/common_utils.sh"
+    : > "$target/modules/lib/ui_logging.sh"
+    : > "$target/modules/lib/system_runtime.sh"
+    : > "$target/modules/lib/downloads.sh"
+    : > "$target/modules/lib/runtime_inputs.sh"
     : > "$target/modules/lib/globals_contract.sh"
     : > "$target/modules/lib/firewall.sh"
     : > "$target/modules/lib/lifecycle.sh"
@@ -561,6 +644,10 @@ LIBEOF
     mkdir -p "$target/modules/lib" "$target/modules/config" "$target/modules/install"
     : > "$target/modules/lib/validation.sh"
     : > "$target/modules/lib/common_utils.sh"
+    : > "$target/modules/lib/ui_logging.sh"
+    : > "$target/modules/lib/system_runtime.sh"
+    : > "$target/modules/lib/downloads.sh"
+    : > "$target/modules/lib/runtime_inputs.sh"
     : > "$target/modules/lib/globals_contract.sh"
     : > "$target/modules/lib/firewall.sh"
     : > "$target/modules/lib/lifecycle.sh"
@@ -638,6 +725,10 @@ LIBEOF
     mkdir -p "$target/modules/lib" "$target/modules/config" "$target/modules/install"
     : > "$target/modules/lib/validation.sh"
     : > "$target/modules/lib/common_utils.sh"
+    : > "$target/modules/lib/ui_logging.sh"
+    : > "$target/modules/lib/system_runtime.sh"
+    : > "$target/modules/lib/downloads.sh"
+    : > "$target/modules/lib/runtime_inputs.sh"
     : > "$target/modules/lib/globals_contract.sh"
     : > "$target/modules/lib/firewall.sh"
     : > "$target/modules/lib/lifecycle.sh"
@@ -743,6 +834,10 @@ LIBEOF
     mkdir -p "$target/modules/lib" "$target/modules/config" "$target/modules/install"
     : > "$target/modules/lib/validation.sh"
     : > "$target/modules/lib/common_utils.sh"
+    : > "$target/modules/lib/ui_logging.sh"
+    : > "$target/modules/lib/system_runtime.sh"
+    : > "$target/modules/lib/downloads.sh"
+    : > "$target/modules/lib/runtime_inputs.sh"
     : > "$target/modules/lib/globals_contract.sh"
     : > "$target/modules/lib/firewall.sh"
     : > "$target/modules/lib/lifecycle.sh"
