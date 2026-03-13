@@ -15,7 +15,7 @@ these are real future maintenance costs, but they are **not** proven defects in 
 
 - type: maintainability
 - files:
-  - `modules/config/client_artifacts.sh`
+  - `modules/config/client_formats.sh`
   - `modules/lib/runtime_inputs.sh`
 - problem:
   - the root-script sprawl problem was materially reduced, and `config.sh` is now mostly orchestration; the remaining future maintenance risk sits in a couple of focused modules that could still bloat if new scope is piled onto them carelessly.

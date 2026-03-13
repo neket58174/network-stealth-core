@@ -142,6 +142,9 @@ raw xray json остаётся canonical artifact, потому что он бе
 | `modules/health/self_check.sh` | canonical engine post-action self-check |
 | `modules/health/measurements.sh` | агрегация field reports и promotion hints |
 | `modules/lib/policy.sh` | сериализация и загрузка managed policy |
+| `modules/config/client_artifacts.sh` | тонкий loader клиентских артефактов для focused-модулей formats и state |
+| `modules/config/client_formats.sh` | рендеринг client links/json/text, генерация raw-xray client export и server key file |
+| `modules/config/client_state.sh` | нормализация clients.json, готовность self-check и helper’ы пересборки артефактов |
 | `modules/config/domain_planner.sh` | выбор доменов и diversity-aware planning |
 | `modules/config/runtime_profiles.sh` | выделение портов, генерация runtime-профилей и ключей |
 | `modules/config/runtime_contract.sh` | генерация xray config-contract, feature gates, mux setup и helper’ы для vless encryption |

@@ -71,7 +71,9 @@ baseline snapshot: `ubuntu` working tree after maturity hardening wave
 | file | role | current verdict |
 |---|---|---|
 | `modules/config/add_clients.sh` | `add-clients` flow, append + artifact rebuild | works; rebuild-from-config behavior is correct |
-| `modules/config/client_artifacts.sh` | client artifact rendering, json normalization, rebuild, and self-check readiness | works; meaningfully narrows `config.sh` |
+| `modules/config/client_artifacts.sh` | thin client-artifact loader | works; keeps `config.sh` stable while focused artifact modules evolve underneath |
+| `modules/config/client_formats.sh` | client link/json/text rendering, raw-xray client export generation, and key-file output | works; isolates rendering/export concerns from rebuild/state behavior |
+| `modules/config/client_state.sh` | clients.json normalization, self-check readiness, public-key recovery, and artifact rebuild helpers | works; isolates artifact-state and rebuild semantics from rendering code |
 | `modules/config/domain_planner.sh` | domain selection, provider diversity, and plan assembly | works; active xhttp tiers are catalog-first and the planner no longer carries port/key/runtime-profile helpers |
 | `modules/config/runtime_apply.sh` | xray `-test` execution, atomic config apply, and environment snapshot persistence | works; meaningfully narrows `config.sh` and centralizes config-apply semantics |
 | `modules/config/runtime_contract.sh` | xray config contract generation, feature gates, mux setup, and vless encryption helpers | works; keeps contract generation and feature checks out of the root entrypoint |
@@ -161,5 +163,5 @@ that means:
 - public contract consistency: **good**
 - confirmed dead code: **none found in current active path**
 - biggest remaining watch items:
-  1. broad-but-contained focused modules such as `modules/config/client_artifacts.sh`
+  1. broad-but-contained focused modules such as `modules/config/client_formats.sh`
   2. intentionally narrow support matrix centered on ubuntu 24.04

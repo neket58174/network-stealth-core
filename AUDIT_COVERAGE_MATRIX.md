@@ -4,7 +4,7 @@ date: 2026-03-13
 repository: `neket371/network-stealth-core`
 branch: `ubuntu`
 baseline snapshot: `ubuntu` working tree after maturity hardening wave
-total repo-tracked files reviewed: **144**
+total repo-tracked files reviewed: **146**
 
 review depth meanings:
 - `manual semantic` — file behavior and contracts were traced manually.
@@ -26,15 +26,15 @@ review depth meanings:
 | `.github/workflows/release.yml` | 307 | workflow | tagged release workflow | contract consistency | reviewed | — |
 | `.github/workflows/self-hosted-smoke.yml` | 77 | workflow | self-hosted smoke workflow | contract consistency | reviewed | — |
 | `.markdownlint.json` | 11 | repo meta | markdown lint policy | inventory-only | reviewed | — |
-| `AUDIT_COVERAGE_MATRIX.md` | 163 | doc | audit inventory and review coverage matrix | contract consistency | reviewed | — |
+| `AUDIT_COVERAGE_MATRIX.md` | 165 | doc | audit inventory and review coverage matrix | contract consistency | reviewed | — |
 | `AUDIT_FINDINGS_BACKLOG.md` | 39 | doc | prioritized audit backlog | contract consistency | reviewed | — |
 | `AUDIT_REPORT_FULL.md` | 219 | doc | full audit narrative and findings | contract consistency | reviewed | — |
-| `AUDIT_RUNTIME_MAP.md` | 165 | doc | per-script runtime responsibility map | contract consistency | reviewed | — |
+| `AUDIT_RUNTIME_MAP.md` | 167 | doc | per-script runtime responsibility map | contract consistency | reviewed | — |
 | `config.sh` | 384 | runtime entrypoint | config orchestration over planner, runtime-contract, runtime-apply, and artifact modules | manual semantic | reviewed | now mainly composes focused config modules instead of carrying the heavy runtime/apply surface itself |
 | `data/domains/catalog.json` | 4618 | data contract | canonical domain metadata catalog | manual semantic | reviewed | active xhttp planner tiers now read catalog-first; side maps remain fallback/legacy-only |
 | `Dockerfile` | 50 | build/tooling | container packaging and smoke runtime image | manual semantic | reviewed | runtime bundle now ships neutral transport endpoint seed file |
-| `docs/en/ARCHITECTURE.md` | 159 | doc | english architecture doc | contract consistency | reviewed | — |
-| `docs/en/CHANGELOG.md` | 144 | doc | english changelog doc | contract consistency | reviewed | — |
+| `docs/en/ARCHITECTURE.md` | 162 | doc | english architecture doc | contract consistency | reviewed | — |
+| `docs/en/CHANGELOG.md` | 145 | doc | english changelog doc | contract consistency | reviewed | — |
 | `docs/en/COMMUNITY.md` | 56 | doc | english community doc | contract consistency | reviewed | — |
 | `docs/en/FAQ.md` | 109 | doc | english faq doc | contract consistency | reviewed | — |
 | `docs/en/GLOSSARY.md` | 82 | doc | english glossary doc | contract consistency | reviewed | — |
@@ -43,8 +43,8 @@ review depth meanings:
 | `docs/en/OPERATIONS.md` | 250 | doc | english operations doc | contract consistency | reviewed | — |
 | `docs/en/ROADMAP.md` | 35 | doc | english roadmap doc | contract consistency | reviewed | — |
 | `docs/en/TROUBLESHOOTING.md` | 126 | doc | english troubleshooting doc | contract consistency | reviewed | — |
-| `docs/ru/ARCHITECTURE.md` | 159 | doc | russian architecture doc | contract consistency | reviewed | — |
-| `docs/ru/CHANGELOG.md` | 131 | doc | russian changelog doc | contract consistency | reviewed | — |
+| `docs/ru/ARCHITECTURE.md` | 162 | doc | russian architecture doc | contract consistency | reviewed | — |
+| `docs/ru/CHANGELOG.md` | 132 | doc | russian changelog doc | contract consistency | reviewed | — |
 | `docs/ru/COMMUNITY.md` | 56 | doc | russian community doc | contract consistency | reviewed | — |
 | `docs/ru/FAQ.md` | 109 | doc | russian faq doc | contract consistency | reviewed | — |
 | `docs/ru/GLOSSARY.md` | 82 | doc | russian glossary doc | contract consistency | reviewed | — |
@@ -62,7 +62,9 @@ review depth meanings:
 | `LICENSE` | 21 | repo meta | license text | inventory-only | reviewed | — |
 | `Makefile` | 78 | build/tooling | local qa and audit entrypoints | manual semantic | reviewed | — |
 | `modules/config/add_clients.sh` | 686 | runtime module | add-clients runtime flow | manual semantic | reviewed | — |
-| `modules/config/client_artifacts.sh` | 1288 | runtime module | client artifact rendering, json normalization, rebuild, and self-check readiness helpers | manual semantic | reviewed | extracted from `config.sh` to narrow root entrypoint scope |
+| `modules/config/client_artifacts.sh` | 26 | runtime module | thin loader for focused client format and client state helpers | manual semantic | reviewed | now only sources focused client-artifact submodules |
+| `modules/config/client_formats.sh` | 873 | runtime module | client link/json/text rendering, raw-xray client export generation, and key-file output | manual semantic | reviewed | extracted from `modules/config/client_artifacts.sh` to isolate output/rendering concerns |
+| `modules/config/client_state.sh` | 434 | runtime module | clients.json normalization, self-check readiness, public-key recovery, and artifact rebuild helpers | manual semantic | reviewed | extracted from `modules/config/client_artifacts.sh` to isolate state/rebuild concerns |
 | `modules/config/domain_planner.sh` | 510 | runtime module | domain selection, provider diversity, and plan assembly helpers | manual semantic | reviewed | active xhttp tier planning is now catalog-first; runtime profile helpers were extracted into a focused sibling module |
 | `modules/config/runtime_apply.sh` | 188 | runtime module | xray config-test execution, atomic config apply, and environment snapshot persistence | manual semantic | reviewed | extracted from `config.sh` to keep runtime apply and env persistence out of the root orchestrator |
 | `modules/config/runtime_contract.sh` | 267 | runtime module | inbound/outbound/routing contract generation, feature gating, mux setup, and vless encryption helpers | manual semantic | reviewed | extracted from `config.sh` to keep xray contract generation and feature checks focused |
@@ -124,9 +126,9 @@ review depth meanings:
 | `tests/bats/input_validation.bats` | 290 | bats test | bats suite: input_validation | manual semantic | reviewed | — |
 | `tests/bats/integration.bats` | 1008 | bats test | bats suite: integration | manual semantic | reviewed | — |
 | `tests/bats/rollback.bats` | 53 | bats test | bats suite: rollback | manual semantic | reviewed | — |
-| `tests/bats/smoke.bats` | 44 | bats test | bats suite: smoke | manual semantic | reviewed | — |
+| `tests/bats/smoke.bats` | 46 | bats test | bats suite: smoke | manual semantic | reviewed | — |
 | `tests/bats/transport.bats` | 76 | bats test | bats suite: transport | manual semantic | reviewed | — |
-| `tests/bats/unit.bats` | 3891 | bats test | bats suite: unit | manual semantic | reviewed | — |
+| `tests/bats/unit.bats` | 3895 | bats test | bats suite: unit | manual semantic | reviewed | — |
 | `tests/bats/validation.bats` | 636 | bats test | bats suite: validation | manual semantic | reviewed | — |
 | `tests/e2e/add_clients_enospc_rollback.sh` | 114 | e2e test | e2e scenario: add_clients_enospc_rollback | manual semantic | reviewed | — |
 | `tests/e2e/broken_config_rollback_smoke.sh` | 125 | e2e test | e2e scenario: broken_config_rollback_smoke | manual semantic | reviewed | — |
@@ -160,4 +162,4 @@ review depth meanings:
 
 ## current audit-level watch items referenced by matrix
 
-- `w-002` — the remaining config-side watch items are focused modules like `modules/config/client_artifacts.sh`, not the root `config.sh` entrypoint anymore.
+- `w-002` — the remaining config-side watch items are focused modules like `modules/config/client_formats.sh`, not the root `config.sh` entrypoint anymore.

@@ -11,6 +11,7 @@
 
 - интерактивный `install` теперь всегда требует явный ввод числа конфигов на обычном пути; `--num-configs` остаётся scripted-override
 - ручной потолок для `global-50` поднят до `15`, а non-interactive auto default оставлен на `5`
+- рендеринг и пересборка client artifacts разделены на focused-модули `client_formats` и `client_state`, а `client_artifacts.sh` стал тонким loader’ом
 - `config.sh` дополнительно разделён на focused-модули runtime-contract и runtime-apply; root-скрипт теперь в основном оркестрирует сборку конфига и артефактов
 - pinned bootstrap по commit теперь вынесен в visually first-class quick start для реальных серверов, а wrapper печатает более жёсткую подсказку при floating mutating bootstrap
 - wrapper bootstrap верификация сохранена совместимой с историческими pinned tag, которые используются в `migrate-stealth`, и больше не требует новые split lib modules

@@ -142,6 +142,9 @@ that support map is written to `export/capabilities.json`.
 | `modules/health/self_check.sh` | canonical post-action self-check engine |
 | `modules/health/measurements.sh` | saved field report aggregation and promotion hints |
 | `modules/lib/policy.sh` | managed policy serialization and loading |
+| `modules/config/client_artifacts.sh` | thin client-artifact loader for focused formats and state helpers |
+| `modules/config/client_formats.sh` | client link/json/text rendering, raw-xray client export generation, and key-file output |
+| `modules/config/client_state.sh` | clients.json normalization, self-check readiness, and artifact rebuild helpers |
 | `modules/config/domain_planner.sh` | domain selection and diversity-aware planning |
 | `modules/config/runtime_profiles.sh` | port allocation, path/runtime profile generation, and key helpers |
 | `modules/config/runtime_contract.sh` | xray config-contract generation, feature gates, mux setup, and vless encryption helpers |

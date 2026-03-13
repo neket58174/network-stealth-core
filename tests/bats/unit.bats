@@ -1142,9 +1142,9 @@ EOF
 
 @test "derive_public_key_from_private_key uses strict x25519 -i flow" {
     run bash -eo pipefail -c '
-    grep -q '\''x25519 -i "\$private_key"'\'' ./modules/config/client_artifacts.sh
-    ! grep -q '\''x25519 "\$private_key"'\'' ./modules/config/client_artifacts.sh
-    grep -q '\''xray x25519 -i failed while deriving public key'\'' ./modules/config/client_artifacts.sh
+    grep -q '\''x25519 -i "\$private_key"'\'' ./modules/config/client_state.sh
+    ! grep -q '\''x25519 "\$private_key"'\'' ./modules/config/client_state.sh
+    grep -q '\''xray x25519 -i failed while deriving public key'\'' ./modules/config/client_state.sh
     echo "ok"
   '
     [ "$status" -eq 0 ]
@@ -1803,9 +1803,9 @@ EOF
 
 @test "clients header box writes one line per segment" {
     run bash -eo pipefail -c '
-    grep -Fq "printf '\''%s\\n'\'' \"\$(ui_box_border_string top \"\$header_width\")\"" ./modules/config/client_artifacts.sh
-    grep -Fq "printf '\''%s\\n'\'' \"\$(ui_box_line_string \"\$header_title\" \"\$header_width\")\"" ./modules/config/client_artifacts.sh
-    grep -Fq "printf '\''%s\\n'\'' \"\$(ui_box_border_string bottom \"\$header_width\")\"" ./modules/config/client_artifacts.sh
+    grep -Fq "printf '\''%s\\n'\'' \"\$(ui_box_border_string top \"\$header_width\")\"" ./modules/config/client_formats.sh
+    grep -Fq "printf '\''%s\\n'\'' \"\$(ui_box_line_string \"\$header_title\" \"\$header_width\")\"" ./modules/config/client_formats.sh
+    grep -Fq "printf '\''%s\\n'\'' \"\$(ui_box_border_string bottom \"\$header_width\")\"" ./modules/config/client_formats.sh
     echo "ok"
   '
     [ "$status" -eq 0 ]
@@ -1826,9 +1826,9 @@ EOF
 
 @test "clients summary keeps concise management commands" {
     run bash -eo pipefail -c '
-    grep -Fq -- "- обновить: xray-reality.sh update" ./modules/config/client_artifacts.sh
-    grep -Fq -- "- удалить: xray-reality.sh uninstall" ./modules/config/client_artifacts.sh
-    ! grep -Fq "Для обновления Xray до новой версии выполните: sudo xray-reality.sh update" ./modules/config/client_artifacts.sh
+    grep -Fq -- "- обновить: xray-reality.sh update" ./modules/config/client_formats.sh
+    grep -Fq -- "- удалить: xray-reality.sh uninstall" ./modules/config/client_formats.sh
+    ! grep -Fq "Для обновления Xray до новой версии выполните: sudo xray-reality.sh update" ./modules/config/client_formats.sh
     echo "ok"
   '
     [ "$status" -eq 0 ]
@@ -1837,9 +1837,9 @@ EOF
 
 @test "config uses formatted generated timestamp helper" {
     run bash -eo pipefail -c '
-    grep -Fq "[[ -n \"\$generated\" ]] || generated=\"\$(format_generated_timestamp)\"" ./modules/config/client_artifacts.sh
-    grep -Fq "Generated: \$(format_generated_timestamp)" ./modules/config/client_artifacts.sh
-    grep -Fq -- "--arg generated \"\$(format_generated_timestamp)\"" ./modules/config/client_artifacts.sh
+    grep -Fq "[[ -n \"\$generated\" ]] || generated=\"\$(format_generated_timestamp)\"" ./modules/config/client_formats.sh
+    grep -Fq "Generated: \$(format_generated_timestamp)" ./modules/config/client_formats.sh
+    grep -Fq -- "--arg generated \"\$(format_generated_timestamp)\"" ./modules/config/client_formats.sh
     echo "ok"
   '
     [ "$status" -eq 0 ]
@@ -2236,7 +2236,7 @@ EOF
 }
 
 @test "clients summary points operators to russian links guidance" {
-    run bash -eo pipefail -c "grep -Fq 'быстрые ссылки: \${links_file}' ./modules/config/client_artifacts.sh; grep -Fq 'ссылка: см. \${links_file}' ./modules/config/client_artifacts.sh; grep -Fq 'как подключаться:' ./modules/config/client_artifacts.sh; grep -Fq 'render_clients_links_txt_from_json' ./modules/config/client_artifacts.sh; echo ok"
+    run bash -eo pipefail -c "grep -Fq 'быстрые ссылки: \${links_file}' ./modules/config/client_formats.sh; grep -Fq 'ссылка: см. \${links_file}' ./modules/config/client_formats.sh; grep -Fq 'как подключаться:' ./modules/config/client_formats.sh; grep -Fq 'render_clients_links_txt_from_json' ./modules/config/client_formats.sh; echo ok"
     [ "$status" -eq 0 ]
     [ "$output" = "ok" ]
 }
@@ -2429,7 +2429,7 @@ EOF
 
 @test "save_client_configs renders clients.txt from clients.json source" {
     run bash -eo pipefail -c '
-    grep -q '\''render_clients_txt_from_json "\$json_file" "\$client_file"'\'' ./modules/config/client_artifacts.sh
+    grep -q '\''render_clients_txt_from_json "\$json_file" "\$client_file"'\'' ./modules/config/client_formats.sh
     echo "ok"
   '
     [ "$status" -eq 0 ]
@@ -2478,7 +2478,7 @@ JSON
     [ "$output" = "ok" ]
 }
 
-@test "config sources dedicated runtime and client-artifact modules" {
+@test "config and client-artifact layers source dedicated modules" {
     run bash -eo pipefail -c '
     grep -Fq '\''CONFIG_RUNTIME_CONTRACT_MODULE="$SCRIPT_DIR/modules/config/runtime_contract.sh"'\'' ./config.sh
     grep -Fq '\''source "$CONFIG_RUNTIME_CONTRACT_MODULE"'\'' ./config.sh
@@ -2486,10 +2486,14 @@ JSON
     grep -Fq '\''source "$CONFIG_RUNTIME_APPLY_MODULE"'\'' ./config.sh
     grep -Fq '\''CONFIG_CLIENT_ARTIFACTS_MODULE="$SCRIPT_DIR/modules/config/client_artifacts.sh"'\'' ./config.sh
     grep -Fq '\''source "$CONFIG_CLIENT_ARTIFACTS_MODULE"'\'' ./config.sh
+    grep -Fq '\''CONFIG_CLIENT_FORMATS_MODULE="${CLIENT_ARTIFACTS_DIR}/client_formats.sh"'\'' ./modules/config/client_artifacts.sh
+    grep -Fq '\''source "$CONFIG_CLIENT_FORMATS_MODULE"'\'' ./modules/config/client_artifacts.sh
+    grep -Fq '\''CONFIG_CLIENT_STATE_MODULE="${CLIENT_ARTIFACTS_DIR}/client_state.sh"'\'' ./modules/config/client_artifacts.sh
+    grep -Fq '\''source "$CONFIG_CLIENT_STATE_MODULE"'\'' ./modules/config/client_artifacts.sh
     grep -q '\''generate_inbound_json() {'\'' ./modules/config/runtime_contract.sh
     grep -q '\''save_environment() {'\'' ./modules/config/runtime_apply.sh
-    grep -q '\''save_client_configs() {'\'' ./modules/config/client_artifacts.sh
-    grep -q '\''rebuild_client_artifacts_from_config() {'\'' ./modules/config/client_artifacts.sh
+    grep -q '\''save_client_configs() {'\'' ./modules/config/client_formats.sh
+    grep -q '\''rebuild_client_artifacts_from_config() {'\'' ./modules/config/client_state.sh
     echo ok
   '
     [ "$status" -eq 0 ]
