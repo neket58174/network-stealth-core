@@ -11,6 +11,7 @@
 
 - интерактивный `install` теперь всегда требует явный ввод числа конфигов на обычном пути; `--num-configs` остаётся scripted-override
 - ручной потолок для `global-50` поднят до `15`, а non-interactive auto default оставлен на `5`
+- `config.sh` дополнительно разделён на focused-модули runtime-contract и runtime-apply; root-скрипт теперь в основном оркестрирует сборку конфига и артефактов
 - pinned bootstrap по commit теперь вынесен в visually first-class quick start для реальных серверов, а wrapper печатает более жёсткую подсказку при floating mutating bootstrap
 - wrapper bootstrap верификация сохранена совместимой с историческими pinned tag, которые используются в `migrate-stealth`, и больше не требует новые split lib modules
 - активные canonical xhttp tier теперь читают metadata из catalog в первую очередь, а `domains.tiers`/`sni_pools.map` стали fallback/compatibility-источниками; значения catalog при этом нормально нормализуются и на windows line endings

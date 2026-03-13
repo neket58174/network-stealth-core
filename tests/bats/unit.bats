@@ -1081,7 +1081,9 @@ EOF
 @test "temp xray config files use hardened permissions helper" {
     run bash -eo pipefail -c '
     grep -q '\''set_temp_xray_config_permissions "\$tmp_config"'\'' ./config.sh
+    grep -q '\''^set_temp_xray_config_permissions() {'\'' ./modules/config/runtime_apply.sh
     ! grep -q '\''chmod 644 "\$tmp_config"'\'' ./config.sh
+    ! grep -q '\''chmod 644 "\$tmp_config"'\'' ./modules/config/runtime_apply.sh
     echo "ok"
   '
     [ "$status" -eq 0 ]
@@ -1295,7 +1297,7 @@ EOF
     ! grep -q '\''xray_config_test 2>&1 | grep -q "Configuration OK"'\'' ./service.sh
     ! grep -q '\''xray_config_test 2>&1 | grep -q "Configuration OK"'\'' ./health.sh
     ! grep -q '\''xray_config_test 2>&1 | grep -q "Configuration OK"'\'' ./lib.sh
-    grep -q '\''^xray_config_test_ok() {'\'' ./config.sh
+    grep -q '\''^xray_config_test_ok() {'\'' ./modules/config/runtime_apply.sh
     echo "ok"
   '
     [ "$status" -eq 0 ]
@@ -1924,7 +1926,6 @@ EOF
     [ "$output" = "ok" ]
 }
 
-
 @test "resolve_confirmation_token accepts prompt line with trailing answer after extra question text" {
     run bash -eo pipefail -c '
     source ./lib.sh
@@ -2117,7 +2118,6 @@ EOF
     [ "$status" -eq 0 ]
     [ "$output" = "rc=0 retry=0" ]
 }
-
 
 @test "prompt_yes_no_from_tty accepts prompt line with extra question text and trailing yes" {
     run bash -eo pipefail -c '
@@ -2478,10 +2478,16 @@ JSON
     [ "$output" = "ok" ]
 }
 
-@test "config sources dedicated client artifacts module" {
+@test "config sources dedicated runtime and client-artifact modules" {
     run bash -eo pipefail -c '
+    grep -Fq '\''CONFIG_RUNTIME_CONTRACT_MODULE="$SCRIPT_DIR/modules/config/runtime_contract.sh"'\'' ./config.sh
+    grep -Fq '\''source "$CONFIG_RUNTIME_CONTRACT_MODULE"'\'' ./config.sh
+    grep -Fq '\''CONFIG_RUNTIME_APPLY_MODULE="$SCRIPT_DIR/modules/config/runtime_apply.sh"'\'' ./config.sh
+    grep -Fq '\''source "$CONFIG_RUNTIME_APPLY_MODULE"'\'' ./config.sh
     grep -Fq '\''CONFIG_CLIENT_ARTIFACTS_MODULE="$SCRIPT_DIR/modules/config/client_artifacts.sh"'\'' ./config.sh
     grep -Fq '\''source "$CONFIG_CLIENT_ARTIFACTS_MODULE"'\'' ./config.sh
+    grep -q '\''generate_inbound_json() {'\'' ./modules/config/runtime_contract.sh
+    grep -q '\''save_environment() {'\'' ./modules/config/runtime_apply.sh
     grep -q '\''save_client_configs() {'\'' ./modules/config/client_artifacts.sh
     grep -q '\''rebuild_client_artifacts_from_config() {'\'' ./modules/config/client_artifacts.sh
     echo ok
@@ -2900,7 +2906,7 @@ EOF
     SPIDER_MODE="false"
 
     save_environment
-    grep -q '\''atomic_write "\$XRAY_ENV" 0600'\'' ./config.sh
+    grep -q '\''atomic_write "\$XRAY_ENV" 0600'\'' ./modules/config/runtime_apply.sh
     source "$XRAY_ENV"
 
     [[ ! -e /tmp/xray_env_injection_test ]]
@@ -3847,7 +3853,6 @@ EOF
     [ "$status" -eq 0 ]
     [[ "$output" == *"ok"* ]]
 }
-
 
 @test "sync_transport_endpoint_file_contract prefers neutral seed path" {
     run bash -eo pipefail -c '

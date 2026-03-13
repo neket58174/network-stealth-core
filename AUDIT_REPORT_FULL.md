@@ -11,7 +11,7 @@ this audit refresh covers the current `v7.1.0` baseline, not the old `4.2.x` she
 
 reviewed surfaces:
 
-- all repo-tracked files in `audit_coverage_matrix.md` (**142/142** including the new `modules/lib/*` extraction, `modules/config/runtime_profiles.sh`, vm proof-pack tooling, and public issue/pr templates)
+- all repo-tracked files in `audit_coverage_matrix.md` (**144/144** including the new `modules/lib/*` extraction, `modules/config/runtime_profiles.sh`, `modules/config/runtime_contract.sh`, `modules/config/runtime_apply.sh`, vm proof-pack tooling, and public issue/pr templates)
 - runtime entrypoints: `xray-reality.sh`, `lib.sh`, `install.sh`, `config.sh`, `service.sh`, `health.sh`, `export.sh`
 - runtime modules under `modules/*`
 - qa/release/lab/windows scripts under `scripts/*`
@@ -88,7 +88,7 @@ on `185.218.204.206`:
 ### what is not broken but still costly
 
 - planner still has fallback/compatibility side inputs, but active xhttp tier planning is now catalog-first and runtime-profile helpers were split into a focused module
-- `config.sh` still holds the broadest remaining runtime contract and is now the clearest next maintainability hotspot if the product grows further
+- `config.sh` is no longer the main hotspot; the remaining config-side maintenance cost now sits in focused modules like `modules/config/client_artifacts.sh`
 - support matrix is still intentionally narrow: ubuntu 24.04 is the supported and ci-validated platform
 
 ### dead code verdict
@@ -133,6 +133,7 @@ status: **good with bounded complexity**
 - exports and raw-xray artifacts are coherent
 - capabilities/compatibility notes are honest
 - client artifact rendering/rebuild logic is split out of `config.sh` into a focused module
+- xray contract generation, feature gates, mux setup, config apply, and environment snapshot logic are split out of `config.sh` into `modules/config/runtime_contract.sh` and `modules/config/runtime_apply.sh`
 - runtime profile, port-allocation, and key helpers are split out of `modules/config/domain_planner.sh` into `modules/config/runtime_profiles.sh`
 - install success/runtime-mode, selection, and xray/minisign bootstrap logic are split out of `install.sh` into focused modules
 - service runtime and uninstall behavior are split out of `service.sh` into focused modules
@@ -187,7 +188,7 @@ the older open maintainability item around oversized root entrypoints is conside
 remaining concerns are now watch items, not active defects:
 
 - planner still keeps fallback/compatibility side inputs even though active xhttp tier planning is now catalog-first
-- `config.sh` is still broad enough to deserve future refactors if scope expands; `modules/lib/runtime_inputs.sh` is now much narrower after the latest lib split
+- the remaining config-side watch items now live mainly in focused modules such as `modules/config/client_artifacts.sh`; `config.sh` itself is now mostly orchestration
 - ubuntu 24.04 remains the intentionally narrow supported matrix
 
 ## closed in this audit refresh

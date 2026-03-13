@@ -38,7 +38,7 @@ baseline snapshot: `ubuntu` working tree after maturity hardening wave
 | `xray-reality.sh` | bootstrap wrapper and trusted loader | env bootstrap refs, repo url, pinning, local script dir | cloned/synced runtime tree, sourced module dir | works; trust boundary is explicit, and mutating floating bootstrap now warns harder |
 | `lib.sh` | central orchestrator | cli args, env, runtime files, policy/state paths | action dispatch, module sourcing, validation, runtime defaults | works; now materially narrower after focused module extraction |
 | `install.sh` | mutating lifecycle entrypoint | install/update/repair/migrate/uninstall args, current managed state | xray install/update, config creation, rollback, and composition over focused output/selection/xray-runtime helpers | works; now mostly orchestration |
-| `config.sh` | config and runtime apply builder | planner outputs, ports, keys, domains, transport settings | `config.json`, environment snapshot, validated runtime apply helpers | works; artifact-heavy logic was extracted into a focused module |
+| `config.sh` | config orchestration entrypoint | planner outputs, ports, keys, domains, transport settings | `config.json`, environment snapshot, and composition over focused config modules | works; now mainly orchestrates planner, runtime-contract, runtime-apply, and artifact modules |
 | `service.sh` | service/runtime ops | existing managed install and systemd state | `status`, `logs`, `check-update`, and service-level orchestration over focused modules | works; now mainly composes focused runtime and uninstall modules |
 | `health.sh` | health/diagnostics entry | runtime state, domain health data, timers | health script/timer content, diagnose helpers | works; heavy lifting is mostly delegated to modules |
 | `export.sh` | export entry helpers | generated clients/artifacts | export files and capability notes | works; most logic now lives in export module |
@@ -73,6 +73,8 @@ baseline snapshot: `ubuntu` working tree after maturity hardening wave
 | `modules/config/add_clients.sh` | `add-clients` flow, append + artifact rebuild | works; rebuild-from-config behavior is correct |
 | `modules/config/client_artifacts.sh` | client artifact rendering, json normalization, rebuild, and self-check readiness | works; meaningfully narrows `config.sh` |
 | `modules/config/domain_planner.sh` | domain selection, provider diversity, and plan assembly | works; active xhttp tiers are catalog-first and the planner no longer carries port/key/runtime-profile helpers |
+| `modules/config/runtime_apply.sh` | xray `-test` execution, atomic config apply, and environment snapshot persistence | works; meaningfully narrows `config.sh` and centralizes config-apply semantics |
+| `modules/config/runtime_contract.sh` | xray config contract generation, feature gates, mux setup, and vless encryption helpers | works; keeps contract generation and feature checks out of the root entrypoint |
 | `modules/config/runtime_profiles.sh` | port allocation, path/service payload generation, and key helpers | works; focused extraction narrowed planner breadth without changing config/add-clients behavior |
 | `modules/config/shared_helpers.sh` | transport/tier labels and compatibility helpers | works; active helpers are transport-neutral, legacy labels remain scoped to grpc/http2 branches |
 | `modules/export/capabilities.sh` | capability matrix and compatibility notes generation | works; export honesty is good |
@@ -159,5 +161,5 @@ that means:
 - public contract consistency: **good**
 - confirmed dead code: **none found in current active path**
 - biggest remaining watch items:
-  1. broad-but-contained files such as `config.sh`
+  1. broad-but-contained focused modules such as `modules/config/client_artifacts.sh`
   2. intentionally narrow support matrix centered on ubuntu 24.04

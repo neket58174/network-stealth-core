@@ -136,7 +136,7 @@ that support map is written to `export/capabilities.json`.
 |---|---|
 | `lib.sh` | dispatcher, validation, path safety, and command contracts |
 | `install.sh` | install/update/repair/migrate orchestration |
-| `config.sh` | config build, schema v3 artifacts, and vless encryption generation |
+| `config.sh` | config orchestration over focused runtime-contract, runtime-apply, and client-artifact modules |
 | `service.sh` | systemd, firewall, status, uninstall, and cleanup |
 | `health.sh` | diagnostics and health entrypoints |
 | `modules/health/self_check.sh` | canonical post-action self-check engine |
@@ -144,6 +144,8 @@ that support map is written to `export/capabilities.json`.
 | `modules/lib/policy.sh` | managed policy serialization and loading |
 | `modules/config/domain_planner.sh` | domain selection and diversity-aware planning |
 | `modules/config/runtime_profiles.sh` | port allocation, path/runtime profile generation, and key helpers |
+| `modules/config/runtime_contract.sh` | xray config-contract generation, feature gates, mux setup, and vless encryption helpers |
+| `modules/config/runtime_apply.sh` | xray `-test` execution, atomic config apply, and environment snapshot persistence |
 | `export.sh` | export generation, capability matrix, and canary bundle |
 
 ## design intent

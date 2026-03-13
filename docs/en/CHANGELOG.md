@@ -11,6 +11,7 @@ versioning: [semantic versioning](https://semver.org/spec/v2.0.0.html)
 
 - interactive `install` now always requires an explicit config count on the normal path; `--num-configs` remains the scripted override
 - raised the manual `global-50` config-count ceiling to `15` while keeping non-interactive auto defaults at `5`
+- split `config.sh` into focused runtime-contract and runtime-apply modules, leaving the root script as orchestration over config builders and artifact modules
 - made pinned bootstrap by commit the visually first-class quick-start path for real servers and added stronger wrapper hints for floating mutating bootstrap usage
 - kept wrapper bootstrap validation compatible with historical pinned tags used by `migrate-stealth` coverage instead of requiring newer split lib modules
 - made active canonical xhttp tiers load catalog metadata first, reducing dependence on `domains.tiers`/`sni_pools.map` and normalizing catalog values cleanly on windows line endings

@@ -15,12 +15,13 @@ these are real future maintenance costs, but they are **not** proven defects in 
 
 - type: maintainability
 - files:
-  - `config.sh`
+  - `modules/config/client_artifacts.sh`
+  - `modules/lib/runtime_inputs.sh`
 - problem:
-  - the root-script sprawl problem was materially reduced, but `config.sh` still carries a broad contract and could become the next hotspot if new product scope is added carelessly.
+  - the root-script sprawl problem was materially reduced, and `config.sh` is now mostly orchestration; the remaining future maintenance risk sits in a couple of focused modules that could still bloat if new scope is piled onto them carelessly.
 - recommended direction:
   - keep new behavior out of the root entrypoints.
-  - prefer subsystem-focused extractions before these files start growing sharply again.
+  - prefer subsystem-focused extractions before these modules start growing sharply again.
   - keep `modules/config/runtime_profiles.sh` focused; do not let it turn into the next planner-style catch-all.
   - keep `modules/lib/runtime_inputs.sh` narrow; new path/config loading logic should stay in the dedicated lib modules.
 

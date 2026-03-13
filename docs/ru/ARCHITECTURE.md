@@ -136,7 +136,7 @@ raw xray json остаётся canonical artifact, потому что он бе
 |---|---|
 | `lib.sh` | dispatcher, validation, path safety и command contracts |
 | `install.sh` | orchestration для install/update/repair/migrate |
-| `config.sh` | сборка конфигов, артефакты schema v3 и генерация vless encryption |
+| `config.sh` | orchestration сборки конфига поверх focused-модулей runtime-contract, runtime-apply и client-artifacts |
 | `service.sh` | systemd, firewall, status, uninstall и cleanup |
 | `health.sh` | входные точки диагностики и health |
 | `modules/health/self_check.sh` | canonical engine post-action self-check |
@@ -144,6 +144,8 @@ raw xray json остаётся canonical artifact, потому что он бе
 | `modules/lib/policy.sh` | сериализация и загрузка managed policy |
 | `modules/config/domain_planner.sh` | выбор доменов и diversity-aware planning |
 | `modules/config/runtime_profiles.sh` | выделение портов, генерация runtime-профилей и ключей |
+| `modules/config/runtime_contract.sh` | генерация xray config-contract, feature gates, mux setup и helper’ы для vless encryption |
+| `modules/config/runtime_apply.sh` | запуск `xray -test`, атомарное применение конфига и сохранение snapshot окружения |
 | `export.sh` | генерация export’ов, capability matrix и canary bundle |
 
 ## дизайн-идея
